@@ -17,7 +17,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_10_044757) do
   create_table "application_credentials", force: :cascade do |t|
     t.bigint "application_id", null: false
     t.datetime "created_at", null: false
-    t.string "password"
+    t.string "password_digest"
     t.string "portal_link"
     t.datetime "updated_at", null: false
     t.string "username"
