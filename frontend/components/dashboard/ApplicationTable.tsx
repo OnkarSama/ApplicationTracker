@@ -8,10 +8,10 @@ import {
   TableBody,
   TableRow,
   TableCell,
-  Link,
-} from "@nextui-org/react";
-import { Chip } from "@nextui-org/chip";
-import { Button } from "@nextui-org/button";
+} from "@heroui/table";
+import {Link } from "@heroui/link";
+import { Chip } from "@heroui/chip";
+import { Button } from "@heroui/button";
 
 function statusColor(status: JobApplication["status"]) {
   switch (status) {

@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { JobApplication, ApplicationStatus } from "./types";
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@nextui-org/react";
-import { Button } from "@nextui-org/react";
-import { Input } from "@nextui-org/react";
-import { Textarea } from "@nextui-org/react";
-import { Select, SelectItem } from "@nextui-org/react";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@heroui/react";
+import { Button } from "@heroui/react";
+import { Input } from "@heroui/react";
+import { Textarea } from "@heroui/react";
+import { Select, SelectItem } from "@heroui/react";
 
 const statuses: ApplicationStatus[] = [
   "Applied",
