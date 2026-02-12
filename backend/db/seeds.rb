@@ -34,7 +34,7 @@ app1 = Application.create!(
   title: "Google Internship",
   notes: "Summer SWE internship",
   status: "Applied",
-  priority: 1,
+  priority: "high",
   category: "Internship"
 )
 
@@ -43,7 +43,7 @@ app2 = Application.create!(
   title: "Amazon New Grad",
   notes: "Backend role",
   status: "Interview",
-  priority: 2,
+  priority: "high",
   category: "Full-time"
 )
 
@@ -52,7 +52,7 @@ app3 = Application.create!(
   title: "Microsoft Internship",
   notes: "Cloud team",
   status: "Applied",
-  priority: 1,
+  priority: "high",
   category: "Internship"
 )
 
@@ -63,19 +63,19 @@ ApplicationCredential.create!([
                                   application: app1,
                                   portal_link: "https://careers.google.com",
                                   username: "alice_google",
-                                  password: "securepass1"
+                                  password_digest: "securepass1"
                                 },
                                 {
                                   application: app2,
                                   portal_link: "https://amazon.jobs",
                                   username: "alice_amazon",
-                                  password: "securepass2"
+                                  password_digest: "securepass2"
                                 },
                                 {
                                   application: app3,
                                   portal_link: "https://careers.microsoft.com",
                                   username: "bob_microsoft",
-                                  password: "securepass3"
+                                  password_digest: "securepass3"
                                 }
                               ])
 

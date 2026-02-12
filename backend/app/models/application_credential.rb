@@ -1,3 +1,3 @@
 class ApplicationCredential < ApplicationRecord
-  belongs_to :app
+  belongs_to :application
 end

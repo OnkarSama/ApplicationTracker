@@ -1,3 +1,7 @@
 class Application < ApplicationRecord
-  belongs_to :user
+  validates :title, presence: true, length: {maximum: 255}
+  validates :notes, presence: true, length: {maximum: 1000}
+  validates :status, presence: true, length: {maximum: 255}
+  validates :priority, presence: true
+  belongs_to :user, dependent: :destroy
 end
