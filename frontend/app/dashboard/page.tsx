@@ -2,10 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AuthGate } from "@/components/auth/AuthGate";
-import { NavbarTop } from "@/components/ui/NavbarTop";
-import { Card, CardBody, CardHeader } from "@nextui-org/react";
-import { Button } from "@nextui-org/react";
-import { Input } from "@nextui-org/react";
+import { Navbar } from "@/components/ui/Navbar";
+import { Card, CardBody, CardHeader } from "@heroui/react";
+import {Button, Input } from "@heroui/react";
 
 import type { JobApplication } from "@/components/dashboard/types";
 import { ApplicationTable } from "@/components/dashboard/ApplicationTable";
@@ -47,7 +46,7 @@ export default function DashboardPage() {
   return (
     <AuthGate>
       <div className="min-h-[100svh] bg-default-50">
-        <NavbarTop />
+        <Navbar />
 
         <main className="mx-auto max-w-6xl p-6">
           <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">

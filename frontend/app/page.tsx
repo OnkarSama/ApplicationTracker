@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardBody, CardHeader } from "@nextui-org/react";
-import { Input } from "@nextui-org/react";
-import { Button } from "@nextui-org/react";
-import { Checkbox } from "@nextui-org/react";
+import { Card, CardBody, CardHeader } from "@heroui/react";
+import { Input } from "@heroui/react";
+import { Button } from "@heroui/react";
+import { Checkbox } from "@heroui/react";
 import { setAuthed, isAuthed } from "@/lib/storage";
 
 export default function LoginPage() {
