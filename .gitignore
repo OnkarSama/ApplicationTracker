@@ -1,1 +1,12 @@
 .DS_Store
+
+
+backend/
+backend/*
+
+log/
+
+../.idea/
+tmp/
+
+.idea/*
