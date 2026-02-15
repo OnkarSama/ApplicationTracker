@@ -1,5 +1,5 @@
 json.user do
-  json.extract! @user, :id, :email, :name, :created_at, :updated_at
+  json.extract! @user, :id, :email_address, :first_name, :last_name, :created_at, :updated_at
   json.application do
     json.array! @user.application do |app|
       json.id app.id

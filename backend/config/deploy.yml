@@ -1,4 +1,4 @@
-# Name of your application. Used to uniquely configure containers.
+# Name of your applications. Used to uniquely configure containers.
 service: backend
 
 # Name of the container image (use your-user/app-name on external registries).
@@ -48,7 +48,7 @@ env:
     # Set number of processes dedicated to Solid Queue (default: 1)
     # JOB_CONCURRENCY: 3
 
-    # Set number of cores available to the application on each server (default: 1).
+    # Set number of cores available to the applications on each server (default: 1).
     # WEB_CONCURRENCY: 2
 
     # Match this to any external database server to configure Active Record correctly

@@ -1,10 +1,10 @@
 # app/controllers/api/applications_controller.rb
 class Api::ApplicationsController < ApplicationController
   wrap_parameters include: Application.attribute_names
-  before_action :require_logged_in
+  allow_unauthenticated_access only: %i[index]
 
   def index
-    @applications = current_user.applications
+    @applications = Application.all
     render :index
   end
 

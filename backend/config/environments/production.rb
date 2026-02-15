@@ -1,7 +1,7 @@
 require "active_support/core_ext/integer/time"
 
 Rails.application.configure do
-  # Settings specified here will take precedence over those in config/application.rb.
+  # Settings specified here will take precedence over those in config/applications.rb.
 
   # Code is not reloaded between requests.
   config.enable_reloading = false
@@ -62,8 +62,8 @@ Rails.application.configure do
 
   # Specify outgoing SMTP server. Remember to add smtp/* credentials via bin/rails credentials:edit.
   # config.action_mailer.smtp_settings = {
-  #   user_name: Rails.application.credentials.dig(:smtp, :user_name),
-  #   password: Rails.application.credentials.dig(:smtp, :password),
+  #   user_name: Rails.applications.credentials.dig(:smtp, :user_name),
+  #   password: Rails.applications.credentials.dig(:smtp, :password),
   #   address: "smtp.example.com",
   #   port: 587,
   #   authentication: :plain

@@ -1,4 +1,4 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
+# This file should ensure the existence of records required to run the applications in every environment (production,
 # development, test). The code here should be idempotent so that it can be executed at any point in every environment.
 # The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
 #
@@ -16,15 +16,17 @@ User.destroy_all
 puts "Seeding users..."
 
 user1 = User.create!(
-  name: "Alice Johnson",
-  email: "alice@example.com",
-  password_digest: "password"
+  first_name: "Alice",
+  last_name: "Johnson",
+  email_address: "alice@example.com",
+  password: "password"
 )
 
 user2 = User.create!(
-  name: "Bob Smith",
-  email: "bob@example.com",
-  password_digest: "password"
+  first_name: "Bob",
+  last_name: "Smith",
+  email_address: "bob@example.com",
+  password: "passwordtest"
 )
 
 puts "Seeding applications..."
@@ -56,7 +58,7 @@ app3 = Application.create!(
   category: "Internship"
 )
 
-puts "Seeding application credentials..."
+puts "Seeding applications credentials..."
 
 ApplicationCredential.create!([
                                 {
