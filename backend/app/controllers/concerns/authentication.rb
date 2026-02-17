@@ -28,13 +28,21 @@ module Authentication
     def find_session_by_cookie
       Session.find_by(id: cookies.signed[:session_id]) if cookies.signed[:session_id]
     end
-
-    def request_authentication
+    #
+    # def request_authentication
+    #   session[:return_to_after_authenticating] = request.url
+    #   redirect_to new_session_path
+    # end
+  def request_authentication
+    if request.format.json?
+      render json: { error: "You must be logged in" }, status: :unauthorized
+    else
       session[:return_to_after_authenticating] = request.url
       redirect_to new_session_path
     end
+  end
 
-    def after_authentication_url
+  def after_authentication_url
       session.delete(:return_to_after_authenticating) || root_url
     end
 

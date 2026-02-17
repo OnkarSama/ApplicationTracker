@@ -1,25 +1,20 @@
-# app/controllers/api/applications_controller.rb
 class Api::ApplicationsController < ApplicationController
+  before_action :require_authentication
   wrap_parameters include: Application.attribute_names
-  allow_unauthenticated_access only: %i[index]
 
   def index
-    @applications = Application.all
+    @applications = Current.user.applications || []
     render :index
   end
 
   def show
-    @application = current_user.applications.find_by(id: params[:id])
-
-    if @application
-      render :show
-    else
-      render json: { message: "Not found" }, status: :not_found
-    end
+    @application = Current.user.applications.find_by(id: params[:id])
+    return render json: { message: "Not found" }, status: :not_found unless @application
+    render :show
   end
 
   def create
-    @application = current_user.applications.new(application_params)
+    @application = Current.user.applications.new(application_params)
 
     if @application.save
       render :show
@@ -29,29 +24,27 @@ class Api::ApplicationsController < ApplicationController
   end
 
   def update
-    @application = current_user.applications.find_by(id: params[:id])
+    @application = Current.user.applications.find_by(id: params[:id])
+    return render json: { message: "Not found" }, status: :not_found unless @application
 
-    if @application&.update(application_params)
+    if @application.update(application_params)
       render :show
     else
-      render json: { message: "Unable to update" }, status: :unprocessable_entity
+      render json: @application.errors.full_messages, status: :unprocessable_entity
     end
   end
 
   def destroy
-    @application = current_user.applications.find_by(id: params[:id])
+    @application = Current.user.applications.find_by(id: params[:id])
+    return render json: { message: "Not found" }, status: :not_found unless @application
 
-    if @application
-      @application.destroy
-      render json: { message: "Deleted successfully" }
-    else
-      render json: { message: "Not found" }, status: :not_found
-    end
+    @application.destroy
+    render json: { message: "Deleted successfully" }
   end
 
   private
 
   def application_params
-    params.require(:application).permit(:title, :description)
+    params.require(:application).permit(:title, :notes, :status, :priority)
   end
 end

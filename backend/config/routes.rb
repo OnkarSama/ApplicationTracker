@@ -1,8 +1,9 @@
 Rails.application.routes.draw do
-  resource :session
+  resource :application
   namespace :api, defaults: { format: :json } do
-    resources :applications
-    resources :application_credentials
+    resources :applications do
+      resources :application_credential
+    end
     resources :users, only: [:index, :show]
     resource :session, only: [:create, :destroy]
     resources :passwords, param: :token
