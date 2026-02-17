@@ -5,10 +5,7 @@
 
 /backend/tmp
 
-/backend/tmp/*
-
-/backend/log
-/backend/log/*
 
 
-/frontend
+../.idea/
+tmp/
