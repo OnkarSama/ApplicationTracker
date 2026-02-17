@@ -45,6 +45,6 @@ class Api::ApplicationsController < ApplicationController
   private
 
   def application_params
-    params.require(:application).permit(:title, :notes, :status, :priority)
+    params.require(:application).permit(:title, :notes, :status, :priority, :category)
   end
 end

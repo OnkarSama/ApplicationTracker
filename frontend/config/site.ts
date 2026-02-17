@@ -2,6 +2,7 @@ export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
     name: "Application Tracker",
+    description: "Track and manage application in one place!",
     navItems: [
         {
             label: "Home",
@@ -9,7 +10,7 @@ export const siteConfig = {
         },
         {
             label: "New Ticket",
-            href: "/ticket/create",
+            href: "/application/create",
         },
 
     ],
@@ -20,7 +21,7 @@ export const siteConfig = {
         },
         {
             label: "New Ticket",
-            href: "/ticket/create",
+            href: "/application/create",
         },
         {
             label: "Logout",

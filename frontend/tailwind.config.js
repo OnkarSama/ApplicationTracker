@@ -30,7 +30,7 @@ const config = {
         heroui({
             prefix: "heroui",
             addCommonColors: true,
-            defaultTheme: "light",
+            defaultTheme: "dark",
 
             themes: {
                 dark: {

@@ -1,9 +1,9 @@
-// import ticketEndpoints from './ticket'
+import applicationEndpoints from './application'
 import sessionEndpoints from './session'
 import userEndpoints from './user'
 
 const endpoints = {
-    // tickets : ticketEndpoints,
+    applications : applicationEndpoints,
     sessions : sessionEndpoints,
     users : userEndpoints
 

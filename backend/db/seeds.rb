@@ -1,4 +1,4 @@
-# This file should ensure the existence of records required to run the applications in every environment (production,
+# This file should ensure the existence of records required to run the application in every environment (production,
 # development, test). The code here should be idempotent so that it can be executed at any point in every environment.
 # The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
 #
@@ -29,7 +29,7 @@ user2 = User.create!(
   password: "passwordtest"
 )
 
-puts "Seeding applications..."
+puts "Seeding application..."
 
 app1 = Application.create!(
   user: user1,
@@ -58,7 +58,7 @@ app3 = Application.create!(
   category: "Internship"
 )
 
-puts "Seeding applications credentials..."
+puts "Seeding application credentials..."
 
 ApplicationCredential.create!([
                                 {
