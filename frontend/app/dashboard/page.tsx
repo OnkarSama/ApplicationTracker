@@ -15,7 +15,7 @@ export default function HomePage() {
     });
 
     const handleNewApplication = () => {
-        router.push("/applications/create");
+        router.push("/application/create");
     };
 
     if (isLoading) return <p className="p-6">Loading applications...</p>;

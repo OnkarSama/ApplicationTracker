@@ -9,7 +9,7 @@ export const siteConfig = {
             href: "/dashboard",
         },
         {
-            label: "New Ticket",
+            label: "New Application",
             href: "/application/create",
         },
 
@@ -20,7 +20,7 @@ export const siteConfig = {
             href: "/dashboard",
         },
         {
-            label: "New Ticket",
+            label: "New Application",
             href: "/application/create",
         },
         {
