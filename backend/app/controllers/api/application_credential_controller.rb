@@ -3,17 +3,17 @@ class Api::ApplicationCredentialController < ApplicationController
   before_action :set_application
   before_action :set_credential, only: [:show, :update, :destroy]
 
-  # GET /api/applications/:application_id/application_credentials
+  # GET /api/application/:application_id/application_credentials
   def index
     render json: @application.application_credential
   end
 
-  # GET /api/applications/:application_id/application_credentials/:id
+  # GET /api/application/:application_id/application_credentials/:id
   def show
     render json: @credential
   end
 
-  # POST /api/applications/:application_id/application_credentials
+  # POST /api/application/:application_id/application_credentials
   def create
     credential = @application.application_credential.new(credential_params)
 
@@ -24,7 +24,7 @@ class Api::ApplicationCredentialController < ApplicationController
     end
   end
 
-  # PATCH /api/applications/:application_id/application_credentials/:id
+  # PATCH /api/application/:application_id/application_credentials/:id
   def update
     if @credential.update(credential_params)
       render json: @credential
@@ -33,7 +33,7 @@ class Api::ApplicationCredentialController < ApplicationController
     end
   end
 
-  # DELETE /api/applications/:application_id/application_credentials/:id
+  # DELETE /api/application/:application_id/application_credentials/:id
   def destroy
     @credential.destroy
     render json: { message: "Credential deleted" }
