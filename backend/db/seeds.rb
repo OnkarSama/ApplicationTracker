@@ -1,16 +1,7 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
-
-# Clear existing data
+# Clear existing data (order matters because of foreign keys)
 ApplicationCredential.destroy_all
 Application.destroy_all
+ApplicantProfile.destroy_all
 User.destroy_all
 
 puts "Seeding users..."
@@ -29,7 +20,30 @@ user2 = User.create!(
   password: "passwordtest"
 )
 
-puts "Seeding application..."
+puts "Seeding applicant profiles..."
+
+ApplicantProfile.create!([
+                           {
+                             user: user1,
+                             preferred_name: "Ali",
+                             contact_email: "alice.contact@example.com",
+                             phone_number: "555-123-4567",
+                             linkedin_url: "https://linkedin.com/in/alicejohnson",
+                             portfolio_url: "https://alice.dev",
+                             bio: "Computer Science student interested in backend systems."
+                           },
+                           {
+                             user: user2,
+                             preferred_name: "Bobby",
+                             contact_email: "bob.contact@example.com",
+                             phone_number: "555-987-6543",
+                             linkedin_url: "https://linkedin.com/in/bobsmith",
+                             portfolio_url: "https://bob.dev",
+                             bio: "Cloud engineering enthusiast and distributed systems learner."
+                           }
+                         ])
+
+puts "Seeding applications..."
 
 app1 = Application.create!(
   user: user1,
@@ -82,4 +96,3 @@ ApplicationCredential.create!([
                               ])
 
 puts "Seed complete!"
-
