@@ -17,7 +17,7 @@ development:
   <<: *default
   database: backend_development
   username: postgres
-  password: ""
+  password: "postgres"
   host: localhost
   port: 5433
 
@@ -25,7 +25,7 @@ test:
   <<: *default
   database: backend_test
   username: postgres
-  password: ""
+  password: "postgres"
   host: localhost
   port: 5433
 
