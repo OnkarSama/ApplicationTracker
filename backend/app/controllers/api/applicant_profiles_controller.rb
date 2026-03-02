@@ -14,20 +14,14 @@ class Api::ApplicantProfilesController < ApplicationController
     end
   end
 
-  def set_profile
-    unless Current.user
-      render json: { error: "Not logged in" }, status: :unauthorized and return
-    end
+  private
 
+  def set_profile
     @profile = Current.user.applicant_profile
   end
 
   def profile_params
-    params.require(:profile).permit(:preferred_name,
-                                              :contact_email,
-                                              :phone_number,
-                                              :linkedin_url,
-                                              :portfolio_url,
-                                              :bio)
+    params.require(:profile).permit(:preferred_name, :contact_email, :phone_number,
+                                    :linkedin_url, :portfolio_url, :bio)
   end
 end

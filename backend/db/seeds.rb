@@ -22,26 +22,23 @@ user2 = User.create!(
 
 puts "Seeding applicant profiles..."
 
-ApplicantProfile.create!([
-                           {
-                             user: user1,
-                             preferred_name: "Ali",
-                             contact_email: "alice.contact@example.com",
-                             phone_number: "555-123-4567",
-                             linkedin_url: "https://linkedin.com/in/alicejohnson",
-                             portfolio_url: "https://alice.dev",
-                             bio: "Computer Science student interested in backend systems."
-                           },
-                           {
-                             user: user2,
-                             preferred_name: "Bobby",
-                             contact_email: "bob.contact@example.com",
-                             phone_number: "555-987-6543",
-                             linkedin_url: "https://linkedin.com/in/bobsmith",
-                             portfolio_url: "https://bob.dev",
-                             bio: "Cloud engineering enthusiast and distributed systems learner."
-                           }
-                         ])
+user1.applicant_profile.update!(
+  preferred_name: "Ali",
+  contact_email: "alice.contact@example.com",
+  phone_number: "555-123-4567",
+  linkedin_url: "https://linkedin.com/in/alicejohnson",
+  portfolio_url: "https://alice.dev",
+  bio: "Computer Science student interested in backend systems."
+)
+
+user2.applicant_profile.update!(
+  preferred_name: "Bobby",
+  contact_email: "bob.contact@example.com",
+  phone_number: "555-987-6543",
+  linkedin_url: "https://linkedin.com/in/bobsmith",
+  portfolio_url: "https://bob.dev",
+  bio: "Cloud engineering enthusiast and distributed systems learner."
+)
 
 puts "Seeding applications..."
 
