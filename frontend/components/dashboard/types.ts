@@ -5,6 +5,8 @@ export type ApplicationStatus =
   | "Rejected"
   | "Wishlist";
 
+export type ApplicationPriority = "High" | "Medium" | "Low";
+
 export type JobApplication = {
   id: string;
   company: string;
@@ -12,6 +14,8 @@ export type JobApplication = {
   location?: string;
   url?: string;
   status: ApplicationStatus;
-  appliedDate?: string; // YYYY-MM-DD
+  priority: ApplicationPriority;
+  salary?: string;         // e.g. "$120,000"
+  appliedDate?: string;    // YYYY-MM-DD
   notes?: string;
 };
