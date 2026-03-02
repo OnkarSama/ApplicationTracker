@@ -1,5 +1,5 @@
 class Api::SignUpsController < ApplicationController
-  allow_unauthenticated_access
+    unauthenticated_access_only
   rate_limit to: 10,
              within: 3.minutes,
              only: :create,
