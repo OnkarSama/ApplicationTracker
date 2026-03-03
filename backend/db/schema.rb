@@ -10,20 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_12_070435) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_19_190134) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
-  create_table "applications", force: :cascade do |t|
-    t.string "category"
+  create_table "applicant_profiles", force: :cascade do |t|
+    t.text "bio"
+    t.string "contact_email"
     t.datetime "created_at", null: false
-    t.text "notes"
-    t.integer "priority"
-    t.string "status"
-    t.string "title"
+    t.string "linkedin_url"
+    t.string "phone_number"
+    t.string "portfolio_url"
+    t.string "preferred_name"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.index ["user_id"], name: "index_applications_on_user_id"
+    t.index ["user_id"], name: "index_applicant_profiles_on_user_id", unique: true
   end
 
   create_table "application_credentials", force: :cascade do |t|
@@ -34,6 +35,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_12_070435) do
     t.datetime "updated_at", null: false
     t.string "username"
     t.index ["application_id"], name: "index_application_credentials_on_application_id"
+  end
+
+  create_table "applications", force: :cascade do |t|
+    t.string "category"
+    t.datetime "created_at", null: false
+    t.text "notes"
+    t.integer "priority"
+    t.decimal "salary", precision: 12, scale: 2
+    t.string "status"
+    t.string "title"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id"], name: "index_applications_on_user_id"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -55,7 +69,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_12_070435) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  add_foreign_key "applicant_profiles", "users"
+  add_foreign_key "application_credentials", "applications"
   add_foreign_key "applications", "users"
-  add_foreign_key "application_credentials", "application"
   add_foreign_key "sessions", "users"
 end

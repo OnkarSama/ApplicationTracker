@@ -3,7 +3,8 @@ class Api::ApplicationsController < ApplicationController
   wrap_parameters include: Application.attribute_names
 
   def index
-    @applications = Current.user.applications || []
+    @q = Current.user.applications.ransack(params[:q])
+    @applications = @q.result
     render :index
   end
 

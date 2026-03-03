@@ -1,4 +1,4 @@
-class Api::ApplicationCredentialController < ApplicationController
+class Api::ApplicationCredentialsController < ApplicationController
   before_action :require_authentication
   before_action :set_application
   before_action :set_credential, only: [:show, :update, :destroy]
