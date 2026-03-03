@@ -20,7 +20,7 @@ import {
 import React from "react";
 import clsx from "clsx";
 import apiRouter from "@/api/router";
-import { useRouter } from "next/navigation";
+import {useRouter, useSearchParams} from "next/navigation";
 import { siteConfig } from "@/config/site";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -82,6 +82,10 @@ const isLinkItem = (
 
 export const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+
+    const searchParams = useSearchParams();
+    const [search, setSearch] = React.useState(searchParams.get("q") ?? "");
+
     const router = useRouter();
     const queryClient = useQueryClient();
 
@@ -103,6 +107,11 @@ export const Navbar = () => {
             router.push(item.href); // ✅ string guaranteed
             setIsMenuOpen(false);
         }
+    };
+
+    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearch(e.target.value);
+        router.push(`/dashboard?q=${encodeURIComponent(e.target.value)}`);
     };
 
 
@@ -157,7 +166,9 @@ export const Navbar = () => {
                             inputWrapper:
                                 "h-full font-normal text-default-500 bg-default-400/20 dark:bg-default-500/20",
                         }}
+                        value={search}
                         placeholder="Search..."
+                        onChange={handleSearch}
                         size="sm"
                         startContent={<SearchIcon size={18} />}
                         type="search"

@@ -13,8 +13,9 @@ export type ApplicationPayload = {
 
 const endpoints = {
 
-    getApplications: async () => {
-        return await api('/applications')
+    getApplications: async (q?: string) => {
+        if (!q) return await api("/applications");
+        return await api(`/applications?q[title_or_notes_or_status_or_category_cont]=${q}`);
     },
 
     getApplicationById: async (id: number) => {
