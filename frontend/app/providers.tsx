@@ -40,8 +40,6 @@ export function Providers({children, themeProps}: ProvidersProps) {
   const router = useRouter();
 
   return (
-      // 3. Wrap the entire application (or the part using React Query)
-      // with QueryClientProvider
       <QueryClientProvider client={queryClient}>
         <HeroUIProvider navigate={router.push}>
           <ToastProvider placement="bottom-center"/>
