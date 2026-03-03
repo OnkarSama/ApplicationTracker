@@ -28,24 +28,22 @@ export default function ApplicationTableHeader({ onNewApplication, stats }: Prop
 
     const hasFilters = q !== "" || statusFilter !== "All" || priorityFilter !== "All";
 
-    const pill = (
-        label: string,
-        active: boolean,
-        onClick: () => void,
-        keyPrefix: string
-    ) => (
-        <button
-            key={`${keyPrefix}${label}`}
-            onClick={onClick}
-            className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors cursor-pointer ${
-                active
-                    ? "bg-primary text-white border-primary"
-                    : "bg-transparent text-slate-500 border-slate-200 hover:border-slate-400"
-            }`}
-        >
-            {label}
-        </button>
-    );
+    function pill(label: string, active: boolean, onClick: () => void, prefix = "") {
+        return (
+            <button
+                key={prefix + label}
+                onClick={onClick}
+                className={[
+                    "px-3.5 py-1 rounded-full text-xs font-semibold border whitespace-nowrap transition-all duration-150 cursor-pointer",
+                    active
+                        ? "border-indigo-500 bg-violet-100 text-indigo-500"
+                        : "border-slate-200 bg-white text-slate-500",
+                ].join(" ")}
+            >
+                {label}
+            </button>
+        );
+    }
 
     return (
         <div>

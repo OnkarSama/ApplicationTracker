@@ -11,8 +11,9 @@ const config = {
     theme: {
         extend: {
             fontFamily: {
-                sans: ["Sora", "sans-serif"],
+                sans: ["DM Sans", "sans-serif"],
                 mono: ["var(--font-mono)"],
+                sora: ["Sora", "sans-serif"],
             },
 
             backgroundImage: {
