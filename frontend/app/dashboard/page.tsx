@@ -131,26 +131,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Search + Add */}
-          <div className="mb-3" style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <div style={{ width: 420, flexShrink: 0 }}>
-              <Input
-                placeholder="Search company, role, location, salary, notes…"
-                value={q}
-                onValueChange={setQ}
-                className="dashboard-search"
-                startContent={<span style={{ color: "#94a3b8", fontSize: 14, paddingRight: 4 }}>🔍</span>}
-              />
-            </div>
-            <Button
-              className="dashboard-add-btn"
-              color="primary"
-              onPress={() => { setEditing(null); setOpen(true); }}
-            >
-              + Add Application
-            </Button>
-          </div>
-
           {/* Filter pills */}
           <div className="mb-5" style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
             <span className="filter-group-label">Status</span>

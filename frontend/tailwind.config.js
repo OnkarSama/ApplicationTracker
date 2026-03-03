@@ -11,15 +11,16 @@ const config = {
     theme: {
         extend: {
             fontFamily: {
-                sans: ["var(--font-sans)"],
+                sans: ["DM Sans", "var(--font-sans)", "sans-serif"],
                 mono: ["var(--font-mono)"],
+                display: ["Sora", "sans-serif"],
             },
 
             backgroundImage: {
                 'button-gradient':
-                    'linear-gradient(135deg, #9333ea, #6366f1)',
+                    'linear-gradient(135deg, #6366f1, #8b5cf6)',
                 'card-glow':
-                    'radial-gradient(circle at top, rgba(147,51,234,.25), transparent)',
+                    'radial-gradient(circle at top, rgba(99,102,241,.25), transparent)',
             },
         },
     },
@@ -41,8 +42,8 @@ const config = {
                         card: "#0f172a",
                         card_hover: "#111827",
 
-                        primary: "#22d3ee",
-                        primary_hover: "#06b6d4",
+                        primary: "#6366f1",
+                        primary_hover: "#4f46e5",
 
                         secondary: "#8b5cf6",
                         accent: "#f472b6",
@@ -50,14 +51,14 @@ const config = {
                         border: "#1e293b",
 
                         heading: "#ffffff",
-                        subheading: "#cbd5f5",
+                        subheading: "#cbd5e1",
                         text: "#e2e8f0",
                         muted: "#64748b",
 
                         table_bg: "#0f172a",
                         table_border: "#1e293b",
 
-                        success: "#22c55e",
+                        success: "#10b981",
                         warning: "#f59e0b",
                         danger: "#ef4444",
                         info: "#38bdf8",
@@ -66,21 +67,21 @@ const config = {
 
                 light: {
                     colors: {
-                        background: "#f8fafc",
-                        foreground: "#020617",
+                        background: "#f4f6f9",
+                        foreground: "#0f172a",
 
                         card: "#ffffff",
                         card_hover: "#f1f5f9",
 
-                        primary: "#0891b2",
-                        primary_hover: "#0e7490",
+                        primary: "#6366f1",
+                        primary_hover: "#4f46e5",
 
-                        secondary: "#7c3aed",
-                        accent: "#ec4899",
+                        secondary: "#6366f1",
+                        accent: "#8b5cf6",
 
                         border: "#e2e8f0",
 
-                        heading: "#020617",
+                        heading: "#0f172a",
                         subheading: "#334155",
                         text: "#1e293b",
                         muted: "#94a3b8",
@@ -88,9 +89,9 @@ const config = {
                         table_bg: "#ffffff",
                         table_border: "#e2e8f0",
 
-                        success: "#15803d",
-                        warning: "#b45309",
-                        danger: "#b91c1c",
+                        success: "#10b981",
+                        warning: "#f59e0b",
+                        danger: "#ef4444",
                         info: "#0284c7",
                     }
                 }
