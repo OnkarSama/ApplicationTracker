@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import Link from "next/link";
 
 export default function HomepageAnimation() {
     const mountRef = useRef<HTMLDivElement>(null);
@@ -45,16 +46,24 @@ export default function HomepageAnimation() {
         // ── Floating glass cards ──────────────────────────────────────────────────
         interface FloatMesh extends THREE.Mesh {
             userData: {
-                vx: number; vy: number; vz: number;
-                rx: number; ry: number; rz: number;
+                vx: number;
+                vy: number;
+                vz: number;
+                rx: number;
+                ry: number;
+                rz: number;
             };
         }
 
         const cards: FloatMesh[] = [];
 
         const makeCard = (
-            w: number, h: number, colorHex: number,
-            x: number, y: number, z: number
+            w: number,
+            h: number,
+            colorHex: number,
+            x: number,
+            y: number,
+            z: number
         ) => {
             const geo = new THREE.BoxGeometry(w, h, 0.06);
             const mat = new THREE.MeshStandardMaterial({
@@ -64,6 +73,7 @@ export default function HomepageAnimation() {
                 transparent: true,
                 opacity: 0.22,
             });
+
             const card = new THREE.Mesh(geo, mat) as FloatMesh;
             card.position.set(x, y, z);
             card.rotation.set(
@@ -93,29 +103,37 @@ export default function HomepageAnimation() {
         };
 
         [
-            { w: 5.5, h: 3.2, c: 0x00d4ff, x: -14, y: 5,   z: -4 },
-            { w: 4.8, h: 2.8, c: 0x7c3aed, x:  13, y: -6,  z: -2 },
-            { w: 6.0, h: 3.6, c: 0x10b981, x: -10, y: -8,  z:  2 },
-            { w: 5.0, h: 3.0, c: 0x00d4ff, x:  16, y: 7,   z: -6 },
-            { w: 4.4, h: 2.6, c: 0xf59e0b, x:   4, y: -12, z:  4 },
-            { w: 5.2, h: 3.1, c: 0x7c3aed, x: -18, y: -2,  z:  0 },
-            { w: 4.6, h: 2.9, c: 0x10b981, x:  10, y: 12,  z: -8 },
-            { w: 5.8, h: 3.4, c: 0xf59e0b, x:  -5, y: 11,  z:  2 },
-            { w: 4.2, h: 2.5, c: 0x00d4ff, x:  20, y: -1,  z: -4 },
-            { w: 5.4, h: 3.3, c: 0x7c3aed, x:  -7, y: -14, z: -2 },
+            { w: 5.5, h: 3.2, c: 0x00d4ff, x: -14, y: 5, z: -4 },
+            { w: 4.8, h: 2.8, c: 0x7c3aed, x: 13, y: -6, z: -2 },
+            { w: 6.0, h: 3.6, c: 0x10b981, x: -10, y: -8, z: 2 },
+            { w: 5.0, h: 3.0, c: 0x00d4ff, x: 16, y: 7, z: -6 },
+            { w: 4.4, h: 2.6, c: 0xf59e0b, x: 4, y: -12, z: 4 },
+            { w: 5.2, h: 3.1, c: 0x7c3aed, x: -18, y: -2, z: 0 },
+            { w: 4.6, h: 2.9, c: 0x10b981, x: 10, y: 12, z: -8 },
+            { w: 5.8, h: 3.4, c: 0xf59e0b, x: -5, y: 11, z: 2 },
+            { w: 4.2, h: 2.5, c: 0x00d4ff, x: 20, y: -1, z: -4 },
+            { w: 5.4, h: 3.3, c: 0x7c3aed, x: -7, y: -14, z: -2 },
         ].forEach((d) => makeCard(d.w, d.h, d.c, d.x, d.y, d.z));
 
         // ── Glowing rings ─────────────────────────────────────────────────────────
         const torus = new THREE.Mesh(
             new THREE.TorusGeometry(12, 0.04, 8, 120),
-            new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.18 })
+            new THREE.MeshBasicMaterial({
+                color: 0x00d4ff,
+                transparent: true,
+                opacity: 0.18,
+            })
         );
         torus.rotation.x = Math.PI / 2.8;
         scene.add(torus);
 
         const torus2 = new THREE.Mesh(
             new THREE.TorusGeometry(18, 0.03, 8, 140),
-            new THREE.MeshBasicMaterial({ color: 0x7c3aed, transparent: true, opacity: 0.12 })
+            new THREE.MeshBasicMaterial({
+                color: 0x7c3aed,
+                transparent: true,
+                opacity: 0.12,
+            })
         );
         torus2.rotation.x = Math.PI / 3.5;
         torus2.rotation.z = 0.4;
@@ -131,8 +149,11 @@ export default function HomepageAnimation() {
             const orb = new THREE.Mesh(
                 new THREE.SphereGeometry(r, 14, 14),
                 new THREE.MeshStandardMaterial({
-                    color: col, emissive: col, emissiveIntensity: 0.9,
-                    roughness: 0.0, metalness: 0.3,
+                    color: col,
+                    emissive: col,
+                    emissiveIntensity: 0.9,
+                    roughness: 0.0,
+                    metalness: 0.3,
                 })
             );
             orb.position.set(
@@ -163,7 +184,12 @@ export default function HomepageAnimation() {
         starGeo.setAttribute("position", new THREE.BufferAttribute(starPos, 3));
         const stars = new THREE.Points(
             starGeo,
-            new THREE.PointsMaterial({ color: 0xffffff, size: 0.09, transparent: true, opacity: 0.5 })
+            new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.09,
+                transparent: true,
+                opacity: 0.5,
+            })
         );
         scene.add(stars);
 
@@ -198,8 +224,12 @@ export default function HomepageAnimation() {
 
             cards.forEach((c) => {
                 const d = c.userData;
-                c.position.x += d.vx; c.position.y += d.vy; c.position.z += d.vz;
-                c.rotation.x += d.rx; c.rotation.y += d.ry; c.rotation.z += d.rz;
+                c.position.x += d.vx;
+                c.position.y += d.vy;
+                c.position.z += d.vz;
+                c.rotation.x += d.rx;
+                c.rotation.y += d.ry;
+                c.rotation.z += d.rz;
                 if (Math.abs(c.position.x) > 26) d.vx *= -1;
                 if (Math.abs(c.position.y) > 18) d.vy *= -1;
                 if (Math.abs(c.position.z) > 12) d.vz *= -1;
@@ -207,7 +237,8 @@ export default function HomepageAnimation() {
 
             orbs.forEach((o) => {
                 const d = (o as any).userData;
-                o.position.x += d.vx; o.position.y += d.vy;
+                o.position.x += d.vx;
+                o.position.y += d.vy;
                 if (Math.abs(o.position.x) > 28) d.vx *= -1;
                 if (Math.abs(o.position.y) > 20) d.vy *= -1;
                 (o.material as THREE.MeshStandardMaterial).emissiveIntensity =
@@ -267,39 +298,90 @@ export default function HomepageAnimation() {
           ApplyOS
         </span>
 
-                {/* Log in */}
-                <button
-                    style={{
-                        fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif",
-                        fontWeight: 500,
-                        fontSize: "0.84rem",
-                        letterSpacing: "0.06em",
-                        padding: "0.52rem 1.5rem",
-                        borderRadius: "6px",
-                        background: "rgba(0,212,255,0.07)",
-                        color: "rgba(0,212,255,0.88)",
-                        border: "1px solid rgba(0,212,255,0.22)",
-                        cursor: "pointer",
-                        backdropFilter: "blur(12px)",
-                        transition: "background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s",
-                    }}
-                    onMouseEnter={(e) => {
-                        const el = e.currentTarget as HTMLButtonElement;
-                        el.style.background = "rgba(0,212,255,0.14)";
-                        el.style.borderColor = "rgba(0,212,255,0.55)";
-                        el.style.color = "#00d4ff";
-                        el.style.boxShadow = "0 0 22px rgba(0,212,255,0.22)";
-                    }}
-                    onMouseLeave={(e) => {
-                        const el = e.currentTarget as HTMLButtonElement;
-                        el.style.background = "rgba(0,212,255,0.07)";
-                        el.style.borderColor = "rgba(0,212,255,0.22)";
-                        el.style.color = "rgba(0,212,255,0.88)";
-                        el.style.boxShadow = "none";
-                    }}
-                >
-                    Log in
-                </button>
+                {/* Actions */}
+                <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                    {/* Sign up */}
+                    <Link
+                        href="/signup"
+                        style={{
+                            fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif",
+                            fontWeight: 600,
+                            fontSize: "0.84rem",
+                            letterSpacing: "0.06em",
+                            padding: "0.52rem 1.2rem",
+                            borderRadius: "6px",
+                            background: "rgba(124,58,237,0.10)",
+                            color: "rgba(210,190,255,0.95)",
+                            border: "1px solid rgba(124,58,237,0.28)",
+                            cursor: "pointer",
+                            backdropFilter: "blur(12px)",
+                            transition:
+                                "background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s",
+                            textDecoration: "none",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            height: "34px",
+                        }}
+                        onMouseEnter={(e) => {
+                            const el = e.currentTarget as HTMLAnchorElement;
+                            el.style.background = "rgba(124,58,237,0.18)";
+                            el.style.borderColor = "rgba(124,58,237,0.55)";
+                            el.style.color = "#c4b5fd";
+                            el.style.boxShadow = "0 0 22px rgba(124,58,237,0.22)";
+                        }}
+                        onMouseLeave={(e) => {
+                            const el = e.currentTarget as HTMLAnchorElement;
+                            el.style.background = "rgba(124,58,237,0.10)";
+                            el.style.borderColor = "rgba(124,58,237,0.28)";
+                            el.style.color = "rgba(210,190,255,0.95)";
+                            el.style.boxShadow = "none";
+                        }}
+                    >
+                        Sign up
+                    </Link>
+
+                    {/* Log in */}
+                    <Link
+                        href="/login"
+                        style={{
+                            fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif",
+                            fontWeight: 500,
+                            fontSize: "0.84rem",
+                            letterSpacing: "0.06em",
+                            padding: "0.52rem 1.2rem",
+                            borderRadius: "6px",
+                            background: "rgba(0,212,255,0.07)",
+                            color: "rgba(0,212,255,0.88)",
+                            border: "1px solid rgba(0,212,255,0.22)",
+                            cursor: "pointer",
+                            backdropFilter: "blur(12px)",
+                            transition:
+                                "background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s",
+                            textDecoration: "none",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            height: "34px",
+                        }}
+                        onMouseEnter={(e) => {
+                            const el = e.currentTarget as HTMLAnchorElement;
+                            el.style.background = "rgba(0,212,255,0.14)";
+                            el.style.borderColor = "rgba(0,212,255,0.55)";
+                            el.style.color = "#00d4ff";
+                            el.style.boxShadow = "0 0 22px rgba(0,212,255,0.22)";
+                        }}
+                        onMouseLeave={(e) => {
+                            const el = e.currentTarget as HTMLAnchorElement;
+                            el.style.background = "rgba(0,212,255,0.07)";
+                            el.style.borderColor = "rgba(0,212,255,0.22)";
+                            el.style.color = "rgba(0,212,255,0.88)";
+                            el.style.boxShadow = "none";
+                        }}
+                    >
+                        Log in
+                    </Link>
+                </div>
             </nav>
 
             {/* ── Hero copy ──────────────────────────────────────────────────────── */}
@@ -328,9 +410,13 @@ export default function HomepageAnimation() {
                 >
           <span
               style={{
-                  width: 6, height: 6, borderRadius: "50%",
-                  background: "#10b981", boxShadow: "0 0 6px #10b981",
-                  display: "inline-block", flexShrink: 0,
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: "#10b981",
+                  boxShadow: "0 0 6px #10b981",
+                  display: "inline-block",
+                  flexShrink: 0,
               }}
           />
                     Job Application Tracker
@@ -399,17 +485,24 @@ export default function HomepageAnimation() {
                         <div
                             key={s.label}
                             style={{
-                                display: "flex", alignItems: "center", gap: "0.38rem",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.38rem",
                                 fontFamily: "'DM Mono', monospace",
-                                fontSize: "0.64rem", color: "rgba(160,200,240,0.7)",
+                                fontSize: "0.64rem",
+                                color: "rgba(160,200,240,0.7)",
                                 letterSpacing: "0.1em",
                             }}
                         >
               <span
                   style={{
-                      width: 7, height: 7, borderRadius: "50%",
-                      background: s.color, boxShadow: `0 0 8px ${s.color}88`,
-                      display: "inline-block", flexShrink: 0,
+                      width: 7,
+                      height: 7,
+                      borderRadius: "50%",
+                      background: s.color,
+                      boxShadow: `0 0 8px ${s.color}88`,
+                      display: "inline-block",
+                      flexShrink: 0,
                   }}
               />
                             {s.label.toUpperCase()}
