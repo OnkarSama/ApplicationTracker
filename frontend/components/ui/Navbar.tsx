@@ -123,8 +123,8 @@ export const Navbar = () => {
 
                 <NavbarBrand className="gap-3 max-w-fit">
                     <Link href="/dashboard">
-                        <p className="text-black font-bold text-inherit">
-                            Application Tracker
+                        <p className="text-primary">
+                            {siteConfig.name}
                         </p>
                     </Link>
                 </NavbarBrand>

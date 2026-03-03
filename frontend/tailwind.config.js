@@ -11,11 +11,8 @@ const config = {
     theme: {
         extend: {
             fontFamily: {
-                // font-sans  → DM Sans (body text throughout the page)
-                sans: ["DM Sans", "var(--font-sans)", "sans-serif"],
+                sans: ["Sora", "sans-serif"],
                 mono: ["var(--font-mono)"],
-                // font-display → Sora (h1, stat values)
-                display: ["Sora", "sans-serif"],
             },
 
             backgroundImage: {
@@ -62,9 +59,12 @@ const config = {
                         text: "#e2e8f0",          // text-heroui-text     → Input text
                         muted: "#64748b",          // text-heroui-muted    → labels, placeholders
 
-                        // Table
-                        table_bg: "#0f172a",
-                        table_border: "#1e293b",  // border-heroui-table_border → CardHeader divider
+                        // Table (INVERTED — light surface inside dark app)
+                        table_bg: "#ffffff",
+                        table_text: "#0f172a",        // strong dark text for contrast
+                        table_subheading: "#334155",  // softer slate
+                        table_border: "#e2e8f0",
+                        table_hover: "#f1f5f9",
 
                         // Status colours
                         success: "#10b981",        // text-heroui-success  → Offers stat
@@ -104,9 +104,12 @@ const config = {
                         text: "#1e293b",            // text-heroui-text     → Input text
                         muted: "#94a3b8",           // text-heroui-muted    → labels, sub-text, placeholders
 
-                        // Table
-                        table_bg: "#ffffff",
-                        table_border: "#e2e8f0",   // border-heroui-table_border → CardHeader bottom border
+                        // Table (INVERTED — dark surface inside light app)
+                        table_bg: "#020617",          // same as dark background
+                        table_text: "#f8fafc",        // strong light text
+                        table_subheading: "#cbd5e1",  // soft slate-300
+                        table_border: "#1e293b",
+                        table_hover: "#0f172a",
 
                         // Status colours
                         success: "#10b981",         // text-heroui-success  → Offers stat

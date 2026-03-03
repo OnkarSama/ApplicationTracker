@@ -1,14 +1,14 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { AuthGate } from "@/components/auth/AuthGate";
-import { Navbar } from "@/components/ui/Navbar";
 import { Card, CardBody, CardHeader } from "@heroui/react";
 import { Button, Input } from "@heroui/react";
 import type { JobApplication, ApplicationStatus, ApplicationPriority } from "@/components/dashboard/types";
-import { ApplicationTable } from "@/components/dashboard/ApplicationTable";
+import ApplicationTable from "@/components/dashboard/ApplicationTable";
+import ApplicationTableHeader from "@/components/dashboard/ApplicationTableHeader";
 import { AddApplicationModal } from "@/components/dashboard/AddApplicationModal";
 import { loadApps, saveApps } from "@/lib/storage";
-import {siteConfig, SiteConfig} from "@/config/site";
+import {siteConfig} from "@/config/site";
 import { seedApps } from "@/lib/mockData";
 
 const STATUSES: ApplicationStatus[] = ["Applied", "Interview", "Offer", "Rejected", "Wishlist"];
@@ -79,70 +79,19 @@ export default function DashboardPage() {
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Sora:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');`}</style>
 
         <div className="min-h-svh bg-background font-['DM_Sans',sans-serif]">
-          <main className="mx-auto max-w-6xl p-6">
+          <main className="max-w-7xl mx-auto p-6">
 
-            {/* Heading */}
-            <div className="mb-6">
-              <h1 className="font-['Sora',sans-serif] text-heading tracking-tight text-[30px] font-extrabold m-0">
-                {siteConfig.name}
-              </h1>
-              <p className="text-subheading mt-1 text-[15px]">
-                Track your job applications in one place.
-              </p>
-            </div>
-
-            {/* Stat cards */}
-            <div className="mb-6 grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(130px,1fr))" }}>
-              {/* Total */}
-              <div className="bg-foreground border border-slate-200 rounded-xl px-5 py-4 flex flex-col gap-1 shadow-sm">
-                <span className="text-[28px] font-extrabold font-['Sora',sans-serif] leading-none text-primary">{stats.total}</span>
-                <span className="text-[11px] text-muted font-semibold tracking-widest uppercase">Total</span>
-              </div>
-              {/* Applied */}
-              <div className="bg-foreground border border-slate-200 rounded-xl px-5 py-4 flex flex-col gap-1 shadow-sm">
-                <span className="text-[28px] font-extrabold font-['Sora',sans-serif] leading-none text-secondary">{stats.applied}</span>
-                <span className="text-[11px] text-muted font-semibold tracking-widest uppercase">Applied</span>
-              </div>
-              {/* Interviews */}
-              <div className="bg-foreground border border-slate-200 rounded-xl px-5 py-4 flex flex-col gap-1 shadow-sm">
-                <span className="text-[28px] font-extrabold font-['Sora',sans-serif] leading-none text-warning">{stats.interviews}</span>
-                <span className="text-[11px] text-muted font-semibold tracking-widest uppercase">Interviews</span>
-              </div>
-              {/* Offers */}
-              <div className="bg-foreground border border-slate-200 rounded-xl px-5 py-4 flex flex-col gap-1 shadow-sm">
-                <span className="text-[28px] font-extrabold font-['Sora',sans-serif] leading-none text-success">{stats.offers}</span>
-                <span className="text-[11px] text-muted font-semibold tracking-widest uppercase">Offers</span>
-              </div>
-            </div>
-
-            {/* Filter pills */}
-            <div className="mb-5 flex flex-wrap gap-2 items-center">
-              <span className="text-[11px] font-bold text-slate-400 tracking-widest uppercase whitespace-nowrap">Status</span>
-              {pill("All", statusFilter === "All", () => setStatusFilter("All"), "status-")}
-              {STATUSES.map((s) => pill(s, statusFilter === s, () => setStatusFilter(s), "status-"))}
-
-              <div className="w-px h-5 bg-slate-200 shrink-0" />
-
-              <span className="text-[11px] font-bold text-slate-400 tracking-widest uppercase whitespace-nowrap">Priority</span>
-              {pill("All", priorityFilter === "All", () => setPriorityFilter("All"), "priority-")}
-              {PRIORITIES.map((p) => pill(p, priorityFilter === p, () => setPriorityFilter(p), "priority-"))}
-
-              {hasFilters && (
-                  <button
-                      onClick={() => { setQ(""); setStatusFilter("All"); setPriorityFilter("All"); }}
-                      className="ml-auto text-xs text-slate-400 bg-transparent border-none cursor-pointer font-semibold"
-                  >
-                    ✕ Clear filters
-                  </button>
-              )}
-            </div>
+              <ApplicationTableHeader
+                  onNewApplication={() => console.log("New application clicked")}
+                  stats={{ total: 24, applied: 18, interviews: 4, offers: 2 }}
+              />
 
             {/* Table card */}
-            <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm">
-              <CardHeader className="border-b border-slate-100 px-[18px] py-3.5">
-                <p className="text-slate-500 text-[13px] tracking-[0.04em] uppercase font-semibold m-0">
+            <Card className="bg-foreground border border-slate-200 rounded-2xl shadow-sm">
+              <CardHeader className="border-table_border px-4.5 py-3.5">
+                <p className="text-table_subheading text-[13px] tracking-[0.04em] uppercase font-semibold m-0">
                   Applications
-                  <span className="ml-2 text-slate-400 font-normal">({filtered.length})</span>
+                  <span className="ml-2 text-table_subheading font-normal">({filtered.length})</span>
                   {hasFilters && <span className="ml-2 text-indigo-500 text-[11px] font-semibold">● filtered</span>}
                 </p>
               </CardHeader>
@@ -152,6 +101,7 @@ export default function DashboardPage() {
                     onDelete={(id) => setApps((prev) => prev.filter((a) => a.id !== id))}
                     onEdit={(app) => { setEditing(app); setOpen(true); }}
                 />
+                {/*<ApplicationTable applications={data} />*/}
               </CardBody>
             </Card>
 
