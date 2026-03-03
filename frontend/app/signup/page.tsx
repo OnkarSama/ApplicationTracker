@@ -223,7 +223,7 @@ export default function SignupPage() {
                     padding: "1.4rem 2.5rem", boxSizing: "border-box",
                 }}>
           <span style={{fontFamily:"'DM Mono',monospace",fontSize:"0.78rem",letterSpacing:"0.22em",color:"rgba(0,212,255,0.65)",textTransform:"uppercase"}}>
-            ApplyOS
+            Application Tracker
           </span>
                     <a
                         href="/login#"
@@ -259,9 +259,9 @@ export default function SignupPage() {
                                 Create Account
                             </div>
                             <h2 style={{fontFamily:"'Syne','Helvetica Neue',sans-serif",fontWeight:800,fontSize:"1.8rem",letterSpacing:"-0.025em",color:"#f0f8ff",margin:0,lineHeight:1.1}}>
-                                Join{" "}
+                                Create{" "}
                                 <span style={{background:"linear-gradient(90deg,#00d4ff 0%,#7c3aed 55%,#10b981 100%)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text"}}>
-                  ApplyOS
+                  An Account
                 </span>
                             </h2>
                             <p style={{fontFamily:"'DM Sans',sans-serif",fontSize:"0.83rem",color:"rgba(160,200,240,0.42)",marginTop:"0.35rem",marginBottom:0}}>
@@ -272,10 +272,10 @@ export default function SignupPage() {
                         {/* Fields */}
                         <div style={{display:"flex",flexDirection:"column",gap:"0.9rem"}}>
                             <div style={{display:"flex",gap:"1rem"}}>
-                                <Field label="First Name" placeholder="Jane"  value={form.firstName} onChange={set("firstName")} half />
-                                <Field label="Last Name"  placeholder="Smith" value={form.lastName}  onChange={set("lastName")}  half />
+                                <Field label="First Name" placeholder="i.e. Jane"  value={form.firstName} onChange={set("firstName")} half />
+                                <Field label="Last Name"  placeholder="i.e Smith" value={form.lastName}  onChange={set("lastName")}  half />
                             </div>
-                            <Field label="Email Address" type="email" placeholder="jane@email.com" value={form.email} onChange={set("email")} />
+                            <Field label="Email Address" type="email" placeholder="i.e jane@email.com" value={form.email} onChange={set("email")} />
                             <div style={{display:"flex",gap:"1rem"}}>
                                 <Field label="Password"         type="password" placeholder="••••••••" value={form.password}        onChange={set("password")}        half />
                                 <Field label="Confirm Password" type="password" placeholder="••••••••" value={form.confirmPassword} onChange={set("confirmPassword")} half />
