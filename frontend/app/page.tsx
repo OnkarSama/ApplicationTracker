@@ -18,6 +18,15 @@ export default function HomepageAnimation() {
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setSize(width, height);
         renderer.setClearColor(0x000000, 0);
+
+        // ✅ Make canvas a true background layer
+        renderer.domElement.style.position = "absolute";
+        renderer.domElement.style.inset = "0";
+        renderer.domElement.style.width = "100%";
+        renderer.domElement.style.height = "100%";
+        renderer.domElement.style.zIndex = "0";
+        renderer.domElement.style.pointerEvents = "none";
+
         mount.appendChild(renderer.domElement);
 
         // ── Scene / Camera ────────────────────────────────────────────────────────
@@ -285,22 +294,19 @@ export default function HomepageAnimation() {
                 className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between"
                 style={{ padding: "1.5rem 2.5rem" }}
             >
-                {/* Wordmark */}
-                <span
-                    style={{
-                        fontFamily: "'DM Mono', 'Courier New', monospace",
-                        fontSize: "0.78rem",
-                        letterSpacing: "0.22em",
-                        color: "rgba(0,212,255,0.65)",
-                        textTransform: "uppercase",
-                    }}
-                >
+        <span
+            style={{
+                fontFamily: "'DM Mono', 'Courier New', monospace",
+                fontSize: "0.78rem",
+                letterSpacing: "0.22em",
+                color: "rgba(0,212,255,0.65)",
+                textTransform: "uppercase",
+            }}
+        >
           ApplyOS
         </span>
 
-                {/* Actions */}
                 <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-                    {/* Sign up */}
                     <Link
                         href="/signup"
                         style={{
@@ -313,35 +319,16 @@ export default function HomepageAnimation() {
                             background: "rgba(124,58,237,0.10)",
                             color: "rgba(210,190,255,0.95)",
                             border: "1px solid rgba(124,58,237,0.28)",
-                            cursor: "pointer",
-                            backdropFilter: "blur(12px)",
-                            transition:
-                                "background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s",
                             textDecoration: "none",
                             display: "inline-flex",
                             alignItems: "center",
                             justifyContent: "center",
                             height: "34px",
                         }}
-                        onMouseEnter={(e) => {
-                            const el = e.currentTarget as HTMLAnchorElement;
-                            el.style.background = "rgba(124,58,237,0.18)";
-                            el.style.borderColor = "rgba(124,58,237,0.55)";
-                            el.style.color = "#c4b5fd";
-                            el.style.boxShadow = "0 0 22px rgba(124,58,237,0.22)";
-                        }}
-                        onMouseLeave={(e) => {
-                            const el = e.currentTarget as HTMLAnchorElement;
-                            el.style.background = "rgba(124,58,237,0.10)";
-                            el.style.borderColor = "rgba(124,58,237,0.28)";
-                            el.style.color = "rgba(210,190,255,0.95)";
-                            el.style.boxShadow = "none";
-                        }}
                     >
                         Sign up
                     </Link>
 
-                    {/* Log in */}
                     <Link
                         href="/login"
                         style={{
@@ -354,29 +341,11 @@ export default function HomepageAnimation() {
                             background: "rgba(0,212,255,0.07)",
                             color: "rgba(0,212,255,0.88)",
                             border: "1px solid rgba(0,212,255,0.22)",
-                            cursor: "pointer",
-                            backdropFilter: "blur(12px)",
-                            transition:
-                                "background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s",
                             textDecoration: "none",
                             display: "inline-flex",
                             alignItems: "center",
                             justifyContent: "center",
                             height: "34px",
-                        }}
-                        onMouseEnter={(e) => {
-                            const el = e.currentTarget as HTMLAnchorElement;
-                            el.style.background = "rgba(0,212,255,0.14)";
-                            el.style.borderColor = "rgba(0,212,255,0.55)";
-                            el.style.color = "#00d4ff";
-                            el.style.boxShadow = "0 0 22px rgba(0,212,255,0.22)";
-                        }}
-                        onMouseLeave={(e) => {
-                            const el = e.currentTarget as HTMLAnchorElement;
-                            el.style.background = "rgba(0,212,255,0.07)";
-                            el.style.borderColor = "rgba(0,212,255,0.22)";
-                            el.style.color = "rgba(0,212,255,0.88)";
-                            el.style.boxShadow = "none";
                         }}
                     >
                         Log in
@@ -386,10 +355,9 @@ export default function HomepageAnimation() {
 
             {/* ── Hero copy ──────────────────────────────────────────────────────── */}
             <div
-                className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10"
-                style={{ paddingTop: "4rem" }}
+                className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
+                style={{ paddingTop: "4rem", zIndex: 10 }}
             >
-                {/* Eyebrow pill */}
                 <div
                     style={{
                         display: "inline-flex",
@@ -422,7 +390,6 @@ export default function HomepageAnimation() {
                     Job Application Tracker
                 </div>
 
-                {/* Heading */}
                 <h1
                     style={{
                         fontFamily: "'Syne', 'Helvetica Neue', sans-serif",
@@ -440,7 +407,8 @@ export default function HomepageAnimation() {
                     <br />
                     <span
                         style={{
-                            background: "linear-gradient(90deg, #00d4ff 0%, #7c3aed 55%, #10b981 100%)",
+                            background:
+                                "linear-gradient(90deg, #00d4ff 0%, #7c3aed 55%, #10b981 100%)",
                             WebkitBackgroundClip: "text",
                             WebkitTextFillColor: "transparent",
                             backgroundClip: "text",
@@ -450,7 +418,6 @@ export default function HomepageAnimation() {
           </span>
                 </h1>
 
-                {/* Sub */}
                 <p
                     style={{
                         fontFamily: "'DM Sans', sans-serif",
@@ -464,7 +431,6 @@ export default function HomepageAnimation() {
                     Every application, follow-up, and offer — tracked in one elegant workspace built for focused job seekers.
                 </p>
 
-                {/* Status legend */}
                 <div
                     style={{
                         display: "flex",
@@ -513,8 +479,9 @@ export default function HomepageAnimation() {
 
             {/* Radial vignette */}
             <div
-                className="absolute inset-0 pointer-events-none z-[5]"
+                className="absolute inset-0 pointer-events-none"
                 style={{
+                    zIndex: 5,
                     background:
                         "radial-gradient(ellipse 70% 60% at 50% 50%, transparent 28%, rgba(0,2,10,0.72) 100%)",
                 }}
@@ -522,8 +489,9 @@ export default function HomepageAnimation() {
 
             {/* Bottom fade */}
             <div
-                className="absolute bottom-0 left-0 right-0 pointer-events-none z-[6]"
+                className="absolute bottom-0 left-0 right-0 pointer-events-none"
                 style={{
+                    zIndex: 6,
                     height: "140px",
                     background: "linear-gradient(to top, rgba(0,2,10,0.88) 0%, transparent 100%)",
                 }}
