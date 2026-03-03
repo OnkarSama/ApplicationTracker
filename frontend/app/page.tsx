@@ -364,7 +364,7 @@ export default function HomepageAnimation() {
                         alignItems: "center",
                         gap: "0.5rem",
                         fontFamily: "'DM Mono', monospace",
-                        fontSize: "0.67rem",
+                        fontSize: "0.99rem",
                         letterSpacing: "0.22em",
                         color: "rgba(0,212,255,0.6)",
                         textTransform: "uppercase",
@@ -387,14 +387,14 @@ export default function HomepageAnimation() {
                   flexShrink: 0,
               }}
           />
-                    Job Application Tracker
+                     Application Tracker
                 </div>
 
                 <h1
                     style={{
                         fontFamily: "'Syne', 'Helvetica Neue', sans-serif",
                         fontWeight: 800,
-                        fontSize: "clamp(2.8rem, 8vw, 5.8rem)",
+                        fontSize: "clamp(.8rem, 8vw, 5.8rem)",
                         lineHeight: 1.02,
                         textAlign: "center",
                         letterSpacing: "-0.03em",
@@ -403,7 +403,7 @@ export default function HomepageAnimation() {
                         marginBottom: "1.4rem",
                     }}
                 >
-                    Land your next
+                    Land Your Next
                     <br />
                     <span
                         style={{
@@ -414,7 +414,7 @@ export default function HomepageAnimation() {
                             backgroundClip: "text",
                         }}
                     >
-            dream role.
+            Dream Role
           </span>
                 </h1>
 
@@ -428,7 +428,7 @@ export default function HomepageAnimation() {
                         lineHeight: 1.78,
                     }}
                 >
-                    Every application, follow-up, and offer — tracked in one elegant workspace built for focused job seekers.
+                    Every application, follow-up, and offer — tracked and organized
                 </p>
 
                 <div
@@ -438,7 +438,7 @@ export default function HomepageAnimation() {
                         marginTop: "3.8rem",
                         flexWrap: "wrap",
                         justifyContent: "center",
-                        opacity: 0.48,
+                        opacity: 0.99,
                     }}
                 >
                     {[
@@ -455,7 +455,7 @@ export default function HomepageAnimation() {
                                 alignItems: "center",
                                 gap: "0.38rem",
                                 fontFamily: "'DM Mono', monospace",
-                                fontSize: "0.64rem",
+                                fontSize: "0.99rem",
                                 color: "rgba(160,200,240,0.7)",
                                 letterSpacing: "0.1em",
                             }}
