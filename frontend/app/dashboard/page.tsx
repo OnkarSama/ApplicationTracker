@@ -94,24 +94,24 @@ export default function DashboardPage() {
             {/* Stat cards */}
             <div className="mb-6 grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(130px,1fr))" }}>
               {/* Total */}
-              <div className="bg-white border border-slate-200 rounded-xl px-5 py-4 flex flex-col gap-1 shadow-sm">
-                <span className="text-[28px] font-extrabold font-['Sora',sans-serif] leading-none text-foreground">{stats.total}</span>
-                <span className="text-[11px] text-slate-400 font-semibold tracking-widest uppercase">Total</span>
+              <div className="bg-foreground border border-slate-200 rounded-xl px-5 py-4 flex flex-col gap-1 shadow-sm">
+                <span className="text-[28px] font-extrabold font-['Sora',sans-serif] leading-none text-primary">{stats.total}</span>
+                <span className="text-[11px] text-muted font-semibold tracking-widest uppercase">Total</span>
               </div>
               {/* Applied */}
-              <div className="bg-white border border-slate-200 rounded-xl px-5 py-4 flex flex-col gap-1 shadow-sm">
-                <span className="text-[28px] font-extrabold font-['Sora',sans-serif] leading-none text-primary">{stats.applied}</span>
-                <span className="text-[11px] text-slate-400 font-semibold tracking-widest uppercase">Applied</span>
+              <div className="bg-foreground border border-slate-200 rounded-xl px-5 py-4 flex flex-col gap-1 shadow-sm">
+                <span className="text-[28px] font-extrabold font-['Sora',sans-serif] leading-none text-secondary">{stats.applied}</span>
+                <span className="text-[11px] text-muted font-semibold tracking-widest uppercase">Applied</span>
               </div>
               {/* Interviews */}
-              <div className="bg-white border border-slate-200 rounded-xl px-5 py-4 flex flex-col gap-1 shadow-sm">
+              <div className="bg-foreground border border-slate-200 rounded-xl px-5 py-4 flex flex-col gap-1 shadow-sm">
                 <span className="text-[28px] font-extrabold font-['Sora',sans-serif] leading-none text-warning">{stats.interviews}</span>
-                <span className="text-[11px] text-slate-400 font-semibold tracking-widest uppercase">Interviews</span>
+                <span className="text-[11px] text-muted font-semibold tracking-widest uppercase">Interviews</span>
               </div>
               {/* Offers */}
-              <div className="bg-white border border-slate-200 rounded-xl px-5 py-4 flex flex-col gap-1 shadow-sm">
+              <div className="bg-foreground border border-slate-200 rounded-xl px-5 py-4 flex flex-col gap-1 shadow-sm">
                 <span className="text-[28px] font-extrabold font-['Sora',sans-serif] leading-none text-success">{stats.offers}</span>
-                <span className="text-[11px] text-slate-400 font-semibold tracking-widest uppercase">Offers</span>
+                <span className="text-[11px] text-muted font-semibold tracking-widest uppercase">Offers</span>
               </div>
             </div>
 
