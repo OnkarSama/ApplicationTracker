@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import { Button, Input, Form } from "@heroui/react";
-import { Icon } from "@iconify/react";
-import { useMutation } from "@tanstack/react-query";
+import {Button, Input, Form, addToast} from "@heroui/react";
+import {Icon} from "@iconify/react";
+import {useMutation} from "@tanstack/react-query";
 import apiRouter from "@/api/router";
-import { useRouter } from "next/navigation";
+import {useRouter} from "next/navigation";
 
 import type {LoginPayload} from "@/api/session";
 
@@ -19,11 +19,26 @@ export default function Component() {
         mutationFn: (payload: LoginPayload) =>
             apiRouter.sessions.createSession(payload),
         onSuccess: (data) => {
-            console.log("Login Success:", data);
+            addToast({
+                title: "Success",
+                description: "Login Successful!",
+                timeout: 1000,
+                shouldShowTimeoutProgress: true,
+                variant: "solid",
+                color: "success",
+            });
             router.push("/dashboard");
         },
         onError: (error) => {
-            console.error("Login Error:", error);
+            addToast({
+
+                title: "Error",
+                description: Object.values(error.response.data.errors).flat().join(","),
+                timeout: 3000,
+                shouldShowTimeoutProgress: true,
+                variant: "solid",
+                color: "danger",
+            });
         },
     });
 
@@ -91,17 +106,6 @@ export default function Component() {
                     </Button>
                 </Form>
 
-                {loginMutation.isError && (
-                    <p className="text-red-500 text-small">
-                        Login failed. Please try again.
-                    </p>
-                )}
-
-                {loginMutation.isSuccess && (
-                    <p className="text-green-500 text-small">
-                        Login successful!
-                    </p>
-                )}
             </div>
         </div>
     );
