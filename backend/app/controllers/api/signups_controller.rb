@@ -1,4 +1,4 @@
-class Api::SignUpsController < ApplicationController
+class Api::SignupsController < ApplicationController
     allow_unauthenticated_access only: %i[show create]
   rate_limit to: 10,
              within: 3.minutes,
