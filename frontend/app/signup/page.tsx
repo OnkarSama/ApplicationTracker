@@ -4,8 +4,9 @@ import SignupPage from "@/components/ui/Signup";
 import { useMutation } from "@tanstack/react-query";
 import apiRouter from "@/api/router";
 import { useRouter } from "next/navigation";
-
 import type {SignupPayload} from "@/api/signup";
+import React from "react";
+import {addToast} from "@heroui/react";
 
 export default function Signup() {
 
@@ -18,7 +19,16 @@ export default function Signup() {
             router.push("/dashboard");
         },
         onError: (error) => {
-            console.error("Login Error:", error);
+
+            addToast({
+
+                title: "Error",
+                description: Object.values(error.response.data.errors).flat().join(","),
+                timeout: 3000,
+                shouldShowTimeoutProgress: true,
+                variant: "solid",
+                color: "danger",
+            });
         },
     });
 
@@ -27,6 +37,8 @@ export default function Signup() {
             <SignupPage onSubmit={(formData) => signupMutation.mutate({user : formData})}
             />
         </div>
-    );i
+
+
+    );
 
 }

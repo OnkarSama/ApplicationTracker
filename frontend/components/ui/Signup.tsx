@@ -106,7 +106,7 @@ function Field({ label, type = "text", placeholder, value, onChange, half }: Fie
 }
 
 interface SignupPageProps {
-    onSubmit: (formData: SignupPayload) => void
+    onSubmit: (formData: SignupPayload["user"]) => void
 }
 /* ─────────────────────────────────────────────
    Main signup page
