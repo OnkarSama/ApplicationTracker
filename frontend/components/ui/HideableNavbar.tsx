@@ -7,7 +7,7 @@ export default function HideableNavbar() {
     const pathname = usePathname();
 
 
-    const hideNavbarRoutes = ["/", "/login", "/singup"]; // login page
+    const hideNavbarRoutes = ["/", "/login", "/signup"]; // login page
 
     if (hideNavbarRoutes.includes(pathname)) {
         return null;
