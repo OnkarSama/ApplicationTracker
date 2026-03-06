@@ -5,7 +5,7 @@ class Api::ApplicationCredentialsController < ApplicationController
 
   # GET /api/application/:application_id/application_credentials
   def index
-    render json: @application.application_credential
+    render :index
   end
 
   # GET /api/application/:application_id/application_credentials/:id
@@ -15,19 +15,24 @@ class Api::ApplicationCredentialsController < ApplicationController
 
   # POST /api/application/:application_id/application_credentials
   def create
-    credential = @application.application_credential.new(credential_params)
 
-    if credential.save
-      render json: credential, status: :created
+    if @application.application_credential.nil?
+        credential = @application.build_application_credential(credential_params)
+        if credential.save
+              render json: credential, status: :created
+            else
+              render json: { errors: credential.errors.full_messages }, status: :unprocessable_entity
+            end
     else
-      render json: { errors: credential.errors.full_messages }, status: :unprocessable_entity
+        render json: { errors: "Credential already exists" }, status: :unprocessable_entity
     end
+
   end
 
   # PATCH /api/application/:application_id/application_credentials/:id
   def update
     if @credential.update(credential_params)
-      render json: @credential
+        render json: {message: "Successfully Update"}
     else
       render json: { errors: @credential.errors.full_messages }, status: :unprocessable_entity
     end
@@ -51,6 +56,8 @@ class Api::ApplicationCredentialsController < ApplicationController
 
   def set_credential
     @credential = @application.application_credential
+
+    puts "This is the creds #{@credential}"
     render json: { error: "Credential not found" }, status: :not_found and return unless @credential
   end
 

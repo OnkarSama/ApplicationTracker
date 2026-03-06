@@ -3,7 +3,6 @@ class Api::ApplicationsController < ApplicationController
   wrap_parameters include: Application.attribute_names
 
   def index
-      Rails.logger.debug "PARAMS: #{params.inspect}"
     @q = Current.user.applications.ransack(params[:q])
     @applications = @q.result
     render :index

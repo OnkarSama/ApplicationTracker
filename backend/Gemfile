@@ -69,3 +69,5 @@ gem "rack-cors"
 
 gem 'ransack'
 
+gem 'jwt'
+

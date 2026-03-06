@@ -8,6 +8,7 @@ class Api::SessionsController < ApplicationController
   def create
     if user = User.authenticate_by(params.permit(:email_address, :password))
       start_new_session_for user
+      @token = JwtService.encode({ user_id: user.id })
       render :show
     else
       render json: {
@@ -18,6 +19,6 @@ class Api::SessionsController < ApplicationController
 
   def destroy
     terminate_session
-    render json: {message: 'success'}
+    render json: {message: 'successfully deleted!'}
   end
 end

@@ -2,7 +2,7 @@ Rails.application.routes.draw do
   resource :application
   namespace :api, defaults: { format: :json } do
     resources :applications do
-      resources :application_credential
+      resource :application_credential
 
     end
     resource :applicant_profile
