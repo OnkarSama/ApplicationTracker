@@ -24,8 +24,6 @@ with requests.Session() as session:
 
     jwt = session_info.json()["token"]
 
-    print(jwt)
-
 
 
     #
