@@ -29,7 +29,7 @@ class Api::ApplicationCredentialsController < ApplicationController
 
   end
 
-  # PATCH /api/application/:application_id/application_credentials/:id
+  # PATCH /api/application/:application_id/application_credentials
   def update
     if @credential.update(credential_params)
         render json: {message: "Successfully Update"}

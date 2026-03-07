@@ -31,14 +31,14 @@ class Api::ApplicationsController < ApplicationController
   end
 
   def update
-    @application = Current.user.applications.find_by(id: params[:id])
-    return render json: { message: "Not found" }, status: :not_found unless @application
+      @application = Current.user.applications.find_by(id: params[:id])
+      return render json: { message: "Not found" }, status: :not_found unless @application
 
-    if @application.update(application_params)
-      render :show
-    else
-      render json: @application.errors.full_messages, status: :unprocessable_entity
-    end
+      if @application.update(application_params)
+          render :show
+      else
+          render json: @application.errors.full_messages, status: :unprocessable_entity
+      end
   end
 
   def destroy
