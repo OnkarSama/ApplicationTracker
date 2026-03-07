@@ -1,11 +1,17 @@
 class Api::ApplicationsController < ApplicationController
   before_action :require_authentication
+  before_action :set_bearer_token
   wrap_parameters include: Application.attribute_names
 
   def index
-    @q = Current.user.applications.ransack(params[:q])
-    @applications = @q.result
-    render :index
+      if @bearer_token.nil?
+          @q = Current.user.applications.ransack(params[:q])
+          @applications = @q.result
+          render :index
+      else
+          @applications = Current.user.applications
+          render :api
+      end
   end
 
   def show
@@ -47,5 +53,9 @@ class Api::ApplicationsController < ApplicationController
 
   def application_params
     params.require(:application).permit(:title, :notes, :status, :priority, :category)
+  end
+
+  def set_bearer_token
+      @bearer_token = request.headers['Authorization']&.start_with?('Bearer')
   end
 end
