@@ -1,112 +1,82 @@
 "use client";
 
-import React from "react";
-import {Button, Input, Form, addToast} from "@heroui/react";
-import {Icon} from "@iconify/react";
-import {useMutation} from "@tanstack/react-query";
-import apiRouter from "@/api/router";
-import {useRouter} from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Card, CardBody, CardHeader } from "@heroui/react";
+import { Input } from "@heroui/react";
+import { Button } from "@heroui/react";
+import { Checkbox } from "@heroui/react";
+import { setAuthed, isAuthed } from "@/lib/storage";
 
-import type {LoginPayload} from "@/api/session";
+export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [pw, setPw] = useState("");
+  const [remember, setRemember] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
 
-export default function Component() {
-    const router = useRouter();
-    const [isVisible, setIsVisible] = React.useState(false);
+  useEffect(() => {
+    if (isAuthed()) router.replace("/dashboard");
+  }, [router]);
 
-    const toggleVisibility = () => setIsVisible((v) => !v);
+  return (
+    <main className="min-h-[100svh] grid place-items-center p-6 bg-default-50">
+      <div className="w-full max-w-md">
+        <Card className="shadow-medium">
+          <CardHeader className="flex flex-col items-start gap-1">
+            <h1 className="text-2xl font-semibold">Welcome back</h1>
+            <p className="text-sm text-default-500">
+              Log in to view your applications dashboard
+            </p>
+          </CardHeader>
 
-    const loginMutation = useMutation({
-        mutationFn: (payload: LoginPayload) =>
-            apiRouter.sessions.createSession(payload),
-        onSuccess: (data) => {
-            addToast({
-                title: "Success",
-                description: "Login Successful!",
-                timeout: 1000,
-                shouldShowTimeoutProgress: true,
-                variant: "solid",
-                color: "success",
-            });
-            router.push("/dashboard");
-        },
-        onError: (error) => {
-            addToast({
+          <CardBody className="gap-4">
+            <Input
+              label="Email"
+              placeholder="you@example.com"
+              value={email}
+              onValueChange={setEmail}
+            />
+            <Input
+              label="Password"
+              type="password"
+              placeholder="••••••••"
+              value={pw}
+              onValueChange={setPw}
+            />
 
-                title: "Error",
-                description: Object.values(error.response.data.errors).flat().join(","),
-                timeout: 3000,
-                shouldShowTimeoutProgress: true,
-                variant: "solid",
-                color: "danger",
-            });
-        },
-    });
-
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-
-        const formData = new FormData(event.currentTarget);
-
-        const payload: LoginPayload = {
-            email_address: formData.get("email")!.toString().toLowerCase(),
-            password: formData.get("password")!.toString(),
-        };
-
-        loginMutation.mutate(payload);
-    };
-
-    return (
-        <div className="flex h-full w-full items-center justify-center">
-            <div className="rounded-large flex w-full max-w-sm flex-col gap-4">
-                <div className="flex flex-col items-center pb-6">
-                    <p className="text-xl font-medium">Welcome</p>
-                    <p className="text-small text-default-500">
-                        Log in to your account to continue
-                    </p>
-                </div>
-
-                <Form
-                    className="flex flex-col gap-3"
-                    validationBehavior="native"
-                    onSubmit={handleSubmit}
-                >
-                    <Input
-                        isRequired
-                        label="Email Address"
-                        name="email"
-                        placeholder="Enter your email"
-                        type="email"
-                        variant="bordered"
-                    />
-
-                    <Input
-                        isRequired
-                        name="password"
-                        label="Password"
-                        placeholder="Enter your password"
-                        type={isVisible ? "text" : "password"}
-                        variant="bordered"
-                        endContent={
-                            <button type="button" onClick={toggleVisibility}>
-                                <Icon
-                                    className="text-default-400 pointer-events-none text-2xl"
-                                    icon={isVisible ? "solar:eye-closed-linear" : "solar:eye-bold"}
-                                />
-                            </button>
-                        }
-                    />
-
-                    <Button
-                        className="w-full"
-                        color="primary"
-                        type="submit"
-                        isLoading={loginMutation.isPending}
-                    >
-                        Sign In
-                    </Button>
-                </Form>
-
+            <div className="flex items-center justify-between">
+              <Checkbox isSelected={remember} onValueChange={setRemember} classNames={{icon: "hidden",}}>
+                Remember me
+              </Checkbox>
+              <button className="text-sm text-primary">Forgot password?</button>
             </div>
-        </div>
-    );
+
+            {err && <p className="text-sm text-danger">{err}</p>}
+
+            <Button
+              color="primary"
+              className="w-full"
+              onPress={() => {
+                setErr(null);
+                if (!email.trim() || !pw.trim()) {
+                  setErr("Please enter email and password.");
+                  return;
+                }
+                // placeholder auth (swap for backend later)
+                setAuthed(true);
+                router.push("/dashboard");
+              }}
+            >
+              Log in
+            </Button>
+
+            <p className="text-sm text-default-500">
+              New here? <span className="text-primary">Create an account</span>
+            </p>
+          </CardBody>
+        </Card>
+      </div>
+    </main>
+  );
 }
