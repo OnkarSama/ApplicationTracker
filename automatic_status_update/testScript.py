@@ -13,7 +13,7 @@ PROTECTED_URL = "https://gradapp.wpi.edu/apply/status" # Replace with target URL
 
 LOGIN_API = "http://localhost:4000/api/session"
 APPLICATIONS_API = "http://localhost:4000/api/applications"
-
+UPDATE_APPLICATIONS_API = lambda app_id: f"http://localhost:4000/api/applications/{app_id}"
 
 def get_jwt(payload,login_route):
 
@@ -35,14 +35,9 @@ def json_to_array(json_data):
     return apps_array
 
 
-def get_apps(jwt, application_rout, session):
-    headers = {
-        'User-Agent': 'ReqBin Python Client/1.0',
-        'Authorization': f'Bearer {jwt}',
-        'Content-Type': 'application/json'
-    }
+def get_apps(application_route, session, headers):
 
-    apps = session.get(APPLICATIONS_API, headers=headers)
+    apps = session.get(application_route, headers=headers)
 
     return json_to_array(apps.json())
 
@@ -52,8 +47,6 @@ def scrape_status(app):
 
     login_route = app_info['portal_link']
 
-    print(login_route)
-
     payload = {
         'email': app_info['username'],
         'password': app_info['password_digest']
@@ -61,18 +54,33 @@ def scrape_status(app):
 
     with requests.Session() as session:
 
-        session_info = session.get(login_route, data=payload)
+        session.get(login_route, data=payload)
 
-        # 3. Access the protected page using the same session
         protected_page_response = session.get(PROTECTED_URL)
 
-        # 4. Parse the page content with BeautifulSoup
         soup = BeautifulSoup(protected_page_response.content, 'html.parser')
 
-        # Example: Extract the title of the protected page
-        print(f"Status: {soup.find('strong', string=lambda t: 'Current Application Status' in t).next_sibling}")
+        status = soup.find('strong', string=lambda t: 'Current Application Status' in t).next_sibling
 
+    return status.strip()
 
+def get_old_statuses(apps):
+
+    old_statuses = []
+
+    for app in apps:
+        old_statuses.append(app['status'])
+
+    return old_statuses
+
+def is_status_change(new_status, old_status):
+
+    return not(new_status == old_status)
+
+def update_status(new_status,app_id, session, headers):
+
+    session_info = session.patch(UPDATE_APPLICATIONS_API(app_id),json={"status" : new_status},headers=headers)
+    print(session_info.content)
 
 
 
@@ -85,22 +93,18 @@ def main():
 
     jwt, session = get_jwt(payload, LOGIN_API)
 
-    apps = get_apps(jwt, APPLICATIONS_API, session)
+    headers = {
+        'User-Agent': 'ReqBin Python Client/1.0',
+        'Authorization': f'Bearer {jwt}',
+        'Content-Type': 'application/json'
+    }
+
+    apps = get_apps(APPLICATIONS_API, session, headers)
+
 
     for app in apps:
-        scrape_status(app)
+        new_status = scrape_status(app)
+        if is_status_change(new_status,app['status']):
+            update_status(new_status,app['id'],session,headers)
 
 main()
-
-    #
-    # # 3. Access the protected page using the same session
-    # protected_page_response = session.get(PROTECTED_URL)
-    #
-    # # 4. Parse the page content with BeautifulSoup
-    # soup = BeautifulSoup(protected_page_response.content, 'html.parser')
-    #
-    # # Example: Extract the title of the protected page
-    # print(f"Page Title: {soup.find('strong', string=lambda t: 'Current Application Status' in t).next_sibling}")
-
-# with open('/Users/onkar/Desktop/ApplicationTracker/automatic_status_update/file.html', 'w') as outfile:
-#     outfile.write(soup.prettify())
