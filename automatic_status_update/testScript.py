@@ -1,14 +1,10 @@
 import requests
-import json
-import re
-
 from bs4 import BeautifulSoup
 
 EMAIL = 'onkardhillon73@gmail.com'
 PASSWORD = 'password123'
 
-PROTECTED_URL = "https://gradapp.wpi.edu/apply/status" # Replace with target URL
-
+PROTECTED_URL = "https://gradapp.wpi.edu/apply/status"
 
 
 LOGIN_API = "http://localhost:4000/api/session"
