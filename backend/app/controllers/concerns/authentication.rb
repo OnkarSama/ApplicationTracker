@@ -22,11 +22,26 @@ module Authentication
     end
 
     def resume_session
-      Current.session ||= find_session_by_cookie
+      Current.session ||= find_session_by_cookie || find_session_by_jwt
     end
 
     def find_session_by_cookie
       Session.find_by(id: cookies.signed[:session_id]) if cookies.signed[:session_id]
+    end
+
+    def find_session_by_jwt
+
+        token = request.bearer_token
+        return nil unless token
+
+        decoded_token_array = JwtService.decode(token)
+        return nil unless decoded_token_array
+
+
+        user = User.find_by(id: decoded_token_array["user_id"])
+        return nil unless user
+
+        Current.user = user
     end
     #
     # def request_authentication
