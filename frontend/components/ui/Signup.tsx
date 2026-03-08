@@ -559,38 +559,41 @@ export default function SignupPage({ onSubmit }: SignupPageProps) {
             ref={mountRef}
             className="h-screen w-screen overflow-hidden bg-linear-gradient"
         >
-            {/* Vignette */}
-            <div className="absolute inset-0 pointer-events-none z-[5] bg-radial-gradient" />
-            {/* Bottom fade */}
-            <div className="absolute bottom-0 left-0 right-0 pointer-events-none z-[6] bg-linear-gradient h-36" />
 
             {/* ── Nav ── */}
-            <nav
-                className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between"
-                style={{ padding: "1.5rem 2.5rem" }}
-            >
-        <span
-            className="font-mono text-xs tracking-[0.22em] uppercase"
-            style={{ color: "hsl(var(--heroui-info) / 0.65)" }}
-        >
-          ApplyOS
-        </span>
-                <Link
-                    href="/login"
-                    className="text-sm font-medium inline-flex items-center px-4 h-[34px] rounded-md border transition-colors"
-                    style={{
-                        background:  "hsl(var(--heroui-info) / 0.07)",
-                        color:       "hsl(var(--heroui-info) / 0.88)",
-                        borderColor: "hsl(var(--heroui-info) / 0.22)",
-                    }}
-                >
-                    Log in
-                </Link>
+            <nav className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-10 py-6">
+                <span className="font-mono text-sm tracking-[0.22em] uppercase text-[hsl(var(--heroui-info))] opacity-65 select-none">
+                    ApplyOS
+                </span>
+
+                <div className="flex items-center gap-3">
+                    <Link
+                        href="/login"
+                        className="
+                            group relative text-sm font-medium inline-flex items-center
+                            px-5 h-9 rounded-md overflow-hidden
+                            border-2 border-[hsl(var(--heroui-info)/0.45)]
+                            text-[hsl(var(--heroui-info))]
+                            transition-all duration-300 ease-out
+                            hover:border-transparent hover:text-white
+                            hover:-translate-y-0.5 hover:scale-[1.05]
+                            active:translate-y-0 active:scale-[0.97]
+
+                        "
+                        onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 24px 5px hsl(var(--heroui-info) / 0.38)"}
+                        onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
+                    >
+                        <span className="absolute inset-0 bg-[hsl(var(--heroui-info)/0.10)] group-hover:opacity-0 transition-opacity duration-300" />
+                        <span className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--heroui-info))] via-[hsl(var(--heroui-primary))] to-[hsl(var(--heroui-secondary))] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <span className="absolute inset-y-0 w-10 -left-10 skew-x-[-20deg] bg-white/30 group-hover:left-[110%] transition-all duration-500 ease-in-out" />
+                        <span className="relative z-10">Log in</span>
+                    </Link>
+                </div>
             </nav>
 
             {/* ── Scrollable form layer ── */}
             <div className="absolute inset-0 z-20 overflow-y-auto flex flex-col items-center pt-24 pb-12">
-                <div className="w-full max-w-[560px] px-6">
+                <div className="w-full max-w-140 px-6">
 
                     {/* Glass card */}
                     <div
@@ -713,6 +716,10 @@ export default function SignupPage({ onSubmit }: SignupPageProps) {
                     </div>
                 </div>
             </div>
+            {/* Vignette */}
+            <div className="absolute inset-0 pointer-events-none z-5 bg-radial-gradient" />
+            {/* Bottom fade */}
+            <div className="absolute bottom-0 left-0 right-0 pointer-events-none z-6 bg-linear-gradient h-36" />
         </div>
     );
 }

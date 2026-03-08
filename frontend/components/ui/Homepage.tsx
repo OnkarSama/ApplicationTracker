@@ -578,9 +578,9 @@ export default function HomepageAnimation() {
             </div>
 
             {/* Vignette */}
-            <div className="absolute inset-0 pointer-events-none z-[5] bg-radial-gradient" />
+            <div className="absolute inset-0 pointer-events-none z-5 bg-radial-gradient" />
             {/* Bottom fade */}
-            <div className="absolute bottom-0 left-0 right-0 pointer-events-none z-[6] bg-linear-gradient h-36" />
+            <div className="absolute bottom-0 left-0 right-0 pointer-events-none z-6 bg-linear-gradient h-36" />
         </div>
     );
 }
