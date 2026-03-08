@@ -29,7 +29,7 @@ function SectionCard({
     fullHeight?: boolean;
 }) {
     return (
-        <div style={{
+        <div className="settings-card-pad" style={{
             background: "rgba(4,12,28,0.82)",
             border: `1px solid ${accentColor}`,
             borderRadius: "16px",
@@ -383,19 +383,19 @@ export default function SettingsPage() {
             <div style={{ position: "absolute", inset: 0, zIndex: 2, pointerEvents: "auto", overflowY: "auto", display: "flex", flexDirection: "column" }}>
 
                 {/* ── Sticky nav ── */}
-                <nav style={{
+                <nav className="settings-nav" style={{
                     position: "sticky", top: 0, zIndex: 10, flexShrink: 0,
                     display: "flex", alignItems: "center", justifyContent: "space-between",
-                    padding: "1.2rem 2rem", boxSizing: "border-box" as const,
+                    boxSizing: "border-box" as const,
                     backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
                     background: "rgba(0,2,10,0.6)", borderBottom: "1px solid rgba(255,255,255,0.05)",
                 }}>
-                    <Link href="/" style={{ fontFamily: "'DM Mono',monospace", fontSize: "0.78rem", letterSpacing: "0.22em", color: "rgba(0,212,255,0.65)", textTransform: "uppercase", textDecoration: "none", transition: "color 0.2s" }}
+                    <Link href="/" className="settings-nav-logo" style={{ fontFamily: "'DM Mono',monospace", fontSize: "0.78rem", letterSpacing: "0.22em", color: "rgba(0,212,255,0.65)", textTransform: "uppercase", textDecoration: "none", transition: "color 0.2s" }}
                           onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = "#00d4ff"; }}
                           onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = "rgba(0,212,255,0.65)"; }}>
                         ApplyOS
                     </Link>
-                    <Link href="/dashboard" style={{ fontFamily: "'DM Sans',sans-serif", fontWeight: 500, fontSize: "0.84rem", padding: "0.5rem 1.4rem", borderRadius: "6px", background: "rgba(0,212,255,0.07)", color: "rgba(0,212,255,0.88)", border: "1px solid rgba(0,212,255,0.22)", textDecoration: "none", display: "inline-block", transition: "all 0.2s" }}
+                    <Link href="/dashboard" className="settings-nav-link" style={{ fontFamily: "'DM Sans',sans-serif", fontWeight: 500, fontSize: "0.84rem", padding: "0.5rem 1.4rem", borderRadius: "6px", background: "rgba(0,212,255,0.07)", color: "rgba(0,212,255,0.88)", border: "1px solid rgba(0,212,255,0.22)", textDecoration: "none", display: "inline-block", transition: "all 0.2s" }}
                           onMouseEnter={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.background = "rgba(0,212,255,0.14)"; el.style.borderColor = "rgba(0,212,255,0.52)"; el.style.boxShadow = "0 0 22px rgba(0,212,255,0.2)"; }}
                           onMouseLeave={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.background = "rgba(0,212,255,0.07)"; el.style.borderColor = "rgba(0,212,255,0.22)"; el.style.boxShadow = "none"; }}>
                         ← Dashboard
@@ -403,7 +403,7 @@ export default function SettingsPage() {
                 </nav>
 
                 {/* ── Page body ── */}
-                <div style={{ flex: 1, padding: "2.5rem 2rem 4rem", boxSizing: "border-box" as const, display: "flex", flexDirection: "column", gap: "2rem" }}>
+                <div className="settings-body" style={{ flex: 1, boxSizing: "border-box" as const, display: "flex", flexDirection: "column", gap: "1.5rem" }}>
 
                     {/* Page header */}
                     <div>
@@ -411,27 +411,22 @@ export default function SettingsPage() {
                             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981", boxShadow: "0 0 6px #10b981", display: "inline-block" }} />
                             Account Settings
                         </div>
-                        <h1 style={{ fontFamily: "'Syne','Helvetica Neue',sans-serif", fontWeight: 800, fontSize: "clamp(1.8rem,4vw,2.6rem)", letterSpacing: "-0.03em", color: "#f0f8ff", margin: 0, lineHeight: 1.05 }}>
+                        <h1 className="settings-h1" style={{ fontFamily: "'Syne','Helvetica Neue',sans-serif", fontWeight: 800, fontSize: "clamp(1.5rem,5vw,2.6rem)", letterSpacing: "-0.03em", color: "#f0f8ff", margin: 0, lineHeight: 1.05 }}>
                             Manage your{" "}
                             <span style={{ background: "linear-gradient(90deg,#00d4ff 0%,#7c3aed 55%,#10b981 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
                 account
               </span>
                         </h1>
-                        <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "0.85rem", color: "rgba(160,200,240,0.42)", marginTop: "0.4rem" }}>
+                        <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "0.82rem", color: "rgba(160,200,240,0.42)", marginTop: "0.4rem" }}>
                             Update your credentials, notifications, and account preferences.
                         </p>
                     </div>
 
                     {/* ══════════════════════════════════════
-              FULL-WIDTH TWO-COLUMN GRID
+              RESPONSIVE GRID — 2 col on desktop,
+              1 col on mobile (≤ 640px)
           ══════════════════════════════════════ */}
-                    <div style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(2, 1fr)",
-                        gridTemplateRows: "auto auto",
-                        gap: "1.5rem",
-                        width: "100%",
-                    }}>
+                    <div className="settings-grid" style={{ display: "grid", gap: "1.25rem", width: "100%" }}>
 
                         {/* ── TOP-LEFT: Change Email ── */}
                         <SectionCard eyebrow="Email Address" title="Change Email" accentColor="rgba(0,212,255,0.18)" dotColor="#00d4ff">
@@ -576,7 +571,39 @@ export default function SettingsPage() {
                 </div>{/* end page body */}
             </div>{/* end UI layer */}
 
-            <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+            <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* ── Desktop: 2 columns, comfortable padding ── */
+        .settings-grid { grid-template-columns: repeat(2, 1fr); }
+        .settings-body { padding: 2.5rem 2rem 4rem; }
+        .settings-nav  { padding: 1.2rem 2rem; }
+        .settings-nav-link { font-size: 0.84rem; padding: 0.5rem 1.4rem; }
+
+        /* ── Tablet (≤ 900px): tighter padding ── */
+        @media (max-width: 900px) {
+          .settings-body { padding: 2rem 1.25rem 3rem; }
+          .settings-nav  { padding: 1rem 1.25rem; }
+        }
+
+        /* ── Mobile (≤ 640px): single column ── */
+        @media (max-width: 640px) {
+          .settings-grid { grid-template-columns: 1fr !important; }
+          .settings-body { padding: 1.25rem 1rem 3rem; gap: 1rem; }
+          .settings-nav  { padding: 0.85rem 1rem; }
+          .settings-nav-logo { font-size: 0.68rem !important; letter-spacing: 0.16em !important; }
+          .settings-nav-link { font-size: 0.75rem !important; padding: 0.4rem 0.9rem !important; }
+          .settings-card-pad { padding: 1.25rem !important; }
+          .settings-h1 { font-size: 1.5rem !important; }
+        }
+
+        /* ── iPhone SE (≤ 375px): ultra tight ── */
+        @media (max-width: 375px) {
+          .settings-body { padding: 1rem 0.75rem 2.5rem; }
+          .settings-nav  { padding: 0.75rem 0.75rem; }
+          .settings-card-pad { padding: 1rem !important; }
+        }
+      `}</style>
         </div>
     );
 }
