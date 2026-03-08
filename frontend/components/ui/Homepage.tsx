@@ -66,6 +66,8 @@ const JOB_CARDS = [
     { company: "Harvard",   role: "MBA",              status: "secondary", x:  -7, y:-15, z: -2  },
     { company: "Berkeley",  role: "MEng EECS",        status: "danger",    x:  18, y: -9, z: -1  },
     { company: "Columbia",  role: "MS Data Science",  status: "warning",   x: -12, y: 14, z: -3  },
+    { company: "WPI",       role: "CS PhD",           status: "warning",   x: 4, y: 10, z: -3  },
+
 ] as const;
 
 type StatusKey = "success" | "info" | "warning" | "secondary" | "danger" | "primary" | "accent";
