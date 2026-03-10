@@ -11,8 +11,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import apiRouter from "@/api/router";
 
-import { seedApps } from "@/lib/mockData";
-const data = seedApps;
 
 const STATUSES: ApplicationStatus[] = ["Applied", "Interview", "Offer", "Rejected", "Wishlist"];
 const PRIORITIES: ApplicationPriority[] = ["High", "Medium", "Low"];
@@ -24,10 +22,10 @@ export default function DashboardPage() {
     const searchParams = useSearchParams();
     const q = searchParams.get("q") ?? "";
 
-    // const { data = [], isLoading, error } = useQuery({
-    //     queryKey: ["getApplications", q],
-    //     queryFn: () => apiRouter.applications.getApplications(q),
-    // });
+    const { data = [], isLoading, error } = useQuery({
+        queryKey: ["getApplications", q],
+        queryFn: () => apiRouter.applications.getApplications(q),
+    });
 
     const handleNewApplication = () => {
         router.push("/application/create");

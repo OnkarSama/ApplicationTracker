@@ -698,7 +698,8 @@ export default function OnboardingWizard() {
     const currentId = STEPS[stepIndex].id;
 
     return (
-        <div ref={mountRef} className="h-screen w-screen overflow-hidden bg-linear-gradient relative">
+        <div ref={mountRef} 
+        className="h-screen w-screen overflow-hidden bg-linear-gradient">
 
             {/* Nav */}
             <nav className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-10 py-6">
