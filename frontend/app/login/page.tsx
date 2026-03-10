@@ -1,24 +1,26 @@
 "use client";
 
-import React from "react";
-import {Button, Input, Form, addToast} from "@heroui/react";
-import {Icon} from "@iconify/react";
-import {useMutation} from "@tanstack/react-query";
+import React, { useEffect } from "react";
+import { Button, Input, Form, addToast } from "@heroui/react";
+import { Icon } from "@iconify/react";
+import { useMutation } from "@tanstack/react-query";
 import apiRouter from "@/api/router";
-import {useRouter} from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
-import type {LoginPayload} from "@/api/session";
+import type { LoginPayload } from "@/api/session";
 
 export default function Component() {
   const router = useRouter();
-  const [isVisible, setIsVisible] = React.useState(false);
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || "/dashboard";
 
+  const [isVisible, setIsVisible] = React.useState(false);
   const toggleVisibility = () => setIsVisible((v) => !v);
 
   const loginMutation = useMutation({
     mutationFn: (payload: LoginPayload) =>
         apiRouter.sessions.createSession(payload),
-    onSuccess: (data) => {
+    onSuccess: () => {
       addToast({
         title: "Success",
         description: "Login Successful!",
@@ -27,11 +29,10 @@ export default function Component() {
         variant: "solid",
         color: "success",
       });
-      router.push("/dashboard");
+      router.push(redirectTo);
     },
     onError: (error) => {
       addToast({
-
         title: "Error",
         description: Object.values(error.response.data.errors).flat().join(","),
         timeout: 3000,
@@ -44,14 +45,11 @@ export default function Component() {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     const formData = new FormData(event.currentTarget);
-
     const payload: LoginPayload = {
       email_address: formData.get("email")!.toString().toLowerCase(),
       password: formData.get("password")!.toString(),
     };
-
     loginMutation.mutate(payload);
   };
 
@@ -78,7 +76,6 @@ export default function Component() {
                 type="email"
                 variant="bordered"
             />
-
             <Input
                 isRequired
                 name="password"
@@ -95,7 +92,6 @@ export default function Component() {
                   </button>
                 }
             />
-
             <Button
                 className="w-full"
                 color="primary"
@@ -105,7 +101,6 @@ export default function Component() {
               Sign In
             </Button>
           </Form>
-
         </div>
       </div>
   );
