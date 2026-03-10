@@ -1,12 +1,17 @@
 class Api::ApplicationsController < ApplicationController
   before_action :require_authentication
+  before_action :set_bearer_token
   wrap_parameters include: Application.attribute_names
 
   def index
-      Rails.logger.debug "PARAMS: #{params.inspect}"
-    @q = Current.user.applications.ransack(params[:q])
-    @applications = @q.result
-    render :index
+      if @bearer_token.nil?
+          @q = Current.user.applications.ransack(params[:q])
+          @applications = @q.result
+          render :index
+      else
+          @applications = Current.user.applications
+          render :api
+      end
   end
 
   def show
@@ -26,14 +31,14 @@ class Api::ApplicationsController < ApplicationController
   end
 
   def update
-    @application = Current.user.applications.find_by(id: params[:id])
-    return render json: { message: "Not found" }, status: :not_found unless @application
+      @application = Current.user.applications.find_by(id: params[:id])
+      return render json: { message: "Not found" }, status: :not_found unless @application
 
-    if @application.update(application_params)
-      render :show
-    else
-      render json: @application.errors.full_messages, status: :unprocessable_entity
-    end
+      if @application.update(application_params)
+          render :show
+      else
+          render json: @application.errors.full_messages, status: :unprocessable_entity
+      end
   end
 
   def destroy
@@ -48,5 +53,9 @@ class Api::ApplicationsController < ApplicationController
 
   def application_params
     params.require(:application).permit(:title, :notes, :status, :priority, :category)
+  end
+
+  def set_bearer_token
+      @bearer_token = request.headers['Authorization']&.start_with?('Bearer')
   end
 end

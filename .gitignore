@@ -10,5 +10,5 @@
 ../.idea/
 tmp/
 
-automatic_status_update/*
+automatic_status_update/*.html
 automatic_status_update/file.html
