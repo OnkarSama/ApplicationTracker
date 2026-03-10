@@ -7,7 +7,7 @@ Rails.application.routes.draw do
     end
     resource :applicant_profile
     resources :users, only: [:index, :show]
-    resource :session, only: [:create, :destroy]
+    resource :session, only: [:show, :create, :destroy]
     resources :passwords, param: :token
     resource :signup, only: [:show, :create]
 

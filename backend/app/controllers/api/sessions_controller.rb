@@ -5,6 +5,15 @@ class Api::SessionsController < ApplicationController
   def new
   end
 
+    # app/controllers/api/sessions_controller.rb — add this action
+def show
+      if Current.user
+        render json: { user: { id: Current.user.id, email_address: Current.user.email_address } }
+      else
+        render json: { error: "Unauthenticated" }, status: :unauthorized
+      end
+    end
+
   def create
     if user = User.authenticate_by(params.permit(:email_address, :password))
       start_new_session_for user
