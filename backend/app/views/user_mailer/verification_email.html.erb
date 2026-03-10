@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h2>Hi <%= @user.first_name %>,</h2>
+    <p>Thanks for signing up. Please verify your email address by clicking the link below.</p>
+    <p>This link expires in 24 hours.</p>
+    <p><a href="<%= @verification_url %>">Verify Email Address</a></p>
+    <p>If you didn't create an account, you can ignore this email.</p>
+  </body>
+</html>
