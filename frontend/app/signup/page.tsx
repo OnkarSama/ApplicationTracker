@@ -16,7 +16,7 @@ export default function Signup() {
         mutationFn: (payload: SignupPayload) =>
             apiRouter.signup.createUser(payload),
         onSuccess: (data) => {
-            router.push("/dashboard");
+            router.push("/onboarding");
         },
         onError: (error) => {
 

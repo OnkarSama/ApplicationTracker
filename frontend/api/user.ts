@@ -14,6 +14,13 @@ const endpoints = {
         return await api('/users', {
             method: 'get'
         })
+    },
+
+    deleteUser: async () => {
+        return await api('/users/', {
+            method: 'delete'
+        })
+
     }
 
 };

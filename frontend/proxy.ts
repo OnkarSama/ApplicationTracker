@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/"];
+const PUBLIC_PATHS = ["/login", "/signup", "/onboarding", "/"];
 const RAILS_API = "http://localhost:4000";
 
 export async function proxy(req: NextRequest) {
