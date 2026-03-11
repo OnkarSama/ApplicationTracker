@@ -10,12 +10,18 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { LoginPayload } from "@/api/session";
 
 export default function Component() {
+
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "/dashboard";
 
   const [isVisible, setIsVisible] = React.useState(false);
   const toggleVisibility = () => setIsVisible((v) => !v);
+
+  const redirectTo = (() => {
+    const param = searchParams.get("redirect");
+    if (!param || param === "/login" || param === "/signup") return "/dashboard";
+    return param;
+  })();
 
   const loginMutation = useMutation({
     mutationFn: (payload: LoginPayload) =>

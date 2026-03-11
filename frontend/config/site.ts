@@ -28,6 +28,10 @@ export const siteConfig = {
             href: "/preferences",
         },
         {
+            label: "Autofill Information",
+            href: "/autofill",
+        },
+        {
             label: "Logout",
             action: "logout",
         }
