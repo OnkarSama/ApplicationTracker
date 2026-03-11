@@ -1,7 +1,7 @@
 export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
-    name: "Application Tracker",
+    name: "ApplyOS",
     description: "Track and manage application in one place!",
     navItems: [
         {
