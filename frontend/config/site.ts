@@ -24,6 +24,10 @@ export const siteConfig = {
             href: "/application/create",
         },
         {
+            label: "Preferences",
+            href: "/preferences",
+        },
+        {
             label: "Logout",
             action: "logout",
         }
