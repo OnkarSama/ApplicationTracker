@@ -1,5 +1,8 @@
 require "active_support/core_ext/integer/time"
 
+Rails.application.routes.default_url_options = { host: "localhost", port: 4000 }
+
+
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
@@ -14,6 +17,7 @@ Rails.application.configure do
 
   # Enable server timing.
   config.server_timing = true
+
 
   # Enable/disable Action Controller caching. By default Action Controller caching is disabled.
   # Run rails dev:cache to toggle Action Controller caching.
@@ -38,7 +42,7 @@ Rails.application.configure do
   config.action_mailer.perform_caching = false
 
   # Set localhost to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
+  config.action_mailer.default_url_options = { host: "localhost", port: 4000 }
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log

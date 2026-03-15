@@ -9,11 +9,15 @@ Rails.application.routes.draw do
         resources :educations
         resources :work_experiences
     end
-    resources :users, only: [:index, :show]
+    resources :users, only: [:index, :show] do
+        collection do
+            post :update_avatar
+        end
+    end
     resource :session, only: [:show, :create, :destroy]
     resources :passwords, param: :token
     resource :signup, only: [:show, :create]
 
   end
-  get '*path', to: "static_pages#frontend_index"
+  get '*path', to: "static_pages#frontend_index", constraints: ->(req) { !req.path.start_with?('/rails/') }
 end
