@@ -71,3 +71,5 @@ gem 'ransack'
 
 gem 'jwt'
 
+
+gem "resend", "~> 1.0"

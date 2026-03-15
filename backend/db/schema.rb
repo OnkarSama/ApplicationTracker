@@ -10,20 +10,30 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_19_190134) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_15_174638) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "applicant_profiles", force: :cascade do |t|
+    t.string "address_line_1"
+    t.string "address_line_2"
     t.text "bio"
+    t.string "city"
     t.string "contact_email"
+    t.string "country"
     t.datetime "created_at", null: false
+    t.date "date_of_birth"
+    t.string "github_url"
     t.string "linkedin_url"
+    t.string "nationality"
     t.string "phone_number"
     t.string "portfolio_url"
     t.string "preferred_name"
+    t.string "pronouns"
+    t.string "state"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.string "zip_code"
     t.index ["user_id"], name: "index_applicant_profiles_on_user_id", unique: true
   end
 
@@ -50,6 +60,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_19_190134) do
     t.index ["user_id"], name: "index_applications_on_user_id"
   end
 
+  create_table "educations", force: :cascade do |t|
+    t.bigint "applicant_profile_id", null: false
+    t.string "area_of_study"
+    t.datetime "created_at", null: false
+    t.string "degree"
+    t.integer "end_year"
+    t.decimal "gpa"
+    t.string "institution"
+    t.integer "start_year"
+    t.datetime "updated_at", null: false
+    t.index ["applicant_profile_id"], name: "index_educations_on_applicant_profile_id"
+  end
+
   create_table "sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "ip_address"
@@ -62,15 +85,33 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_19_190134) do
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email_address", null: false
+    t.datetime "email_verified_at"
     t.string "first_name", null: false
     t.string "last_name", null: false
     t.string "password_digest", null: false
     t.datetime "updated_at", null: false
+    t.string "verification_token"
+    t.datetime "verification_token_expires_at"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
+  end
+
+  create_table "work_experiences", force: :cascade do |t|
+    t.bigint "applicant_profile_id", null: false
+    t.datetime "created_at", null: false
+    t.boolean "current"
+    t.string "description"
+    t.string "employer"
+    t.date "end_date"
+    t.string "job_title"
+    t.date "start_date"
+    t.datetime "updated_at", null: false
+    t.index ["applicant_profile_id"], name: "index_work_experiences_on_applicant_profile_id"
   end
 
   add_foreign_key "applicant_profiles", "users"
   add_foreign_key "application_credentials", "applications"
   add_foreign_key "applications", "users"
+  add_foreign_key "educations", "applicant_profiles"
   add_foreign_key "sessions", "users"
+  add_foreign_key "work_experiences", "applicant_profiles"
 end

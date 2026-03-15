@@ -31,7 +31,7 @@ module Authentication
 
     def find_session_by_jwt
 
-        token = request.bearer_token
+        token = request.headers["Authorization"]&.split(" ")&.last
         return nil unless token
 
         decoded_token_array = JwtService.decode(token)

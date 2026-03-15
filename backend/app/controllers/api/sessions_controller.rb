@@ -8,7 +8,7 @@ class Api::SessionsController < ApplicationController
     # app/controllers/api/sessions_controller.rb — add this action
 def show
       if Current.user
-        render json: { user: { id: Current.user.id, email_address: Current.user.email_address } }
+        render json: { user: { id: Current.user.id, first_name: Current.user.first_name, last_name: Current.user.last_name, email_address: Current.user.email_address } }
       else
         render json: { error: "Unauthenticated" }, status: :unauthorized
       end
