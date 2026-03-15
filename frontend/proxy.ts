@@ -1,23 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/onboarding", "/"];
+const PUBLIC_PATHS = ["/login", "/signup", "/"];
+const REFERRER_GATED_PATHS: { path: string; allowedReferrers: string[]; fallback?: string }[] = [
+    { path: "/onboarding", allowedReferrers: ["/signup"], fallback: "/" },
+];
 const RAILS_API = "http://localhost:4000";
 
 export async function proxy(req: NextRequest) {
     const { pathname } = req.nextUrl;
 
     const isApiRoute = pathname.startsWith("/api");
+    if (isApiRoute) return NextResponse.next();
+
     const isPublic =
         PUBLIC_PATHS.some((p) => pathname === p || (p !== "/" && pathname.startsWith(p))) ||
         pathname.startsWith("/_next") ||
-        pathname.startsWith("/favicon") ||
-        isApiRoute;
+        pathname.startsWith("/favicon");
 
-
-    if (isApiRoute) return NextResponse.next();
+    const referrerGate = REFERRER_GATED_PATHS.find(({ path }) =>
+        pathname === path || pathname.startsWith(path)
+    );
 
     const cookieHeader = req.headers.get("cookie") ?? "";
-
     let isAuthenticated = false;
     if (cookieHeader) {
         try {
@@ -27,6 +31,24 @@ export async function proxy(req: NextRequest) {
             });
             isAuthenticated = res.ok;
         } catch {}
+    }
+
+    // Referrer-gated paths (e.g. /onboarding — only reachable from /signup)
+    if (referrerGate) {
+        const referrer = req.headers.get("referer") ?? "";
+        const referrerPath = referrer ? new URL(referrer).pathname : "";
+        const isAllowedReferrer = referrerGate.allowedReferrers.some(
+            (r) => referrerPath === r || referrerPath.startsWith(r)
+        );
+
+        if (!isAllowedReferrer) {
+            const url = req.nextUrl.clone();
+            url.pathname = referrerGate.fallback ?? (isAuthenticated ? "/dashboard" : "/login");
+            url.searchParams.delete("redirect");
+            return NextResponse.redirect(url);
+        }
+
+        return NextResponse.next();
     }
 
     // Logged-in user trying to access login/signup — bounce to dashboard
