@@ -875,7 +875,29 @@ export default function OnboardingWizard() {
         setError(null);
         setIsSaving(true);
         try {
-            await apiRouter.profile.updateProfile(data);
+            const result = await apiRouter.profile.updateProfile(data);
+
+            // Replace local UUIDs with real DB ids so they don't get re-posted
+            if (result?.savedEducations?.length) {
+                setData((d) => ({
+                    ...d,
+                    education: d.education.map((edu) => {
+                        const saved = result.savedEducations.find((s: any) => s.localId === edu.id)
+                        return saved ? { ...edu, id: saved.dbId } : edu
+                    }),
+                }))
+            }
+
+            if (result?.savedEmployments?.length) {
+                setData((d) => ({
+                    ...d,
+                    employment: d.employment.map((job) => {
+                        const saved = result.savedEmployments.find((s: any) => s.localId === job.id)
+                        return saved ? { ...job, id: saved.dbId } : job
+                    }),
+                }))
+            }
+
             setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
         } catch (err) {
             setError("Failed to save. Please try again.");

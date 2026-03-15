@@ -37,7 +37,7 @@ export type EducationPayload = {
         institution: string
         degree: string
         area_of_study: string
-        start_year: number
+        start_year?: number
         end_year?: number
         gpa?: number
     }
@@ -87,6 +87,8 @@ interface WizardData {
     }
 }
 
+const isLocalId = (id: string) => id.includes('-')
+
 const endpoints = {
 
     getProfile: async () => {
@@ -118,41 +120,49 @@ const endpoints = {
             } satisfies ProfilePayload,
         })
 
-        await Promise.all(
-            wizard.education.map((edu) =>
-                api('/applicant_profile/educations', {
-                    method: 'post',
-                    data: {
-                        education: {
-                            institution:   edu.institution,
-                            degree:        edu.degree,
-                            area_of_study: edu.field,
-                            start_year:    parseInt(edu.startYear) || undefined,
-                            end_year:      parseInt(edu.endYear)   || undefined,
-                            gpa:           parseFloat(edu.gpa)     || undefined,
-                        },
-                    } satisfies EducationPayload,
+        const savedEducations = await Promise.all(
+            wizard.education
+                .filter((edu) => isLocalId(edu.id))
+                .map(async (edu) => {
+                    const res = await api('/applicant_profile/educations', {
+                        method: 'post',
+                        data: {
+                            education: {
+                                institution:   edu.institution,
+                                degree:        edu.degree,
+                                area_of_study: edu.field,
+                                start_year:    parseInt(edu.startYear) || undefined,
+                                end_year:      parseInt(edu.endYear)   || undefined,
+                                gpa:           parseFloat(edu.gpa)     || undefined,
+                            },
+                        } satisfies EducationPayload,
+                    })
+                    return { localId: edu.id, dbId: String(res.id) }
                 })
-            )
         )
 
-        await Promise.all(
-            wizard.employment.map((job) =>
-                api('/applicant_profile/work_experiences', {
-                    method: 'post',
-                    data: {
-                        work_experience: {
-                            employer:    job.employer,
-                            job_title:   job.title,
-                            start_date:  job.startDate,
-                            end_date:    job.current ? undefined : job.endDate || undefined,
-                            current:     job.current,
-                            description: job.description || undefined,
-                        },
-                    } satisfies WorkExperiencePayload,
+        const savedEmployments = await Promise.all(
+            wizard.employment
+                .filter((job) => isLocalId(job.id))
+                .map(async (job) => {
+                    const res = await api('/applicant_profile/work_experiences', {
+                        method: 'post',
+                        data: {
+                            work_experience: {
+                                employer:    job.employer,
+                                job_title:   job.title,
+                                start_date:  job.startDate,
+                                end_date:    job.current ? undefined : job.endDate || undefined,
+                                current:     job.current,
+                                description: job.description || undefined,
+                            },
+                        } satisfies WorkExperiencePayload,
+                    })
+                    return { localId: job.id, dbId: String(res.id) }
                 })
-            )
         )
+
+        return { savedEducations, savedEmployments }
     },
 
 }
