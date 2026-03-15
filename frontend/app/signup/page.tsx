@@ -18,7 +18,7 @@ export default function Signup() {
         onSuccess: (data) => {
             router.push("/onboarding");
         },
-        onError: (error) => {
+        onError: (error: any) => {
 
             addToast({
 

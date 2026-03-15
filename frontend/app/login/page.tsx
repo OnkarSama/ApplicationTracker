@@ -37,7 +37,7 @@ export default function Component() {
       });
       router.push(redirectTo);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       addToast({
         title: "Error",
         description: Object.values(error.response.data.errors).flat().join(","),

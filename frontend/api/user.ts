@@ -21,7 +21,19 @@ const endpoints = {
             method: 'delete'
         })
 
-    }
+    },
+
+    uploadAvatar: async (file: File) => {
+        const formData = new FormData();
+        formData.append("avatar", file);
+        return await api('/users/update_avatar', {
+            method: 'post',
+            data: formData,
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+    },
 
 };
 

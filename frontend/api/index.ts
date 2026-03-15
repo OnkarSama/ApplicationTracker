@@ -9,13 +9,14 @@ const axiosInstance = axios.create({
 });
 
 type ApiOptions = {
-    data?: object | string;
+    data?: object | string | FormData;
     method?: "get" | "post" | "put" | "delete" | "patch";
     params?: object;
+    headers?: Record<string, string>;
 };
 
 export const api = async (url: string, options: ApiOptions = {}) => {
-    const { data, method = "get", params } = options;
+    const { data, method = "get", params, headers } = options;
 
     try {
         const response = await axiosInstance.request({
@@ -23,6 +24,7 @@ export const api = async (url: string, options: ApiOptions = {}) => {
             method,
             data,
             params,
+            headers,
             responseType: "json",
         });
 

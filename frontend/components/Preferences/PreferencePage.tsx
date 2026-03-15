@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     Input,
     Button,
@@ -13,6 +13,10 @@ import {
     useDisclosure,
 } from "@heroui/react";
 
+import Image from "next/image";
+
+import { useQuery } from "@tanstack/react-query";
+import apiRouter from "@/api/router";
 /* ─────────────────────────────────────────────
    TYPES
 ───────────────────────────────────────────── */
@@ -172,34 +176,52 @@ export function EyeToggle({ visible, onToggle }: { visible: boolean; onToggle: (
 ───────────────────────────────────────────── */
 export function ProfileCard() {
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [displayName, setDisplayName] = useState("Jane Doe");
-    const [editingName, setEditingName] = useState(false);
-    const [nameInput, setNameInput] = useState("Jane Doe");
-    const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
-    const [pendingAvatar, setPendingAvatar] = useState<string | null>(null);
     const [feedback, setFeedback] = useState<FeedbackState>(null);
+    const [pendingFile, setPendingFile] = useState<File | null>(null);
+    const [pendingAvatar, setPendingAvatar] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
 
-    const email = "jane.doe@email.com";
-    const joinedDate = "March 2025";
-    const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    const { data: sessionData } = useQuery({
+        queryKey: ["currentUser"],
+        queryFn: () => apiRouter.sessions.showUser(),
+    });
+
+    const user = sessionData?.user;
+    const displayName = user ? `${user.first_name} ${user.last_name}` : "—";
+    const email = user?.email_address ?? "—";
+    const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
     const currentAvatar = pendingAvatar ?? avatarSrc;
-    const hasChanges = !!pendingAvatar || (editingName && nameInput !== displayName);
+
+    useEffect(() => {
+        if (user?.avatar_url) setAvatarSrc(user.avatar_url);
+    }, [user]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
+        setPendingFile(file);
         const reader = new FileReader();
         reader.onload = ev => setPendingAvatar(ev.target?.result as string);
         reader.readAsDataURL(file);
     };
 
-    const handleSave = () => {
-        if (pendingAvatar) setAvatarSrc(pendingAvatar);
-        if (editingName) setDisplayName(nameInput);
-        setPendingAvatar(null);
-        setEditingName(false);
-        setFeedback({ kind: "success", msg: "Profile updated successfully." });
-        setTimeout(() => setFeedback(null), 4000);
+    const handleSave = async () => {
+        if (!pendingFile) return;
+        setIsUploading(true);
+        try {
+            const result = await apiRouter.users.uploadAvatar(pendingFile);
+            setAvatarSrc(result.avatar_url);
+            setPendingAvatar(null);
+            setPendingFile(null);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+            setFeedback({ kind: "success", msg: "Avatar updated successfully." });
+        } catch {
+            setFeedback({ kind: "error", msg: "Failed to upload avatar. Please try again." });
+        } finally {
+            setIsUploading(false);
+            setTimeout(() => setFeedback(null), 4000);
+        }
     };
 
     return (
@@ -248,51 +270,14 @@ export function ProfileCard() {
                     )}
                 </div>
 
-                {/* Info — all in one row */}
+                {/* Info */}
                 <div className="flex-1 flex flex-wrap gap-x-8 gap-y-2 min-w-0">
 
-                    {/* Display name */}
                     <div className="flex flex-col gap-0.5">
                         <span className="text-[0.58rem] tracking-[0.16em] uppercase font-mono text-muted">Display Name</span>
-                        {editingName ? (
-                            <div className="flex gap-2 items-center">
-                                <Input
-                                    value={nameInput}
-                                    onValueChange={setNameInput}
-                                    variant="bordered"
-                                    size="sm"
-                                    classNames={inputCN("cyan")}
-                                    autoFocus
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => { setEditingName(false); setNameInput(displayName); }}
-                                    className="bg-transparent border-none cursor-pointer text-muted hover:text-danger transition-colors flex-shrink-0"
-                                >
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-heading font-bold text-base tracking-tight">{displayName}</span>
-                                <button
-                                    type="button"
-                                    onClick={() => { setEditingName(true); setNameInput(displayName); }}
-                                    className="bg-transparent border-none cursor-pointer text-muted hover:text-info transition-colors"
-                                    title="Edit name"
-                                >
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        )}
+                        <span className="text-heading font-bold text-base tracking-tight">{displayName}</span>
                     </div>
 
-                    {/* Email */}
                     <div className="flex flex-col gap-0.5">
                         <span className="text-[0.58rem] tracking-[0.16em] uppercase font-mono text-muted">Email</span>
                         <div className="flex items-center gap-1.5">
@@ -303,30 +288,17 @@ export function ProfileCard() {
                         </div>
                     </div>
 
-                    {/* Member since */}
-                    <div className="flex flex-col gap-0.5">
-                        <span className="text-[0.58rem] tracking-[0.16em] uppercase font-mono text-muted">Member Since</span>
-                        <div className="flex items-center gap-1.5">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-success/60 flex-shrink-0">
-                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                            </svg>
-                            <span className="text-sm text-subheading">{joinedDate}</span>
-                        </div>
-                    </div>
-
-                    {hasChanges && (
+                    {pendingAvatar && (
                         <div className="w-full flex gap-2 flex-wrap">
-                            <Button size="sm" variant="bordered" onPress={handleSave}
+                            <Button size="sm" variant="bordered" onPress={handleSave} isLoading={isUploading}
                                     className="border-info/30 bg-info/10 text-foreground hover:bg-info/20 hover:border-info/55 font-bold tracking-wide">
-                                Save Profile
+                                Save Avatar
                             </Button>
-                            {pendingAvatar && (
-                                <Button size="sm" variant="bordered"
-                                        onPress={() => { setPendingAvatar(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
-                                        className="border-border bg-card text-muted hover:bg-card_hover hover:text-subheading font-medium tracking-wide">
-                                    Discard Photo
-                                </Button>
-                            )}
+                            <Button size="sm" variant="bordered"
+                                    onPress={() => { setPendingAvatar(null); setPendingFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                                    className="border-border bg-card text-muted hover:bg-card_hover hover:text-subheading font-medium tracking-wide">
+                                Discard
+                            </Button>
                         </div>
                     )}
 

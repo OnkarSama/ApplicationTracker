@@ -11,6 +11,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import apiRouter from "@/api/router";
 
+import type {Application} from "@/api/application";
+
 
 const STATUSES: ApplicationStatus[] = ["Applied", "Interview", "Offer", "Rejected", "Wishlist"];
 const PRIORITIES: ApplicationPriority[] = ["High", "Medium", "Low"];
@@ -22,7 +24,7 @@ export default function DashboardPage() {
     const searchParams = useSearchParams();
     const q = searchParams.get("q") ?? "";
 
-    const { data = [], isLoading, error } = useQuery({
+    const { data = [] as Application[], isLoading, error } = useQuery({
         queryKey: ["getApplications", q],
         queryFn: () => apiRouter.applications.getApplications(q),
     });
@@ -34,9 +36,9 @@ export default function DashboardPage() {
 
     const stats = useMemo(() => ({
         total:      data.length,
-        applied:    data.filter((a) => a.status === "Applied").length,
-        interviews: data.filter((a) => a.status === "Interview").length,
-        offers:     data.filter((a) => a.status === "Offer").length,
+        applied:    data.filter((a: Application) => a.status === "Applied").length,
+        interviews: data.filter((a: Application) => a.status === "Interview").length,
+        offers:     data.filter((a: Application) => a.status === "Offer").length,
     }), [data]);
 
 

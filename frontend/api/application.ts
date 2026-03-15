@@ -11,6 +11,15 @@ export type ApplicationPayload = {
     }
 }
 
+export type Application = {
+    id: number
+    title: string
+    notes: string
+    status: string
+    priority: number
+    category: string
+}
+
 const endpoints = {
 
     getApplications: async (q?: string) => {
