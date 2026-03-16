@@ -12,6 +12,7 @@ Rails.application.routes.draw do
     resources :users, only: [:index, :show] do
         collection do
             post :update_avatar
+            delete :destroy
         end
     end
     resource :session, only: [:show, :create, :destroy]

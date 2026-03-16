@@ -17,7 +17,7 @@ const endpoints = {
     },
 
     deleteUser: async () => {
-        return await api('/users/', {
+        return await api('/users', {
             method: 'delete'
         })
 

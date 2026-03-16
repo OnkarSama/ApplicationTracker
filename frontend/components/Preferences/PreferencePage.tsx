@@ -10,13 +10,15 @@ import {
     ModalHeader,
     ModalBody,
     ModalFooter,
-    useDisclosure,
+    useDisclosure, addToast
 } from "@heroui/react";
 
-import Image from "next/image";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import {useRouter} from "next/navigation";
 import apiRouter from "@/api/router";
+
+
 /* ─────────────────────────────────────────────
    TYPES
 ───────────────────────────────────────────── */
@@ -551,18 +553,46 @@ export function NotificationsCard() {
 export function DeleteAccountModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
     const [deleteInput, setDeleteInput] = useState("");
     const [loading, setLoading] = useState(false);
+    const router = useRouter();
 
-    const handleDelete = async () => {
+    const deleteMutation = useMutation({
+        mutationFn: () => apiRouter.users.deleteUser(),
+        onSuccess: () => {
+            addToast({
+                title: "Success",
+                description: "Sorry to see you go!",
+                timeout: 1000,
+                shouldShowTimeoutProgress: true,
+                variant: "solid",
+                color: "success",
+            });
+            handleClose();
+            router.push("/");
+        },
+        onError: (error: any) => {
+            setLoading(false);
+            addToast({
+                title: "Error",
+                description: error?.response?.data?.errors
+                    ? Object.values(error.response.data.errors).flat().join(", ")
+                    : "Failed to delete account.",
+                timeout: 3000,
+                shouldShowTimeoutProgress: true,
+                variant: "solid",
+                color: "danger",
+            });
+        },
+    });
+
+    const handleDelete = () => {
         if (deleteInput !== "DELETE") return;
         setLoading(true);
-        await new Promise(r => setTimeout(r, 1200));
-        setLoading(false);
-        console.log("Account deletion requested");
-        handleClose();
+        deleteMutation.mutate();
     };
 
     const handleClose = () => {
         setDeleteInput("");
+        setLoading(false);
         onClose();
     };
 
