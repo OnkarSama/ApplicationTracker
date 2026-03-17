@@ -2,7 +2,7 @@ class JwtService
 
     def self.encode(payload)
         secret = Rails.application.credentials.jwt_secret
-
+        payload[:exp] = 1.hours.from_now.to_i
         JWT.encode(payload, secret,'HS256')
 
     end
