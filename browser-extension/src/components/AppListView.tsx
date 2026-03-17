@@ -8,7 +8,6 @@ import {
     TableBody,
     TableRow,
     TableCell,
-    Chip,
 } from "@heroui/react";
 
 export default function AppListView() {
@@ -21,29 +20,25 @@ export default function AppListView() {
     if (isLoading) return <div>Loading...</div>;
 
     return (
-        <>
-            <div className="relative overflow-x-auto">
-                <Table
-                    isHeaderSticky
-                    className="bg-table_bg rounded-xl border border-table_border shadow-[0_18px_40px_rgba(0,0,0,0.35)] w-full"
-                >
-                    <TableHeader>
-                        <TableColumn key="title">Title</TableColumn>
-                        <TableColumn key="category">Category</TableColumn>
-                    </TableHeader>
+        <div className="w-full p-2">
+            <Table
+                isHeaderSticky
+                aria-label="Applications"
+            >
+                <TableHeader>
+                    <TableColumn>TITLE</TableColumn>
+                    <TableColumn>CATEGORY</TableColumn>
+                </TableHeader>
 
-                    <TableBody emptyContent="No applications found." items={data}>
-                        {(app) => (
-                            <TableRow key={app.id}>
-                                <TableCell className="text-table_text">{app.title}</TableCell>
-                                <TableCell>
-                                    <Chip size="sm" variant="flat">{app.category}</Chip>
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
-        </>
+                <TableBody emptyContent="No applications found." items={data}>
+                    {(app) => (
+                        <TableRow key={app.id}>
+                            <TableCell>{app.title}</TableCell>
+                            <TableCell>{app.category}</TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
+        </div>
     );
 }
