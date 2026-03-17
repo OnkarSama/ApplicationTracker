@@ -41,7 +41,7 @@ module Authentication
         user = User.find_by(id: decoded_token_array["user_id"])
         return nil unless user
 
-        Current.user = user
+        user.sessions.last
     end
     #
     # def request_authentication
