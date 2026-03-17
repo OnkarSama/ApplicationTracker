@@ -1,7 +1,7 @@
 import LoginView from '@/components/LoginView'
 import AppListView from '@/components/AppListView'
 import './App.css'
-import {useState} from "react";
+import {useState,useEffect} from "react";
 
 export default function App() {
 
@@ -21,6 +21,16 @@ export default function App() {
                 return <h1>No component found</h1>;
         }
     };
+
+    useEffect(() => {
+        chrome.storage.local.get('jwtToken', (result) => {
+            if (result.jwtToken) {
+                setCurrentView('appList')
+            } else {
+                setCurrentView('login')
+            }
+        })
+    }, [])
 
     return (
         <div style={{ width: '400px', height: '600px' }} className="h-full p-2.5">

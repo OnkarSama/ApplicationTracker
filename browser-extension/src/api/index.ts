@@ -23,6 +23,17 @@ axiosInstance.interceptors.request.use(
     }
 );
 
+axiosInstance.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        if (error.response?.status === 401) {
+            await chrome.storage.local.remove('jwtToken')
+            window.location.reload()
+        }
+        return Promise.reject(error)
+    }
+)
+
 type ApiOptions = {
     data?: object | string | FormData;
     method?: "get" | "post" | "put" | "delete" | "patch";
