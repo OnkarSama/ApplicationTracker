@@ -57,7 +57,6 @@ class Api::ApplicationCredentialsController < ApplicationController
   def set_credential
     @credential = @application.application_credential
 
-    puts "This is the creds #{@credential}"
     render json: { error: "Credential not found" }, status: :not_found and return unless @credential
   end
 
