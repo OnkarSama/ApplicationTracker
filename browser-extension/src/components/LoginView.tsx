@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Button, Input, Form } from "@heroui/react";
+import {Button, Input, Form, addToast} from "@heroui/react";
 import { useMutation } from "@tanstack/react-query";
 import apiRouter from "@/api/router";
 
@@ -16,13 +16,28 @@ export default function LoginView({ onLoginSuccess }: { onLoginSuccess: () => vo
         mutationFn: (payload: LoginPayload) =>
             apiRouter.sessions.createSession(payload),
         onSuccess: (data : any) => {
+            addToast({
+                title: "Success",
+                description: "Login Successful!",
+                timeout: 1000,
+                shouldShowTimeoutProgress: true,
+                variant: "solid",
+                color: "success",
+            });
 
             chrome.storage.local.set({ jwtToken: data.token }).then(() => {
                 onLoginSuccess();
             });
         },
         onError: (error: any) => {
-            console.log(Object.values(error.response.data.errors).flat().join(","));
+            addToast({
+                title: "Error",
+                description: Object.values(error.response.data.errors).flat().join(","),
+                timeout: 3000,
+                shouldShowTimeoutProgress: true,
+                variant: "solid",
+                color: "danger",
+            });
 
         },
     });

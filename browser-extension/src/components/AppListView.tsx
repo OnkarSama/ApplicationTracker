@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import apiRouter from "@/api/router";
 import type { Application } from "@/api/application";
@@ -10,7 +11,9 @@ import {
     TableCell,
 } from "@heroui/react";
 
-export default function AppListView() {
+export default function AppListView({ onAppClick }: { onAppClick: (app: Application) => void }) {
+
+
     const { data, isLoading } = useQuery<Application[]>({
         queryKey: ['applications'],
         queryFn: () => apiRouter.applications.getApplications(),
@@ -20,19 +23,20 @@ export default function AppListView() {
     if (isLoading) return <div>Loading...</div>;
 
     return (
-        <div className="w-full p-2">
+        <div className="relative overflow-x-auto">
             <Table
                 isHeaderSticky
+                isStriped
                 aria-label="Applications"
             >
                 <TableHeader>
-                    <TableColumn>TITLE</TableColumn>
-                    <TableColumn>CATEGORY</TableColumn>
+                    <TableColumn align="start">TITLE</TableColumn>
+                    <TableColumn align="start">CATEGORY</TableColumn>
                 </TableHeader>
 
                 <TableBody emptyContent="No applications found." items={data}>
                     {(app) => (
-                        <TableRow key={app.id}>
+                        <TableRow  key={app.id} onClick={() => onAppClick(app)}>
                             <TableCell>{app.title}</TableCell>
                             <TableCell>{app.category}</TableCell>
                         </TableRow>

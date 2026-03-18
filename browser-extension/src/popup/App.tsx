@@ -1,12 +1,19 @@
 import LoginView from '@/components/LoginView'
 import AppListView from '@/components/AppListView'
-import './App.css'
+import AppDetailView from "@/components/AppDetailView";
+import './index.css'
 import {useState,useEffect} from "react";
+import {useQuery} from "@tanstack/react-query";
+import type {Application} from "@/api/application.ts";
+
 
 export default function App() {
 
     type View = 'login' | 'appList' | 'appDetail'
+
     const [currentView, setCurrentView] = useState<View>('login')
+    const [selectedApp, setSelectedApp] = useState<Application | null>(null)
+
 
 
     const renderComponent = (componentName: View) => {
@@ -14,9 +21,12 @@ export default function App() {
             case 'login':
                 return <LoginView onLoginSuccess={() => setCurrentView('appList')}/>;
             case 'appList':
-                return <AppListView/>;
-            // case 'appDetail':
-            //     return <ComponentC />;
+                return <AppListView onAppClick={(app) => {
+                    setSelectedApp(app)
+                    setCurrentView('appDetail')
+                }}/>;
+            case 'appDetail':
+                return <AppDetailView />;
             default:
                 return <h1>No component found</h1>;
         }
