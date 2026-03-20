@@ -1,6 +1,7 @@
 
 import React from "react";
 import {Button, Input, Form, addToast} from "@heroui/react";
+import { Icon } from "@iconify/react";
 import { useMutation } from "@tanstack/react-query";
 import apiRouter from "@/api/router";
 
@@ -56,7 +57,7 @@ export default function LoginView({ onLoginSuccess }: { onLoginSuccess: () => vo
         <div className="flex h-full w-full items-center justify-center">
             <div className="rounded-large flex w-full max-w-sm flex-col gap-4">
                 <div className="flex flex-col items-center pb-6">
-                    <p className="text-xl font-medium">Welcome</p>
+                    <p className="text-xl font-medium">Welcome To ApplyOS Credentials Storage</p>
                     <p className="text-small text-default-500">
                         Log in to your account to continue
                     </p>
@@ -84,6 +85,10 @@ export default function LoginView({ onLoginSuccess }: { onLoginSuccess: () => vo
                         variant="bordered"
                         endContent={
                             <button type="button" onClick={toggleVisibility}>
+                                <Icon
+                                    className="text-default-400 pointer-events-none text-2xl"
+                                    icon={isVisible ? "solar:eye-closed-linear" : "solar:eye-bold"}
+                                />
                             </button>
                         }
                     />
