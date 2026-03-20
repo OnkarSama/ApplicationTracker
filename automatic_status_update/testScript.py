@@ -2,7 +2,9 @@ import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 import os
+from fastapi import FastAPI, Header
 
+fastapi = FastAPI()
 load_dotenv()
 
 EMAIL = os.getenv("EMAIL")
@@ -98,10 +100,20 @@ def main():
 
     apps = get_apps(APPLICATIONS_API, session, headers)
 
-
+    is_updated = False
     for app in apps:
         new_status = scrape_status(app)
         if is_status_change(new_status,app['status']):
             update_status(new_status,app['id'],session,headers)
+            is_updated = True
 
-main()
+    return is_updated
+
+@fastapi.post("/automaticStatusUpdate")
+async def update_statuses(authorization: str = Header(None)):
+    API_KEY = os.getenv("API_KEY")
+    if authorization.split(" ")[1] == API_KEY:
+        is_updated = main()
+        return {"Updated": is_updated, "Auth": authorization}
+    else :
+        return {"Auth": "Not Authenticated"}
