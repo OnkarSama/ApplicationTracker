@@ -93,8 +93,7 @@ def main():
     jwt, session = get_jwt(payload, LOGIN_API)
 
     headers = {
-        'User-Agent': 'ReqBin Python Client/1.0',
-        'Authorization': f'Bearer {jwt}',
+        'Authorization': f'Bearer {os.getenv("API_KEY")}',
         'Content-Type': 'application/json'
     }
 
