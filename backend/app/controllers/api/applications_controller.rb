@@ -1,5 +1,7 @@
 class Api::ApplicationsController < ApplicationController
-  before_action :require_authentication
+    include APIAuthentication
+  before_action :require_authentication, only: [:index, :show, :create, :update, :destroy]
+  before_action :require_api_authentication, only: [:sync]
   before_action :set_bearer_token
   wrap_parameters include: Application.attribute_names
 
@@ -63,6 +65,4 @@ class Api::ApplicationsController < ApplicationController
     def set_bearer_token
         @bearer_token = request.headers['Authorization']&.start_with?('Bearer')
     end
-
-    de
 end
