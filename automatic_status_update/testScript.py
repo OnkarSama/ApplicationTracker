@@ -17,16 +17,6 @@ LOGIN_API = os.getenv("LOGIN_API")
 APPLICATIONS_API = os.getenv("APPLICATIONS_API")
 UPDATE_APPLICATIONS_API = lambda app_id: f"{APPLICATIONS_API}/{app_id}"
 
-def get_jwt(payload,login_route):
-
-    with requests.Session() as session:
-
-        session_info = session.post(login_route, data=payload)
-
-        jwt = session_info.json()["token"]
-
-    return jwt, session
-
 def json_to_array(json_data):
 
     apps_array = []
@@ -37,9 +27,9 @@ def json_to_array(json_data):
     return apps_array
 
 
-def get_apps(application_route, session, headers):
+def get_apps(application_route, headers):
 
-    apps = session.get(application_route, headers=headers)
+    apps = requests.get(application_route, headers=headers)
 
     return json_to_array(apps.json())
 
@@ -76,9 +66,9 @@ def is_status_change(new_status, old_status):
 
     return not(new_status == old_status)
 
-def update_status(new_status,app_id, session, headers):
+def update_status(new_status,app_id, headers):
 
-    session_info = session.patch(UPDATE_APPLICATIONS_API(app_id),json={"status" : new_status},headers=headers)
+    session_info = requests.patch(UPDATE_APPLICATIONS_API(app_id),json={"status" : new_status},headers=headers)
     print(session_info.content)
 
 
@@ -90,20 +80,18 @@ def main():
         'password': PASSWORD
     }
 
-    jwt, session = get_jwt(payload, LOGIN_API)
-
     headers = {
         'Authorization': f'Bearer {os.getenv("API_KEY")}',
         'Content-Type': 'application/json'
     }
 
-    apps = get_apps(APPLICATIONS_API, session, headers)
+    apps = get_apps(APPLICATIONS_API, headers)
 
     is_updated = False
     for app in apps:
         new_status = scrape_status(app)
         if is_status_change(new_status,app['status']):
-            update_status(new_status,app['id'],session,headers)
+            update_status(new_status,app['id'],headers)
             is_updated = True
 
     return is_updated
