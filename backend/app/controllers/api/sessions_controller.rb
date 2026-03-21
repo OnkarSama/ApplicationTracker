@@ -28,7 +28,7 @@ class Api::SessionsController < ApplicationController
             start_new_session_for user
             @token = JwtService.encode({ user_id: user.id })
 
-            AutomaticStatusUpdateJob.perform_later
+            AutomaticStatusUpdateJob.perform_later(user)
 
             render :show
         else

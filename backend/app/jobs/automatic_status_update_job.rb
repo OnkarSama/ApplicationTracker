@@ -1,9 +1,9 @@
 class AutomaticStatusUpdateJob < ApplicationJob
   queue_as :default
 
-  def perform(*args)
+  def perform(user)
     begin
-        @isUpdated = AutomaticStatusUpdateService.requestUpdate()
+        @isUpdated = AutomaticStatusUpdateService.requestUpdate(user)
     rescue Errno::ECONNREFUSED
         nil
     end

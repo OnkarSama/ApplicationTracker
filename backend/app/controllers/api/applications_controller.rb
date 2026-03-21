@@ -32,10 +32,6 @@ class Api::ApplicationsController < ApplicationController
         end
     end
 
-    def credential
-
-    end
-
     def sync
         @isUpdated = AutomaticStatusUpdateService.requestUpdate(notify: true)
         render json: {isUpdated: @isUpdated}
