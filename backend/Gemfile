@@ -71,5 +71,6 @@ gem 'ransack'
 
 gem 'jwt'
 
+gem 'net-http'
 
 gem "resend", "~> 1.0"
