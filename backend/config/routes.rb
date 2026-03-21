@@ -2,6 +2,9 @@ Rails.application.routes.draw do
   resource :application
   namespace :api, defaults: { format: :json } do
     resources :applications do
+        collection do
+            post :sync
+        end
       resource :application_credential
 
     end

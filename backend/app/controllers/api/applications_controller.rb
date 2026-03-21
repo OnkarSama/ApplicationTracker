@@ -3,59 +3,64 @@ class Api::ApplicationsController < ApplicationController
   before_action :set_bearer_token
   wrap_parameters include: Application.attribute_names
 
-  def index
-      if @bearer_token.nil?
-          @q = Current.user.applications.ransack(params[:q])
-          @applications = @q.result
-          render :index
-      else
-          @applications = Current.user.applications
-          render :api
-      end
-  end
-
-  def show
-    @application = Current.user.applications.find_by(id: params[:id])
-    return render json: { message: "Not found" }, status: :not_found unless @application
-    render :show
-  end
-
-  def create
-    @application = Current.user.applications.new(application_params)
-
-    if @application.save
-      render :show
-    else
-      render json: @application.errors.full_messages, status: :unprocessable_entity
+    def index
+        if @bearer_token.nil?
+            @q = Current.user.applications.ransack(params[:q])
+            @applications = @q.result
+            render :index
+        else
+            @applications = Current.user.applications
+            render :api
+        end
     end
-  end
 
-  def update
-      @application = Current.user.applications.find_by(id: params[:id])
-      return render json: { message: "Not found" }, status: :not_found unless @application
+    def show
+        @application = Current.user.applications.find_by(id: params[:id])
+        return render json: { message: "Not found" }, status: :not_found unless @application
+        render :show
+    end
 
-      if @application.update(application_params)
-          render :show
-      else
-          render json: @application.errors.full_messages, status: :unprocessable_entity
-      end
-  end
+    def create
+        @application = Current.user.applications.new(application_params)
 
-  def destroy
-    @application = Current.user.applications.find_by(id: params[:id])
-    return render json: { message: "Not found" }, status: :not_found unless @application
+        if @application.save
+        render :show
+        else
+        render json: @application.errors.full_messages, status: :unprocessable_entity
+        end
+    end
 
-    @application.destroy
-    render json: { message: "Deleted successfully" }
-  end
+    def sync
+        @isUpdated = AutomaticStatusUpdateService.requestUpdate()
+        render json: {isUpdated: @isUpdated}
+    end
 
-  private
+    def update
+        @application = Current.user.applications.find_by(id: params[:id])
+        return render json: { message: "Not found" }, status: :not_found unless @application
 
-  def application_params
-    params.require(:application).permit(:title, :notes, :status, :priority, :category)
-  end
+        if @application.update(application_params)
+            render :show
+        else
+            render json: @application.errors.full_messages, status: :unprocessable_entity
+        end
+    end
 
-  def set_bearer_token
-      @bearer_token = request.headers['Authorization']&.start_with?('Bearer')
-  end
+    def destroy
+        @application = Current.user.applications.find_by(id: params[:id])
+        return render json: { message: "Not found" }, status: :not_found unless @application
+
+        @application.destroy
+        render json: { message: "Deleted successfully" }
+    end
+
+    private
+
+    def application_params
+        params.require(:application).permit(:title, :notes, :status, :priority, :category)
+    end
+
+    def set_bearer_token
+        @bearer_token = request.headers['Authorization']&.start_with?('Bearer')
+    end
 end
