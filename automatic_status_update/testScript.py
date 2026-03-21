@@ -114,6 +114,6 @@ async def update_statuses(authorization: str = Header(None)):
     API_KEY = os.getenv("API_KEY")
     if authorization.split(" ")[1] == API_KEY:
         is_updated = main()
-        return {"Updated": is_updated, "Auth": authorization}
+        return {"Updated": is_updated}
     else :
         return {"Auth": "Not Authenticated"}
