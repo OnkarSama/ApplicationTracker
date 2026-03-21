@@ -31,7 +31,7 @@ class Api::ApplicationsController < ApplicationController
     end
 
     def sync
-        @isUpdated = AutomaticStatusUpdateService.requestUpdate()
+        @isUpdated = AutomaticStatusUpdateService.requestUpdate(notify: true)
         render json: {isUpdated: @isUpdated}
     end
 
@@ -63,4 +63,6 @@ class Api::ApplicationsController < ApplicationController
     def set_bearer_token
         @bearer_token = request.headers['Authorization']&.start_with?('Bearer')
     end
+
+    de
 end

@@ -27,6 +27,9 @@ class Api::SessionsController < ApplicationController
         if user = User.authenticate_by(params.permit(:email_address, :password))
             start_new_session_for user
             @token = JwtService.encode({ user_id: user.id })
+
+            AutomaticStatusUpdateJob.perform_later
+
             render :show
         else
             render json: {
