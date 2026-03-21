@@ -1,4 +1,4 @@
-module APIAuthentication
+module ApiAuthentication
     include ActiveSupport::Concern
 
     private

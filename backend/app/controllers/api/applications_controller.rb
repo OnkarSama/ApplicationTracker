@@ -1,5 +1,5 @@
 class Api::ApplicationsController < ApplicationController
-    include APIAuthentication
+    include ::ApiAuthentication
   before_action :require_authentication, only: [:index, :show, :create, :update, :destroy]
   before_action :require_api_authentication, only: [:sync]
   before_action :set_bearer_token
@@ -30,6 +30,10 @@ class Api::ApplicationsController < ApplicationController
         else
         render json: @application.errors.full_messages, status: :unprocessable_entity
         end
+    end
+
+    def credential
+
     end
 
     def sync
