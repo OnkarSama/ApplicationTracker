@@ -50,7 +50,13 @@ const endpoints = {
         return await api(`/applications/${id}`, {
             method : 'delete'
         })
-    }
+    },
+
+    syncApplications: async () => {
+        return await api(`/applications/sync`, {
+            method : 'post'
+        })
+    },
 
 }
 

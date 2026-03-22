@@ -1,17 +1,18 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { AuthGate } from "@/components/auth/AuthGate";
-import { Card, CardBody, CardHeader } from "@heroui/react";
+import {addToast, Button, Card, CardBody, CardHeader} from "@heroui/react";
 import type {ApplicationStatus, ApplicationPriority } from "@/components/dashboard/types";
 import ApplicationTable from "@/components/dashboard/ApplicationTable";
 import ApplicationTableHeader from "@/components/dashboard/ApplicationTableHeader";
 import { AddApplicationModal } from "@/components/dashboard/AddApplicationModal";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import {useMutation, useQuery, useQueryClient, QueryClient} from "@tanstack/react-query";
 import apiRouter from "@/api/router";
 
 import type {Application} from "@/api/application";
+import type {LoginPayload} from "@/api/session";
 
 
 const STATUSES: ApplicationStatus[] = ["Applied", "Interview", "Offer", "Rejected", "Wishlist"];
@@ -20,6 +21,8 @@ const PRIORITIES: ApplicationPriority[] = ["High", "Medium", "Low"];
 export default function DashboardPage() {
 
     const router = useRouter();
+
+    const queryClient = useQueryClient();
 
     const searchParams = useSearchParams();
     const q = searchParams.get("q") ?? "";
@@ -32,6 +35,37 @@ export default function DashboardPage() {
     const handleNewApplication = () => {
         router.push("/application/create");
     };
+
+    const syncMutation = useMutation({
+        mutationFn: () =>
+            apiRouter.applications.syncApplications(),
+        onSuccess: (response: any) => {
+            addToast({
+                title: "Success",
+                description: response.isUpdated ? "Statuses were updated!" : "No changes found",
+                timeout: 1000,
+                shouldShowTimeoutProgress: true,
+                variant: "solid",
+                color: "success",
+            });
+            queryClient.invalidateQueries({ queryKey: ["getApplications"] })
+        },
+        onError: (error: any) => {
+            addToast({
+                title: "Error",
+                description: Object.values(error.response.data.errors).flat().join(","),
+                timeout: 3000,
+                shouldShowTimeoutProgress: true,
+                variant: "solid",
+                color: "danger",
+            });
+        },
+    });
+
+    const handleSync = () => {
+        syncMutation.mutate();
+    };
+
 
 
     const stats = useMemo(() => ({
@@ -74,12 +108,16 @@ export default function DashboardPage() {
 
                     {/* Table card */}
                     <Card className="bg-foreground border border-slate-200 rounded-2xl shadow-sm">
-                        <CardHeader className="border-table_border px-4.5 py-3.5">
-                            <p className="text-table_subheading text-[13px] tracking-[0.04em] uppercase font-semibold m-0">
+                        <CardHeader className="flex items-center justify-between border-table_border px-4.5 py-3.5">
+                            <div className=" text-table_subheading text-[13px] tracking-[0.04em] uppercase font-semibold m-0">
                                 Applications
                                 {/*<span className="ml-2 text-table_subheading font-normal">({filtered.length})</span>*/}
                                 {/*{hasFilters && <span className="ml-2 text-indigo-500 text-[11px] font-semibold">● filtered</span>}*/}
-                            </p>
+                            </div>
+                            <Button
+                                onPress={handleSync}>
+                                update statuses
+                            </Button>
                         </CardHeader>
                         <CardBody>
                             <ApplicationTable applications={data}/>
