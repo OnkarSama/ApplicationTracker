@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 import os
-from fastapi import FastAPI, Header
+from fastapi import FastAPI, Header, Request
 
 fastapi = FastAPI()
 load_dotenv()
@@ -35,7 +35,7 @@ def get_apps(application_route, headers):
 
 def scrape_status(app):
 
-    app_info = app['credential']
+    app_info = app['application_credential']
 
     login_route = app_info['portal_link']
 
@@ -68,24 +68,15 @@ def is_status_change(new_status, old_status):
 
 def update_status(new_status,app_id, headers):
 
-    session_info = requests.patch(UPDATE_APPLICATIONS_API(app_id),json={"status" : new_status},headers=headers)
-    print(session_info.content)
+    requests.patch(UPDATE_APPLICATIONS_API(app_id),json={"status" : new_status},headers=headers)
 
-
-
-def main():
-
-    payload = {
-        'email_address': EMAIL,
-        'password': PASSWORD
-    }
+def main(apps):
 
     headers = {
         'Authorization': f'Bearer {os.getenv("API_KEY")}',
         'Content-Type': 'application/json'
     }
 
-    apps = get_apps(APPLICATIONS_API, headers)
 
     is_updated = False
     for app in apps:
@@ -96,11 +87,13 @@ def main():
 
     return is_updated
 
+
 @fastapi.post("/automaticStatusUpdate")
-async def update_statuses(authorization: str = Header(None)):
+async def update_statuses(request: Request, authorization: str = Header(None)):
     API_KEY = os.getenv("API_KEY")
     if authorization.split(" ")[1] == API_KEY:
-        is_updated = main()
+        body = await request.json()
+        is_updated = main(body)
         return {"Updated": is_updated}
-    else :
+    else:
         return {"Auth": "Not Authenticated"}
