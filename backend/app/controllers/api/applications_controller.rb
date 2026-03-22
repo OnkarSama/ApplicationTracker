@@ -1,7 +1,7 @@
 class Api::ApplicationsController < ApplicationController
     include ::ApiAuthentication
-  before_action :require_authentication, only: [:index, :show, :create, :update, :destroy]
-  before_action :require_api_authentication, only: [:sync]
+  before_action :require_authentication, only: [:index, :show, :create, :destroy, :update, :sync]
+  before_action :require_api_authentication, only: [:update]
   before_action :set_bearer_token
   wrap_parameters include: Application.attribute_names
 
@@ -33,13 +33,18 @@ class Api::ApplicationsController < ApplicationController
     end
 
     def sync
-        @isUpdated = AutomaticStatusUpdateService.requestUpdate(notify: true)
+        @isUpdated = AutomaticStatusUpdateService.requestUpdate(Current.user,true)
         render json: {isUpdated: @isUpdated}
     end
 
     def update
-        @application = Current.user.applications.find_by(id: params[:id])
-        return render json: { message: "Not found" }, status: :not_found unless @application
+        if Current.user.nil?
+            @application = Application.find_by(id: params[:id])
+            return render json: { message: "Not found" }, status: :not_found unless @application
+        else
+            @application = Current.user.applications.find_by(id: params[:id])
+            return render json: { message: "Not found" }, status: :not_found unless @application
+        end
 
         if @application.update(application_params)
             render :show
@@ -65,4 +70,5 @@ class Api::ApplicationsController < ApplicationController
     def set_bearer_token
         @bearer_token = request.headers['Authorization']&.start_with?('Bearer')
     end
+
 end

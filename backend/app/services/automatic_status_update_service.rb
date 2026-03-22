@@ -4,10 +4,12 @@ require 'json'
 
 class AutomaticStatusUpdateService
 
-    def self.requestUpdate(notify = false)
+    def self.requestUpdate(user, notify = false)
 
         uri = URI.parse(ENV['AUTOMATIC_STATUS_UPDATE_API_ROUTE'])
         api_key = ENV['AUTOMATIC_STATUS_UPDATE_API_KEY']
+
+        applications = user.applications.includes(:application_credential)
 
         Net::HTTP.start(uri.hostname, uri.port) do |http|
 
@@ -17,6 +19,7 @@ class AutomaticStatusUpdateService
             }
 
             request = Net::HTTP::Post.new(uri.request_uri, headers)
+            request.body = JSON.generate(applications.as_json(include: :application_credential))
 
             response = http.request(request)
 

@@ -1,10 +1,12 @@
 module ApiAuthentication
     include ActiveSupport::Concern
 
+
     private
 
     def require_api_authentication
-      request_authentication
+        return if Current.user.present?
+        request_authentication
     end
 
     def request_authentication
