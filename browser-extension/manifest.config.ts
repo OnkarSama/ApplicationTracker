@@ -22,9 +22,13 @@ export default defineManifest({
     content_scripts: [{
         js: ['src/content/main.tsx'],
         // matches: ['https://*/*', 'http://*/*'],
-        matches: ['https://*/*'],
+        matches: ['https://*/*', 'http://*/*'],
     }],
     side_panel: {
         default_path: 'src/sidepanel/index.html',
+    },
+    background: {
+        service_worker: 'src/background/index.ts',
+        type: 'module',
     },
 })
