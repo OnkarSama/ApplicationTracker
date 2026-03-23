@@ -22,6 +22,9 @@ Rails.application.routes.draw do
     resources :passwords, param: :token
     resource :signup, only: [:show, :create]
 
+    resource :verification, only: [] do
+      get :verify
+      post :resend
+    end
   end
-  get '*path', to: "static_pages#frontend_index", constraints: ->(req) { !req.path.start_with?('/rails/') }
 end

@@ -22,15 +22,15 @@ class Api::VerificationsController < ApplicationController
     render json: { message: "Email verified successfully." }, status: :ok
   end
 
-def resend
-  user = User.find_by(email_address: params[:email_address]&.downcase&.strip)
+    def resend
+      user = User.find_by(email_address: params[:email_address]&.downcase&.strip)
 
-  unless user.nil? || user.verified?
-    user.generate_verification_token!
-    UserMailer.verification_email(user).deliver_later
-  end
+      unless user.nil? || user.verified?
+        user.generate_verification_token!
+        UserMailer.verification_email(user).deliver_later
+      end
 
-  # always return the same message regardless
-  render json: { message: "If that email exists, a verification link has been sent." }
-end
+      # always return the same message regardless
+      render json: { message: "If that email exists, a verification link has been sent." }
+    end
 end

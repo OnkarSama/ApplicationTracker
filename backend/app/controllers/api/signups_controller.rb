@@ -13,8 +13,10 @@ class Api::SignupsController < ApplicationController
     @user = User.new(sign_up_params)
 
     if @user.save
-      start_new_session_for(@user)
-      render :create, status: :created
+        @user.generate_verification_token!
+        start_new_session_for(@user)
+        UserMailer.verification_email(@user).deliver_later
+        render :create, status: :created
     else
       render :create, status: :unprocessable_entity
     end
