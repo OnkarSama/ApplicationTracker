@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import * as THREE from "three";
 import Link from "next/link";
 import {
     Input, Button, Textarea, Modal, ModalContent,
@@ -274,8 +273,8 @@ function WorkRow({ exp, onEdit, onDelete }: { exp: WorkExperience; onEdit: () =>
                     <span style={{ fontFamily: "'DM Mono',monospace", fontSize: "0.58rem", letterSpacing: "0.1em", color: "rgba(0,212,255,0.6)", background: "rgba(0,212,255,0.07)", border: "1px solid rgba(0,212,255,0.15)", borderRadius: "999px", padding: "0.15rem 0.55rem" }}>{exp.employer}</span>
                 </div>
                 <span style={{ fontFamily: "'DM Mono',monospace", fontSize: "0.6rem", color: "rgba(160,200,240,0.38)", letterSpacing: "0.08em" }}>
-          {fmt(exp.start_date)} — {fmt(exp.end_date)}
-        </span>
+                    {fmt(exp.start_date)} — {fmt(exp.end_date)}
+                </span>
                 {exp.description && <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "0.78rem", color: "rgba(160,200,240,0.5)", margin: 0, marginTop: "0.25rem", lineHeight: 1.5 }}>{exp.description}</p>}
             </div>
             <div style={{ display: "flex", gap: "0.4rem", flexShrink: 0 }}>
@@ -347,7 +346,6 @@ function AddBtn({ label, onClick, accent }: { label: string; onClick: () => void
    MAIN PAGE
 ───────────────────────────────────────────── */
 export default function ProfileEditPage() {
-    const canvasRef = useRef<HTMLDivElement>(null);
 
     /* profile state */
     const [form,    setForm]    = useState<ProfileData>({ ...API_DATA });
@@ -357,7 +355,6 @@ export default function ProfileEditPage() {
     const [feedback, setFeedback] = useState<FeedbackState>(null);
 
     /* delete */
-    const [deleteInput,   setDeleteInput]   = useState("");
     const [deleteLoading, setDeleteLoading] = useState(false);
 
     /* work modal */
@@ -403,7 +400,7 @@ export default function ProfileEditPage() {
         });
     };
     const deleteEdu = (idx: number) => {
-        if (form.educations.length <= 1) return; // cannot remove last
+        if (form.educations.length <= 1) return;
         setForm(p => ({ ...p, educations: p.educations.filter((_, i) => i !== idx) }));
     };
 
@@ -423,121 +420,18 @@ export default function ProfileEditPage() {
 
     const handleClear = () => { setForm({ ...saved }); setErrors({}); setFeedback(null); };
 
-    const handleDelete = async (ev: React.FormEvent) => {
-        ev.preventDefault();
-        if (deleteInput !== "DELETE") return;
+    const handleDelete = async () => {
         setDeleteLoading(true);
         await new Promise(r => setTimeout(r, 1200)); // TODO: wire API
         setDeleteLoading(false);
         console.log("Account deletion requested");
     };
 
-    /* ── Three.js scene ── */
-    useEffect(() => {
-        if (!canvasRef.current) return;
-        const mount = canvasRef.current;
-        let w = window.innerWidth, h = window.innerHeight;
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.setSize(w, h); renderer.setClearColor(0x00020a, 1);
-        mount.appendChild(renderer.domElement);
-        const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x000000, 0.016);
-        const camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 300);
-        camera.position.set(0, 0, 34);
-        scene.add(new THREE.AmbientLight(0xffffff, 0.25));
-        const L1 = new THREE.PointLight(0x00d4ff, 3.5, 90); L1.position.set(-18, 12, 14); scene.add(L1);
-        const L2 = new THREE.PointLight(0x7c3aed, 3.0, 90); L2.position.set(18, -10, 10); scene.add(L2);
-        const L3 = new THREE.PointLight(0x10b981, 1.8, 70); L3.position.set(0, 18, -8);   scene.add(L3);
-        interface FM extends THREE.Mesh { userData: { vx: number; vy: number; vz: number; rx: number; ry: number; rz: number } }
-        const cards: FM[] = [];
-        [
-            { w: 5.5, h: 3.2, c: 0x00d4ff, x: -16, y: 5, z: -5 }, { w: 4.8, h: 2.8, c: 0x7c3aed, x: 15, y: -7, z: -3 },
-            { w: 6.0, h: 3.6, c: 0x10b981, x: -11, y: -9, z: 3 }, { w: 5.0, h: 3.0, c: 0x00d4ff, x: 17, y: 8, z: -7 },
-            { w: 4.4, h: 2.6, c: 0xf59e0b, x: 5, y: -13, z: 5 },  { w: 5.2, h: 3.1, c: 0x7c3aed, x: -20, y: -3, z: 1 },
-            { w: 4.6, h: 2.9, c: 0x10b981, x: 12, y: 13, z: -9 }, { w: 5.8, h: 3.4, c: 0xf59e0b, x: -6, y: 12, z: 3 },
-            { w: 4.2, h: 2.5, c: 0x00d4ff, x: 22, y: -2, z: -5 }, { w: 5.4, h: 3.3, c: 0x7c3aed, x: -8, y: -15, z: -3 },
-        ].forEach(({ w, h, c, x, y, z }) => {
-            const geo = new THREE.BoxGeometry(w, h, 0.06);
-            const card = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: c, roughness: 0.05, metalness: 0.9, transparent: true, opacity: 0.13 })) as FM;
-            card.position.set(x, y, z);
-            card.rotation.set((Math.random() - .5) * .5, (Math.random() - .5) * .5, (Math.random() - .5) * .3);
-            card.userData = { vx: (Math.random() - .5) * .006, vy: (Math.random() - .5) * .005, vz: (Math.random() - .5) * .003, rx: (Math.random() - .5) * .0015, ry: (Math.random() - .5) * .002, rz: (Math.random() - .5) * .001 };
-            card.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: c, transparent: true, opacity: 0.55 })));
-            scene.add(card); cards.push(card);
-        });
-        const ring1 = new THREE.Mesh(new THREE.TorusGeometry(14, .04, 8, 120), new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: .14 }));
-        ring1.rotation.x = Math.PI / 2.8; scene.add(ring1);
-        const ring2 = new THREE.Mesh(new THREE.TorusGeometry(20, .03, 8, 140), new THREE.MeshBasicMaterial({ color: 0x7c3aed, transparent: true, opacity: .1 }));
-        ring2.rotation.x = Math.PI / 3.5; ring2.rotation.z = 0.4; scene.add(ring2);
-        const orbColors = [0x10b981, 0x00d4ff, 0xf59e0b, 0xef4444, 0x7c3aed];
-        const orbs: THREE.Mesh[] = [];
-        for (let i = 0; i < 20; i++) {
-            const col = orbColors[i % orbColors.length];
-            const orb = new THREE.Mesh(new THREE.SphereGeometry(.12 + Math.random() * .18, 14, 14), new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: .9, roughness: 0, metalness: .3 }));
-            orb.position.set((Math.random() - .5) * 52, (Math.random() - .5) * 38, (Math.random() - .5) * 24);
-            (orb as any).userData = { vx: (Math.random() - .5) * .013, vy: (Math.random() - .5) * .01, pulse: Math.random() * Math.PI * 2 };
-            orbs.push(orb); scene.add(orb);
-        }
-        const grid = new THREE.GridHelper(120, 40, 0x00d4ff, 0x0a1628);
-        grid.position.y = -20;
-        (grid.material as THREE.Material).transparent = true; (grid.material as THREE.Material).opacity = 0.14;
-        scene.add(grid);
-        const sPos = new Float32Array(1500);
-        for (let i = 0; i < 1500; i++) sPos[i] = (Math.random() - .5) * 130;
-        const sg = new THREE.BufferGeometry(); sg.setAttribute("position", new THREE.BufferAttribute(sPos, 3));
-        scene.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, size: .08, transparent: true, opacity: .42 })));
-        const mouse = { x: 0, y: 0 };
-        const onMM = (e: MouseEvent) => { mouse.x = (e.clientX / window.innerWidth - .5) * 2; mouse.y = -(e.clientY / window.innerHeight - .5) * 2; };
-        window.addEventListener("mousemove", onMM);
-        const onResize = () => { w = window.innerWidth; h = window.innerHeight; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); };
-        window.addEventListener("resize", onResize);
-        let fId: number;
-        const clock = new THREE.Clock();
-        const animate = () => {
-            fId = requestAnimationFrame(animate);
-            const t = clock.getElapsedTime();
-            camera.position.x += (mouse.x * 3.5 - camera.position.x) * 0.03;
-            camera.position.y += (mouse.y * 2.2 - camera.position.y) * 0.03;
-            camera.lookAt(scene.position);
-            cards.forEach(c => {
-                const d = c.userData;
-                c.position.x += d.vx; c.position.y += d.vy; c.position.z += d.vz;
-                c.rotation.x += d.rx; c.rotation.y += d.ry; c.rotation.z += d.rz;
-                if (Math.abs(c.position.x) > 28) d.vx *= -1;
-                if (Math.abs(c.position.y) > 20) d.vy *= -1;
-                if (Math.abs(c.position.z) > 12) d.vz *= -1;
-            });
-            orbs.forEach(o => {
-                const d = (o as any).userData;
-                o.position.x += d.vx; o.position.y += d.vy;
-                if (Math.abs(o.position.x) > 30) d.vx *= -1;
-                if (Math.abs(o.position.y) > 22) d.vy *= -1;
-                (o.material as THREE.MeshStandardMaterial).emissiveIntensity = .55 + .5 * Math.sin(t * 2.1 + d.pulse);
-            });
-            ring1.rotation.z = t * .065; ring2.rotation.z = -t * .04; ring2.rotation.y = t * .022;
-            L1.position.x = Math.sin(t * .38) * 22; L1.position.y = Math.cos(t * .28) * 15;
-            L2.position.x = Math.cos(t * .33) * 22; L2.position.y = Math.sin(t * .26) * 13;
-            grid.position.z = (t * 1.8) % 3;
-            renderer.render(scene, camera);
-        };
-        animate();
-        return () => {
-            cancelAnimationFrame(fId);
-            window.removeEventListener("mousemove", onMM);
-            window.removeEventListener("resize", onResize);
-            renderer.dispose();
-            if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
-        };
-    }, []);
-
     const divider = <div style={{ height: 1, background: "rgba(255,255,255,0.055)" }} />;
 
     return (
-        <div style={{ position: "fixed", inset: 0, background: "linear-gradient(160deg,#00020a 0%,#020b18 45%,#050e1f 100%)", overflow: "hidden" }}>
-            <div ref={canvasRef} style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none" }} />
-            <div style={{ position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none", background: "radial-gradient(ellipse 80% 70% at 50% 50%,transparent 20%,rgba(0,2,10,0.72) 100%)" }} />
-            <div style={{ position: "absolute", inset: 0, zIndex: 2, pointerEvents: "auto", overflowY: "auto", display: "flex", flexDirection: "column" }}>
+        <div style={{ minHeight: "100vh", background: "linear-gradient(160deg,#00020a 0%,#020b18 45%,#050e1f 100%)" }}>
+            <div style={{ display: "flex", flexDirection: "column" }}>
 
                 {/* Nav */}
                 <nav className="pf-nav" style={{ position: "sticky", top: 0, zIndex: 10, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", boxSizing: "border-box" as const, backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", background: "rgba(0,2,10,0.6)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
@@ -554,7 +448,7 @@ export default function ProfileEditPage() {
                 </nav>
 
                 {/* Body */}
-                <div className="pf-body" style={{ flex: 1, boxSizing: "border-box" as const, display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                <div className="pf-body" style={{ boxSizing: "border-box" as const, display: "flex", flexDirection: "column", gap: "1.5rem" }}>
 
                     {/* Header */}
                     <div>
@@ -574,10 +468,8 @@ export default function ProfileEditPage() {
                     {/* Form */}
                     <form onSubmit={handleSave} noValidate style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
 
-                        {/* ── ROW 1: Identity + Contact ── */}
+                        {/* ROW 1: Identity + Contact */}
                         <div className="pf-grid-2" style={{ display: "grid", gap: "1.25rem" }}>
-
-                            {/* Identity */}
                             <Card eyebrow="Identity" title="Personal Details" accentColor="rgba(0,212,255,0.18)" dotColor="#00d4ff">
                                 <Input label="Preferred Name" placeholder="What should we call you?" value={form.preferred_name} onValueChange={v => setField("preferred_name")(v)} variant="bordered" classNames={iCN("cyan")} />
                                 <Input label="Pronouns" placeholder="he/him, she/her, they/them…" value={form.pronouns} onValueChange={v => setField("pronouns")(v)} variant="bordered" classNames={iCN("cyan")} />
@@ -591,7 +483,6 @@ export default function ProfileEditPage() {
                                 </div>
                             </Card>
 
-                            {/* Contact */}
                             <Card eyebrow="Contact" title="Contact Details" accentColor="rgba(124,58,237,0.18)" dotColor="#7c3aed">
                                 <Input label="Contact Email" type="email" placeholder="recruiter@email.com" value={form.contact_email} onValueChange={v => setField("contact_email")(v)} variant="bordered" isInvalid={!!errors.contact_email} errorMessage={errors.contact_email} classNames={iCN("violet")} />
                                 <Input label="Phone Number" type="tel" placeholder="+1 (555) 000-0000" value={form.phone_number} onValueChange={v => setField("phone_number")(v)} variant="bordered" isInvalid={!!errors.phone_number} errorMessage={errors.phone_number} classNames={iCN("violet")} />
@@ -610,7 +501,7 @@ export default function ProfileEditPage() {
                             </Card>
                         </div>
 
-                        {/* ── ROW 2: Links — full width ── */}
+                        {/* ROW 2: Links */}
                         <Card eyebrow="Links" title="Online Presence" accentColor="rgba(16,185,129,0.18)" dotColor="#10b981">
                             <div className="pf-grid-3" style={{ display: "grid", gap: "1rem" }}>
                                 <Input label="LinkedIn URL" placeholder="https://linkedin.com/in/yourprofile" value={form.linkedin_url} onValueChange={v => setField("linkedin_url")(v)} variant="bordered" isInvalid={!!errors.linkedin_url} errorMessage={errors.linkedin_url} classNames={iCN("emerald")}
@@ -622,10 +513,8 @@ export default function ProfileEditPage() {
                             </div>
                         </Card>
 
-                        {/* ── ROW 3: Work + Education ── */}
+                        {/* ROW 3: Work + Education */}
                         <div className="pf-grid-2" style={{ display: "grid", gap: "1.25rem" }}>
-
-                            {/* Work Experience */}
                             <Card eyebrow="Experience" title="Work Experience" accentColor="rgba(124,58,237,0.18)" dotColor="#7c3aed"
                                   action={<AddBtn label="Add" onClick={openAddWork} accent="#7c3aed" />}>
                                 {form.work_experiences.length === 0 ? (
@@ -639,7 +528,6 @@ export default function ProfileEditPage() {
                                 )}
                             </Card>
 
-                            {/* Education */}
                             <Card eyebrow="Education" title="Education" accentColor="rgba(16,185,129,0.18)" dotColor="#10b981"
                                   action={<AddBtn label="Add" onClick={openAddEdu} accent="#10b981" />}>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
@@ -650,7 +538,7 @@ export default function ProfileEditPage() {
                             </Card>
                         </div>
 
-                        {/* ── FORM ACTIONS ── */}
+                        {/* FORM ACTIONS */}
                         {feedback && <Feedback state={feedback} />}
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" as const, gap: "0.75rem" }}>
                             <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" as const }}>
@@ -663,23 +551,29 @@ export default function ProfileEditPage() {
                             </div>
                             {isDirty && (
                                 <span style={{ fontFamily: "'DM Mono',monospace", fontSize: "0.58rem", letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(245,158,11,0.65)", display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#f59e0b", display: "inline-block" }} />
-                  Unsaved changes
-                </span>
+                                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#f59e0b", display: "inline-block" }} />
+                                    Unsaved changes
+                                </span>
                             )}
                         </div>
 
-                        {/* ── DANGER ZONE ── */}
+                        {/* DANGER ZONE */}
                         {divider}
                         <Card eyebrow="Irreversible Actions" title="Danger Zone" accentColor="rgba(239,68,68,0.22)" dotColor="#ef4444">
-                            <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "0.875rem", color: "rgba(160,200,240,0.5)", lineHeight: 1.75, margin: 0 }}>
-                                Permanently delete your account and all associated data. This action{" "}
-                                <span style={{ color: "rgba(252,165,165,0.85)", fontWeight: 600 }}>cannot be undone</span>.
-                            </p>
-                            <Input label={<>Type <span style={{ color: "rgba(252,165,165,0.8)" }}>DELETE</span> to confirm</>} placeholder="DELETE" value={deleteInput} onValueChange={setDeleteInput} variant="bordered"
-                                   classNames={{ inputWrapper: "border-red-500/20 bg-white/[0.03] hover:border-red-500/40 data-[focus=true]:border-red-500/60", input: "text-red-300/90 placeholder:text-slate-700 font-mono text-sm", label: "text-slate-400 text-xs" }} />
-                            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                                <Button onPress={() => handleDelete({ preventDefault: () => {} } as any)} isLoading={deleteLoading} isDisabled={deleteInput !== "DELETE"} variant="bordered" className="border-red-500/30 bg-red-500/10 text-red-300 hover:bg-red-500/20 hover:border-red-500/55 font-bold tracking-wide disabled:opacity-35">
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" as const, gap: "1rem" }}>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                                    <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "0.875rem", color: "rgba(160,200,240,0.7)", fontWeight: 500 }}>Delete account</span>
+                                    <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "0.8rem", color: "rgba(160,200,240,0.38)", lineHeight: 1.5 }}>
+                                        Permanently removes your account and all data.{" "}
+                                        <span style={{ color: "rgba(252,165,165,0.7)" }}>This cannot be undone.</span>
+                                    </span>
+                                </div>
+                                <Button
+                                    onPress={handleDelete}
+                                    isLoading={deleteLoading}
+                                    variant="bordered"
+                                    className="border-red-500/30 bg-red-500/10 text-red-300 hover:bg-red-500/20 hover:border-red-500/55 font-bold tracking-wide flex-shrink-0"
+                                >
                                     Delete My Account
                                 </Button>
                             </div>
@@ -695,35 +589,35 @@ export default function ProfileEditPage() {
             <EduModal  isOpen={eduModal.isOpen}  onClose={eduModal.onClose}  initial={editEdu}  onSave={saveEdu}  isOnly={form.educations.length === 1} />
 
             <style>{`
-        .pf-nav      { padding: 1.2rem 2rem; }
-        .pf-body     { padding: 2.5rem 2rem 4rem; }
-        .pf-grid-2   { grid-template-columns: repeat(2,1fr); }
-        .pf-grid-3   { grid-template-columns: repeat(3,1fr); }
-        .pf-grid-2b  { grid-template-columns: repeat(2,1fr); }
-        .pf-modal-grid { grid-template-columns: repeat(2,1fr); }
+                .pf-nav      { padding: 1.2rem 2rem; }
+                .pf-body     { padding: 2.5rem 2rem 4rem; }
+                .pf-grid-2   { grid-template-columns: repeat(2,1fr); }
+                .pf-grid-3   { grid-template-columns: repeat(3,1fr); }
+                .pf-grid-2b  { grid-template-columns: repeat(2,1fr); }
+                .pf-modal-grid { grid-template-columns: repeat(2,1fr); }
 
-        @media (max-width: 900px) {
-          .pf-nav  { padding: 1rem 1.25rem; }
-          .pf-body { padding: 2rem 1.25rem 3rem; }
-          .pf-grid-3 { grid-template-columns: repeat(2,1fr); }
-        }
-        @media (max-width: 640px) {
-          .pf-nav        { padding: 0.85rem 1rem; }
-          .pf-nav-link   { font-size: 0.75rem !important; padding: 0.4rem 0.9rem !important; }
-          .pf-body       { padding: 1.25rem 1rem 3rem; gap: 1rem; }
-          .pf-grid-2     { grid-template-columns: 1fr !important; }
-          .pf-grid-3     { grid-template-columns: 1fr !important; }
-          .pf-grid-2b    { grid-template-columns: 1fr !important; }
-          .pf-modal-grid { grid-template-columns: 1fr !important; }
-          .pf-card       { padding: 1.25rem !important; }
-          .pf-h1         { font-size: 1.5rem !important; }
-        }
-        @media (max-width: 375px) {
-          .pf-nav  { padding: 0.75rem; }
-          .pf-body { padding: 1rem 0.75rem 2.5rem; }
-          .pf-card { padding: 1rem !important; }
-        }
-      `}</style>
+                @media (max-width: 900px) {
+                    .pf-nav  { padding: 1rem 1.25rem; }
+                    .pf-body { padding: 2rem 1.25rem 3rem; }
+                    .pf-grid-3 { grid-template-columns: repeat(2,1fr); }
+                }
+                @media (max-width: 640px) {
+                    .pf-nav        { padding: 0.85rem 1rem; }
+                    .pf-nav-link   { font-size: 0.75rem !important; padding: 0.4rem 0.9rem !important; }
+                    .pf-body       { padding: 1.25rem 1rem 3rem; gap: 1rem; }
+                    .pf-grid-2     { grid-template-columns: 1fr !important; }
+                    .pf-grid-3     { grid-template-columns: 1fr !important; }
+                    .pf-grid-2b    { grid-template-columns: 1fr !important; }
+                    .pf-modal-grid { grid-template-columns: 1fr !important; }
+                    .pf-card       { padding: 1.25rem !important; }
+                    .pf-h1         { font-size: 1.5rem !important; }
+                }
+                @media (max-width: 375px) {
+                    .pf-nav  { padding: 0.75rem; }
+                    .pf-body { padding: 1rem 0.75rem 2.5rem; }
+                    .pf-card { padding: 1rem !important; }
+                }
+            `}</style>
         </div>
     );
 }
