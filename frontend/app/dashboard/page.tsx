@@ -6,6 +6,7 @@ import type {ApplicationStatus, ApplicationPriority } from "@/components/dashboa
 import ApplicationTable from "@/components/dashboard/ApplicationTable";
 import ApplicationTableHeader from "@/components/dashboard/ApplicationTableHeader";
 import { AddApplicationModal } from "@/components/dashboard/AddApplicationModal";
+import EmptyDashboard from "@/components/dashboard/ZeroState"; // ← new
 
 import { useRouter, useSearchParams } from "next/navigation";
 import {useMutation, useQuery, useQueryClient, QueryClient} from "@tanstack/react-query";
@@ -93,6 +94,8 @@ export default function DashboardPage() {
         );
     }
 
+    const isEmpty = !isLoading && data.length === 0;
+
     return (
         <AuthGate>
             {/* Import fonts via a link tag in _document or layout, or keep a minimal style for @import only */}
@@ -114,13 +117,18 @@ export default function DashboardPage() {
                                 {/*<span className="ml-2 text-table_subheading font-normal">({filtered.length})</span>*/}
                                 {/*{hasFilters && <span className="ml-2 text-indigo-500 text-[11px] font-semibold">● filtered</span>}*/}
                             </div>
-                            <Button
-                                onPress={handleSync}>
-                                update statuses
-                            </Button>
+                            {/* Hide sync button when list is empty — nothing to sync */}
+                            {!isEmpty && (
+                                <Button onPress={handleSync}>
+                                    update statuses
+                                </Button>
+                            )}
                         </CardHeader>
                         <CardBody>
-                            <ApplicationTable applications={data}/>
+                            {isEmpty
+                                ? <EmptyDashboard />               // ← swaps in when list is empty
+                                : <ApplicationTable applications={data}/>
+                            }
                         </CardBody>
                     </Card>
 
