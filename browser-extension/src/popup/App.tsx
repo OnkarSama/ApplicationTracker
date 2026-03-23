@@ -23,6 +23,7 @@ export default function App() {
             if (savedView && savedView !== 'login') {
                 setCurrentView(savedView)
                 if (savedView === 'appDetail' && result.selectedApp) {
+                    // @ts-ignore
                     setSelectedApp(result.selectedApp)
                 }
             } else {
