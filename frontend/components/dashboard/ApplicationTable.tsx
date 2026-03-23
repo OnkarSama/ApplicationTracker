@@ -123,6 +123,7 @@ export default function ApplicationTable({ applications = [] }: Props) {
     console.log("Applications in table:", applications);
 
     /* ---------- TABLE ---------- */
+    // @ts-ignore
     return (
         <>
             <div className="relative overflow-x-auto">
@@ -203,7 +204,9 @@ export default function ApplicationTable({ applications = [] }: Props) {
                                 </TableCell>
 
                                 <TableCell>
-                                    <span className="text-table_text line-clamp-2">{app.notes}</span>
+                                    <span className="text-table_text line-clamp-2">
+                                        {app.notes?.at(-1)?.content ?? "—"}
+                                    </span>
                                 </TableCell>
 
                                 <TableCell>

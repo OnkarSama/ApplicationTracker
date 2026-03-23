@@ -14,12 +14,12 @@ export type ApplicationPayload = {
 export type Application = {
     id: number
     title: string
-    notes: string
+    notes: { id: number; content: string; created_at: string }[]
     status: string
     priority: number
     category: string
+    created_at: string
 }
-
 const endpoints = {
 
     getApplications: async (q?: string) => {
