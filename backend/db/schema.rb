@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_15_210235) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_23_043441) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -78,7 +78,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_15_210235) do
   create_table "applications", force: :cascade do |t|
     t.string "category"
     t.datetime "created_at", null: false
-    t.text "notes"
     t.integer "priority"
     t.decimal "salary", precision: 12, scale: 2
     t.string "status"
@@ -99,6 +98,34 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_15_210235) do
     t.integer "start_year"
     t.datetime "updated_at", null: false
     t.index ["applicant_profile_id"], name: "index_educations_on_applicant_profile_id"
+  end
+
+  create_table "interviews", force: :cascade do |t|
+    t.bigint "application_id", null: false
+    t.datetime "created_at", null: false
+    t.string "interview_type"
+    t.text "notes"
+    t.datetime "scheduled_at"
+    t.datetime "updated_at", null: false
+    t.index ["application_id"], name: "index_interviews_on_application_id"
+  end
+
+  create_table "notes", force: :cascade do |t|
+    t.bigint "application_id", null: false
+    t.text "content"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["application_id"], name: "index_notes_on_application_id"
+  end
+
+  create_table "notifications", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "message"
+    t.string "notification_type"
+    t.boolean "read"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -142,6 +169,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_15_210235) do
   add_foreign_key "application_credentials", "applications"
   add_foreign_key "applications", "users"
   add_foreign_key "educations", "applicant_profiles"
+  add_foreign_key "interviews", "applications"
+  add_foreign_key "notes", "applications"
+  add_foreign_key "notifications", "users"
   add_foreign_key "sessions", "users"
   add_foreign_key "work_experiences", "applicant_profiles"
 end

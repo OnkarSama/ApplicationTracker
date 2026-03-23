@@ -6,8 +6,12 @@ Rails.application.routes.draw do
             post :sync
         end
       resource :application_credential
-
+      resources :notes, only: [:index, :create, :update, :destroy]
+      resources :interviews, only: [:index, :create, :destroy]
     end
+
+    resources :notifications, only: [:index, :update]
+
     resource :applicant_profile do
         resources :educations
         resources :work_experiences
@@ -26,5 +30,6 @@ Rails.application.routes.draw do
       get :verify
       post :resend
     end
+
   end
 end
