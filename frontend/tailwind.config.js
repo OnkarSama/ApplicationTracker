@@ -14,16 +14,9 @@ const config = {
             fontFamily: {
                 sans: ["DM Sans", "sans-serif"],
                 mono: ["var(--font-mono)"],
-                sora: ["Sora", "sans-serif"],
-            },
 
-            backgroundImage: {
-                // bg-button-gradient → "Add Application" button
-                'button-gradient': 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                'card-glow': 'radial-gradient(circle at top, rgba(99,102,241,.25), transparent)',
-                'hero-gradient': 'linear-gradient(90deg, hsl(var(--heroui-info)) 0%, hsl(var(--heroui-primary)) 40%, hsl(var(--heroui-secondary)) 70%, hsl(var(--heroui-success)) 100%)',
-                'radial-gradient': 'radial-gradient(ellipse 70% 60% at 50% 50%, transparent 28%, hsl(var(--heroui-background) / 0.72) 100%)',
-                'linear-gradient' : 'linear-gradient(to top, hsl(var(--heroui-background) / 0.88) 0%, transparent 100%)'
+
+                sora: ["Sora", "sans-serif"],
             },
         },
     },
@@ -39,91 +32,65 @@ const config = {
             themes: {
                 dark: {
                     colors: {
-                        // Layout
-                        background: "#020617",
-                        foreground: "#f8fafc",
+                        background: "#0B0F1F",
+                        foreground: "#F5F5F7",
+                        card: "#121831",
+                        card_hover: "#1A2133",
+                        primary: "#6366F1",
+                        primary_hover: "#4F46E5",
+                        secondary: "#9F7AEA",
+                        accent: "#F472B6",
+                        border: "#2E344E",
+                        heading: "#FFFFFF",
+                        subheading: "#CBD5E1",
+                        text: "#E0E7FF",
+                        muted: "#94A3B8",
 
-                        // Surfaces
-                        card: "#0f172a",         // bg-heroui-card
-                        card_hover: "#111827",
+                        // ── Table ──
+                        table_bg: "#1F2937",       // dark gray for table rows
+                        table_text: "#F5F5F7",     // off-white text
+                        table_subheading: "#94A3B8",
+                        table_border: "#374151",
+                        table_hover: "#2C3345",    // darker hover for row clarity
 
-                        // Brand — #6366f1 indigo used on Applied stat, pills, filtered badge
-                        primary: "#6366f1",
-                        primary_hover: "#4f46e5",
-
-                        // Purple accent — #8b5cf6 used in button gradient end-stop
-                        secondary: "#8b5cf6",
-                        accent: "#f472b6",
-
-                        // Borders — #1e293b (dark) / #e2e8f0 (light)
-                        border: "#1e293b",
-
-                        // Typography
-                        heading: "#ffffff",       // text-heroui-heading  → h1, Total stat
-                        subheading: "#cbd5e1",
-                        text: "#e2e8f0",          // text-heroui-text     → Input text
-                        muted: "#64748b",          // text-heroui-muted    → labels, placeholders
-
-                        // Table (INVERTED — light surface inside dark app)
-                        table_bg: "#ffffff",
-                        table_text: "#0f172a",        // strong dark text for contrast
-                        table_subheading: "#334155",  // softer slate
-                        table_border: "#e2e8f0",
-                        table_hover: "#f1f5f9",
-
-                        // Status colours
-                        success: "#10b981",        // text-heroui-success  → Offers stat
-                        warning: "#f59e0b",         // text-heroui-warning  → Interviews stat
-                        danger: "#ef4444",
-                        info: "#38bdf8",
-
-                        // Active pill background (#ede9fe is light-only; dark gets a tinted variant)
-                        pill_active: "#3730a3",
+                        // ── Status / Pills ──
+                        success: "#10B981",
+                        warning: "#FBBF24",
+                        danger: "#EF4444",
+                        info: "#3B82F6",
+                        pill_active: "#4F46E5",
                     }
                 },
 
                 light: {
                     colors: {
-                        // Layout
-                        background: "#f4f6f9",    // bg-heroui-background → page bg
-                        foreground: "#0f172a",
+                        background: "#F3F4F6",
+                        foreground: "#0F172A",
+                        card: "#F9FAFB",
+                        card_hover: "#E5E7EB",
+                        primary: "#6366F1",
+                        primary_hover: "#4F46E5",
+                        secondary: "#8B5CF6",
+                        accent: "#D946EF",
+                        border: "#D1D5DB",
+                        heading: "#0F172A",
+                        subheading: "#475569",
+                        text: "#1E293B",
+                        muted: "#64748B",
 
-                        // Surfaces
-                        card: "#ffffff",           // bg-heroui-card       → stat cards, search input, pills
-                        card_hover: "#f1f5f9",
+                        // ── Table ──
+                        table_bg: "#E0E0E0",       // medium-light gray for table rows
+                        table_text: "#0F172A",     // strong dark text
+                        table_subheading: "#475569",
+                        table_border: "#CBD5E1",
+                        table_hover: "#D1D5DB",    // subtle hover effect
 
-                        // Brand — #6366f1 indigo
-                        primary: "#6366f1",        // text-heroui-primary  → Applied stat, active pills, filtered badge
-                        primary_hover: "#4f46e5",
-
-                        // Purple — #8b5cf6 (button gradient end, accent)
-                        secondary: "#8b5cf6",
-                        accent: "#8b5cf6",
-
-                        // Borders — #e2e8f0
-                        border: "#e2e8f0",         // border-heroui-border → cards, divider, pills, input
-
-                        // Typography
-                        heading: "#0f172a",        // text-heroui-heading  → h1, Total stat
-                        subheading: "#334155",
-                        text: "#1e293b",            // text-heroui-text     → Input text
-                        muted: "#94a3b8",           // text-heroui-muted    → labels, sub-text, placeholders
-
-                        // Table (INVERTED — dark surface inside light app)
-                        table_bg: "#020617",          // same as dark background
-                        table_text: "#f8fafc",        // strong light text
-                        table_subheading: "#cbd5e1",  // soft slate-300
-                        table_border: "#1e293b",
-                        table_hover: "#0f172a",
-
-                        // Status colours
-                        success: "#10b981",         // text-heroui-success  → Offers stat
-                        warning: "#f59e0b",          // text-heroui-warning  → Interviews stat
-                        danger: "#ef4444",
-                        info: "#0284c7",
-
-                        // Active pill background — bg-[#ede9fe] in page (violet-100)
-                        pill_active: "#ede9fe",
+                        // ── Status / Pills ──
+                        success: "#10B981",
+                        warning: "#FBBF24",
+                        danger: "#EF4444",
+                        info: "#3B82F6",
+                        pill_active: "#D8B4FE",
                     }
                 }
             }

@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import {
     Input, Button, Textarea, Modal, ModalContent,
     ModalHeader, ModalBody, ModalFooter, useDisclosure,
     Checkbox,
 } from "@heroui/react";
+import apiRouter from "@/api/router";
 
 /* ─────────────────────────────────────────────
-   TYPES — mirror backend JSON
+   TYPES
 ───────────────────────────────────────────── */
 interface WorkExperience {
     id?: number;
@@ -54,27 +55,12 @@ interface ProfileData {
 
 type FeedbackState = { kind: "success" | "error"; msg: string } | null;
 
-/* ─────────────────────────────────────────────
-   MOCK BACKEND DATA
-───────────────────────────────────────────── */
-/* TODO: replace with your real API fetch — e.g. apiRouter.profile.get() */
-const API_DATA: ProfileData = {
-    preferred_name: "",
-    contact_email: "",
-    phone_number: "",
-    linkedin_url: "",
-    portfolio_url: "",
-    github_url: "",
-    bio: "",
-    pronouns: "",
-    nationality: "",
-    date_of_birth: "",
-    address_line_1: "",
-    address_line_2: "",
-    city: "",
-    state: "",
-    zip_code: "",
-    country: "",
+const EMPTY_PROFILE: ProfileData = {
+    preferred_name: "", contact_email: "", phone_number: "",
+    linkedin_url: "", portfolio_url: "", github_url: "",
+    bio: "", pronouns: "", nationality: "", date_of_birth: "",
+    address_line_1: "", address_line_2: "", city: "", state: "",
+    zip_code: "", country: "",
     work_experiences: [],
     educations: [{ institution: "", degree: "", area_of_study: "", start_year: "", end_year: "", gpa: "" }],
 };
@@ -105,24 +91,43 @@ function blankEdu(): Education {
 }
 
 /* ─────────────────────────────────────────────
-   SHARED HeroUI classNames
+   HEROUI INPUT classNames — accent variants
 ───────────────────────────────────────────── */
-const iCN = (accent: "cyan" | "violet" | "amber" | "emerald" | "red" = "cyan") => {
-    const ring    = { cyan: "data-[focus=true]:border-cyan-500/60",   violet: "data-[focus=true]:border-violet-500/60", amber: "data-[focus=true]:border-amber-400/55",   emerald: "data-[focus=true]:border-emerald-500/55", red: "data-[focus=true]:border-red-500/60"   }[accent];
-    const hover   = { cyan: "hover:border-cyan-500/35",               violet: "hover:border-violet-500/35",             amber: "hover:border-amber-400/30",               emerald: "hover:border-emerald-400/30",             red: "hover:border-red-500/35"               }[accent];
+type Accent = "cyan" | "violet" | "amber" | "emerald" | "red";
+
+const iCN = (accent: Accent = "cyan") => {
+    const ring: Record<Accent, string> = {
+        cyan:    "data-[focus=true]:border-cyan-500/60",
+        violet:  "data-[focus=true]:border-violet-500/60",
+        amber:   "data-[focus=true]:border-amber-400/55",
+        emerald: "data-[focus=true]:border-emerald-500/55",
+        red:     "data-[focus=true]:border-red-500/60",
+    };
+    const hover: Record<Accent, string> = {
+        cyan:    "hover:border-cyan-500/35",
+        violet:  "hover:border-violet-500/35",
+        amber:   "hover:border-amber-400/30",
+        emerald: "hover:border-emerald-400/30",
+        red:     "hover:border-red-500/35",
+    };
     return {
-        inputWrapper: `border-white/10 bg-white/[0.04] ${hover} ${ring} backdrop-blur-sm`,
-        input:        "text-slate-100 placeholder:text-slate-600 text-sm",
-        label:        "text-slate-400 text-xs",
-        errorMessage: "text-red-400/80 text-xs",
-        description:  "text-slate-600 text-xs mt-0.5",
+        inputWrapper: `border-border/50 bg-foreground/[0.04] ${hover[accent]} ${ring[accent]} backdrop-blur-sm`,
+        input:        "text-foreground placeholder:text-muted text-sm",
+        label:        "text-muted text-xs",
+        errorMessage: "text-danger/80 text-xs",
+        description:  "text-muted/60 text-xs mt-0.5",
     };
 };
+
 const taCN = (accent: "cyan" | "violet" = "cyan") => ({
-    inputWrapper: `border-white/10 bg-white/[0.04] ${{ cyan: "hover:border-cyan-500/35 data-[focus=true]:border-cyan-500/60", violet: "hover:border-violet-500/35 data-[focus=true]:border-violet-500/60" }[accent]} backdrop-blur-sm`,
-    input:        "text-slate-100 placeholder:text-slate-600 text-sm",
-    label:        "text-slate-400 text-xs",
-    errorMessage: "text-red-400/80 text-xs",
+    inputWrapper: `border-border/50 bg-foreground/[0.04] ${
+        accent === "cyan"
+            ? "hover:border-cyan-500/35 data-[focus=true]:border-cyan-500/60"
+            : "hover:border-violet-500/35 data-[focus=true]:border-violet-500/60"
+    } backdrop-blur-sm`,
+    input:        "text-foreground placeholder:text-muted text-sm",
+    label:        "text-muted text-xs",
+    errorMessage: "text-danger/80 text-xs",
 });
 
 /* ─────────────────────────────────────────────
@@ -132,7 +137,11 @@ function Feedback({ state }: { state: FeedbackState }) {
     if (!state) return null;
     const ok = state.kind === "success";
     return (
-        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", padding: "0.7rem 1rem", borderRadius: "10px", background: ok ? "rgba(16,185,129,0.07)" : "rgba(239,68,68,0.07)", border: `1px solid ${ok ? "rgba(16,185,129,0.22)" : "rgba(239,68,68,0.22)"}`, fontFamily: "'DM Sans',sans-serif", fontSize: "0.85rem", color: ok ? "rgba(110,231,183,0.92)" : "rgba(252,165,165,0.92)" }}>
+        <div className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-[family-name:var(--font-dm-sans)] ${
+            ok
+                ? "bg-success/[0.07] border border-success/22 text-success/92"
+                : "bg-danger/[0.07] border border-danger/22 text-danger/92"
+        }`}>
             {ok
                 ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>}
@@ -142,32 +151,157 @@ function Feedback({ state }: { state: FeedbackState }) {
 }
 
 /* ─────────────────────────────────────────────
-   SECTION CARD SHELL
+   SECTION CARD
 ───────────────────────────────────────────── */
-function Card({ accentColor, dotColor, eyebrow, title, children, action }: {
-    accentColor: string; dotColor: string; eyebrow: string; title: string;
-    children: React.ReactNode; action?: React.ReactNode;
+type AccentBorder = "cyan" | "violet" | "emerald";
+const cardBorder: Record<AccentBorder, string> = {
+    cyan:    "border-cyan-500/18",
+    violet:  "border-violet-500/18",
+    emerald: "border-emerald-500/18",
+};
+const dotBg: Record<AccentBorder, string> = {
+    cyan:    "bg-cyan-400 shadow-[0_0_6px_theme(colors.cyan.400)]",
+    violet:  "bg-violet-500 shadow-[0_0_6px_theme(colors.violet.500)]",
+    emerald: "bg-emerald-500 shadow-[0_0_6px_theme(colors.emerald.500)]",
+};
+const eyebrowColor: Record<AccentBorder, string> = {
+    cyan:    "text-cyan-400/55 border-cyan-400/12 bg-cyan-400/[0.04]",
+    violet:  "text-violet-400/55 border-violet-400/12 bg-violet-400/[0.04]",
+    emerald: "text-emerald-400/55 border-emerald-400/12 bg-emerald-400/[0.04]",
+};
+
+function Card({ accent = "cyan", eyebrow, title, children, action }: {
+    accent?: AccentBorder;
+    eyebrow: string;
+    title: string;
+    children: React.ReactNode;
+    action?: React.ReactNode;
 }) {
     return (
-        <div className="pf-card" style={{ background: "rgba(4,12,28,0.82)", border: `1px solid ${accentColor}`, borderRadius: "16px", backdropFilter: "blur(28px)", WebkitBackdropFilter: "blur(28px)", padding: "1.75rem", boxShadow: "0 0 60px rgba(0,212,255,0.03),inset 0 1px 0 rgba(255,255,255,0.05)", display: "flex", flexDirection: "column" as const, gap: "1.1rem" }}>
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem" }}>
+        <div className={`flex flex-col gap-4 bg-card border ${cardBorder[accent]} rounded-2xl backdrop-blur-[28px] p-7 shadow-[0_0_60px_rgba(0,212,255,0.03),inset_0_1px_0_rgba(255,255,255,0.05)]`}>
+            <div className="flex items-start justify-between gap-4">
                 <div>
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", fontFamily: "'DM Mono',monospace", fontSize: "0.58rem", letterSpacing: "0.2em", color: "rgba(0,212,255,0.55)", textTransform: "uppercase" as const, marginBottom: "0.45rem", border: "1px solid rgba(0,212,255,0.12)", padding: "0.22rem 0.65rem", borderRadius: "999px", background: "rgba(0,212,255,0.04)" }}>
-                        <span style={{ width: 5, height: 5, borderRadius: "50%", background: dotColor, boxShadow: `0 0 5px ${dotColor}`, display: "inline-block", flexShrink: 0 }} />
+                    <div className={`inline-flex items-center gap-1.5 font-mono text-[0.58rem] tracking-[0.2em] uppercase mb-1.5 border px-2.5 py-[0.22rem] rounded-full ${eyebrowColor[accent]}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotBg[accent]}`} />
                         {eyebrow}
                     </div>
-                    <h2 style={{ fontFamily: "'Syne','Helvetica Neue',sans-serif", fontWeight: 800, fontSize: "1.1rem", letterSpacing: "-0.02em", color: "#f0f8ff", margin: 0 }}>{title}</h2>
+                    <h2 className="font-[family-name:var(--font-syne)] font-extrabold text-[1.1rem] tracking-tight text-heading m-0">{title}</h2>
                 </div>
                 {action}
             </div>
-            <div style={{ height: 1, background: "rgba(255,255,255,0.055)" }} />
+            <div className="h-px bg-border/30" />
             {children}
         </div>
     );
 }
 
 /* ─────────────────────────────────────────────
-   WORK EXPERIENCE MODAL
+   ICON BUTTON
+───────────────────────────────────────────── */
+function IconBtn({ onClick, title, children, disabled, variant = "default" }: {
+    onClick: () => void; title: string; children: React.ReactNode;
+    disabled?: boolean; variant?: "default" | "danger" | "emerald";
+}) {
+    const colors: Record<string, string> = {
+        default: "text-cyan-400/50 hover:text-cyan-400 hover:border-cyan-400/27 hover:bg-cyan-400/[0.07]",
+        danger:  "text-red-400/40  hover:text-red-400  hover:border-red-400/27  hover:bg-red-400/[0.07]",
+        emerald: "text-emerald-500/50 hover:text-emerald-400 hover:border-emerald-400/27 hover:bg-emerald-400/[0.07]",
+    };
+    return (
+        <button
+            type="button"
+            title={title}
+            onClick={disabled ? undefined : onClick}
+            className={`flex items-center justify-center p-1.5 bg-foreground/[0.04] border border-border/40 rounded-md transition-all duration-[180ms] ${
+                disabled ? "opacity-30 cursor-not-allowed" : `cursor-pointer ${colors[variant]}`
+            }`}
+        >
+            {children}
+        </button>
+    );
+}
+
+/* ─────────────────────────────────────────────
+   ADD BUTTON (dashed)
+───────────────────────────────────────────── */
+function AddBtn({ label, onClick, accent }: { label: string; onClick: () => void; accent: "violet" | "emerald" }) {
+    const cls: Record<string, string> = {
+        violet:  "text-violet-500 border-violet-500/33 hover:bg-violet-500/[0.05] hover:border-violet-500/60",
+        emerald: "text-emerald-500 border-emerald-500/33 hover:bg-emerald-500/[0.05] hover:border-emerald-500/60",
+    };
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className={`flex items-center gap-1.5 font-mono text-[0.6rem] tracking-[0.14em] uppercase border border-dashed rounded-lg px-4 py-2 w-full cursor-pointer transition-all duration-200 ${cls[accent]}`}
+        >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            {label}
+        </button>
+    );
+}
+
+/* ─────────────────────────────────────────────
+   WORK EXPERIENCE ROW
+───────────────────────────────────────────── */
+function WorkRow({ exp, onEdit, onDelete }: { exp: WorkExperience; onEdit: () => void; onDelete: () => void }) {
+    const fmt = (d: string | null) => d ? d.slice(0, 7).replace("-", "/") : "Present";
+    return (
+        <div className="flex items-start justify-between gap-4 p-4 bg-foreground/[0.025] rounded-xl border border-border/30">
+            <div className="flex flex-col gap-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-[family-name:var(--font-syne)] font-bold text-[0.9rem] text-heading">{exp.job_title}</span>
+                    <span className="font-mono text-[0.58rem] tracking-[0.1em] text-cyan-400/60 bg-cyan-400/[0.07] border border-cyan-400/15 rounded-full px-2 py-0.5">{exp.employer}</span>
+                </div>
+                <span className="font-mono text-[0.6rem] text-muted/40 tracking-[0.08em]">
+          {fmt(exp.start_date)} — {fmt(exp.end_date)}
+        </span>
+                {exp.description && (
+                    <p className="text-[0.78rem] text-muted/50 mt-1 leading-relaxed">{exp.description}</p>
+                )}
+            </div>
+            <div className="flex gap-1.5 shrink-0">
+                <IconBtn onClick={onEdit} title="Edit" variant="default">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </IconBtn>
+                <IconBtn onClick={onDelete} title="Delete" variant="danger">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </IconBtn>
+            </div>
+        </div>
+    );
+}
+
+/* ─────────────────────────────────────────────
+   EDUCATION ROW
+───────────────────────────────────────────── */
+function EduRow({ edu, onEdit, onDelete, isOnly }: { edu: Education; onEdit: () => void; onDelete: () => void; isOnly: boolean }) {
+    return (
+        <div className="flex items-start justify-between gap-4 p-4 bg-foreground/[0.025] rounded-xl border border-border/30">
+            <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-[family-name:var(--font-syne)] font-bold text-[0.9rem] text-heading">{edu.institution}</span>
+                    {edu.gpa && (
+                        <span className="font-mono text-[0.58rem] tracking-[0.1em] text-emerald-400/70 bg-emerald-500/[0.07] border border-emerald-500/18 rounded-full px-2 py-0.5">GPA {edu.gpa}</span>
+                    )}
+                </div>
+                <span className="text-[0.82rem] text-muted/65">{edu.degree} in {edu.area_of_study}</span>
+                <span className="font-mono text-[0.6rem] text-muted/35 tracking-[0.08em]">{edu.start_year} — {edu.end_year}</span>
+            </div>
+            <div className="flex gap-1.5 shrink-0">
+                <IconBtn onClick={onEdit} title="Edit" variant="emerald">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </IconBtn>
+                <IconBtn onClick={onDelete} title="Delete" variant="danger" disabled={isOnly}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </IconBtn>
+            </div>
+        </div>
+    );
+}
+
+/* ─────────────────────────────────────────────
+   WORK MODAL
 ───────────────────────────────────────────── */
 function WorkModal({ isOpen, onClose, initial, onSave }: {
     isOpen: boolean; onClose: () => void;
@@ -181,31 +315,38 @@ function WorkModal({ isOpen, onClose, initial, onSave }: {
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="2xl" classNames={{
-            base: "bg-[#040c1c] border border-white/10 backdrop-blur-2xl",
-            header: "border-b border-white/[0.06]", footer: "border-t border-white/[0.06]",
+            base: "bg-card border border-border/50 backdrop-blur-2xl",
+            header: "border-b border-border/30",
+            footer: "border-t border-border/30",
         }}>
             <ModalContent>
-                <ModalHeader style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, color: "#f0f8ff", fontSize: "1.1rem" }}>
+                <ModalHeader className="font-[family-name:var(--font-syne)] font-extrabold text-heading text-[1.1rem]">
                     {initial?.id ? "Edit Experience" : "Add Experience"}
                 </ModalHeader>
-                <ModalBody style={{ display: "flex", flexDirection: "column", gap: "0.9rem", paddingTop: "1.25rem", paddingBottom: "1.25rem" }}>
-                    <div className="pf-modal-grid" style={{ display: "grid", gap: "0.9rem" }}>
+                <ModalBody className="flex flex-col gap-3.5 pt-5 pb-5">
+                    <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
                         <Input label="Employer" placeholder="Google" value={w.employer} onValueChange={set("employer")} variant="bordered" classNames={iCN("violet")} />
                         <Input label="Job Title" placeholder="Software Engineer" value={w.job_title} onValueChange={set("job_title")} variant="bordered" classNames={iCN("violet")} />
                     </div>
-                    <div className="pf-modal-grid" style={{ display: "grid", gap: "0.9rem" }}>
+                    <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
                         <Input label="Start Date" type="date" value={w.start_date} onValueChange={set("start_date")} variant="bordered" classNames={iCN("violet")} />
                         <Input label="End Date" type="date" value={w.end_date ?? ""} onValueChange={set("end_date")} variant="bordered" isDisabled={!!w.current} classNames={iCN("violet")} />
                     </div>
-                    <Checkbox isSelected={!!w.current} onValueChange={v => setW(p => ({ ...p, current: v, end_date: v ? null : p.end_date }))}
-                              classNames={{ label: "text-slate-400 text-sm", wrapper: "border-white/20 bg-white/[0.03] group-data-[selected=true]:bg-cyan-500/20 group-data-[selected=true]:border-cyan-500/50" }}>
+                    <Checkbox
+                        isSelected={!!w.current}
+                        onValueChange={v => setW(p => ({ ...p, current: v, end_date: v ? null : p.end_date }))}
+                        classNames={{
+                            label: "text-muted text-sm",
+                            wrapper: "border-border bg-foreground/[0.03] group-data-[selected=true]:bg-cyan-500/20 group-data-[selected=true]:border-cyan-500/50",
+                        }}
+                    >
                         Currently working here
                     </Checkbox>
                     <Textarea label="Description" placeholder="What did you build, improve, or accomplish?" value={w.description} onValueChange={set("description")} variant="bordered" minRows={3} classNames={taCN("violet")} />
                 </ModalBody>
                 <ModalFooter>
-                    <Button variant="bordered" onPress={onClose} className="border-white/10 bg-white/[0.03] text-slate-400 hover:bg-white/[0.07] hover:text-slate-200">Cancel</Button>
-                    <Button isDisabled={!valid} onPress={() => { onSave(w); onClose(); }} variant="bordered" className="border-violet-500/30 bg-violet-500/10 text-slate-100 hover:bg-violet-500/20 hover:border-violet-500/55 font-bold">
+                    <Button variant="bordered" onPress={onClose} className="border-border/50 bg-foreground/[0.03] text-muted hover:bg-foreground/[0.07] hover:text-subheading">Cancel</Button>
+                    <Button isDisabled={!valid} onPress={() => { onSave(w); onClose(); }} variant="bordered" className="border-violet-500/30 bg-violet-500/10 text-foreground hover:bg-violet-500/20 hover:border-violet-500/55 font-bold">
                         {initial?.id ? "Save" : "Add"}
                     </Button>
                 </ModalFooter>
@@ -217,11 +358,10 @@ function WorkModal({ isOpen, onClose, initial, onSave }: {
 /* ─────────────────────────────────────────────
    EDUCATION MODAL
 ───────────────────────────────────────────── */
-function EduModal({ isOpen, onClose, initial, onSave, isOnly }: {
+function EduModal({ isOpen, onClose, initial, onSave }: {
     isOpen: boolean; onClose: () => void;
     initial: Education | null;
     onSave: (e: Education) => void;
-    isOnly: boolean;
 }) {
     const [ed, setEd] = useState<Education>(initial ?? blankEdu());
     useEffect(() => { setEd(initial ?? blankEdu()); }, [initial, isOpen]);
@@ -230,28 +370,29 @@ function EduModal({ isOpen, onClose, initial, onSave, isOnly }: {
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="2xl" classNames={{
-            base: "bg-[#040c1c] border border-white/10 backdrop-blur-2xl",
-            header: "border-b border-white/[0.06]", footer: "border-t border-white/[0.06]",
+            base: "bg-card border border-border/50 backdrop-blur-2xl",
+            header: "border-b border-border/30",
+            footer: "border-t border-border/30",
         }}>
             <ModalContent>
-                <ModalHeader style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, color: "#f0f8ff", fontSize: "1.1rem" }}>
+                <ModalHeader className="font-[family-name:var(--font-syne)] font-extrabold text-heading text-[1.1rem]">
                     {initial?.id ? "Edit Education" : "Add Education"}
                 </ModalHeader>
-                <ModalBody style={{ display: "flex", flexDirection: "column", gap: "0.9rem", paddingTop: "1.25rem", paddingBottom: "1.25rem" }}>
+                <ModalBody className="flex flex-col gap-3.5 pt-5 pb-5">
                     <Input label="Institution" placeholder="Adelphi University" value={ed.institution} onValueChange={set("institution")} variant="bordered" classNames={iCN("emerald")} />
-                    <div className="pf-modal-grid" style={{ display: "grid", gap: "0.9rem" }}>
+                    <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
                         <Input label="Degree" placeholder="Bachelor's" value={ed.degree} onValueChange={set("degree")} variant="bordered" classNames={iCN("emerald")} />
                         <Input label="Area of Study" placeholder="Computer Science" value={ed.area_of_study} onValueChange={set("area_of_study")} variant="bordered" classNames={iCN("emerald")} />
                     </div>
-                    <div className="pf-modal-grid" style={{ display: "grid", gap: "0.9rem" }}>
+                    <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
                         <Input label="Start Year" type="number" placeholder="2022" value={String(ed.start_year)} onValueChange={v => set("start_year")(v)} variant="bordered" classNames={iCN("emerald")} />
                         <Input label="End Year" type="number" placeholder="2026" value={String(ed.end_year)} onValueChange={v => set("end_year")(v)} variant="bordered" classNames={iCN("emerald")} />
                     </div>
                     <Input label="GPA (optional)" placeholder="3.8" value={ed.gpa} onValueChange={set("gpa")} variant="bordered" classNames={iCN("emerald")} />
                 </ModalBody>
                 <ModalFooter>
-                    <Button variant="bordered" onPress={onClose} className="border-white/10 bg-white/[0.03] text-slate-400 hover:bg-white/[0.07] hover:text-slate-200">Cancel</Button>
-                    <Button isDisabled={!valid} onPress={() => { onSave(ed); onClose(); }} variant="bordered" className="border-emerald-500/30 bg-emerald-500/10 text-slate-100 hover:bg-emerald-500/20 hover:border-emerald-500/55 font-bold">
+                    <Button variant="bordered" onPress={onClose} className="border-border/50 bg-foreground/[0.03] text-muted hover:bg-foreground/[0.07] hover:text-subheading">Cancel</Button>
+                    <Button isDisabled={!valid} onPress={() => { onSave(ed); onClose(); }} variant="bordered" className="border-emerald-500/30 bg-emerald-500/10 text-foreground hover:bg-emerald-500/20 hover:border-emerald-500/55 font-bold">
                         {initial?.id ? "Save" : "Add"}
                     </Button>
                 </ModalFooter>
@@ -261,113 +402,104 @@ function EduModal({ isOpen, onClose, initial, onSave, isOnly }: {
 }
 
 /* ─────────────────────────────────────────────
-   WORK EXPERIENCE ENTRY ROW
+   LOADING SKELETON
 ───────────────────────────────────────────── */
-function WorkRow({ exp, onEdit, onDelete }: { exp: WorkExperience; onEdit: () => void; onDelete: () => void }) {
-    const fmt = (d: string | null) => d ? d.slice(0, 7).replace("-", "/") : "Present";
+function Skeleton() {
     return (
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem", padding: "0.9rem 1rem", background: "rgba(255,255,255,0.025)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.055)" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem", minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" as const }}>
-                    <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: "0.9rem", color: "#f0f8ff" }}>{exp.job_title}</span>
-                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: "0.58rem", letterSpacing: "0.1em", color: "rgba(0,212,255,0.6)", background: "rgba(0,212,255,0.07)", border: "1px solid rgba(0,212,255,0.15)", borderRadius: "999px", padding: "0.15rem 0.55rem" }}>{exp.employer}</span>
-                </div>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: "0.6rem", color: "rgba(160,200,240,0.38)", letterSpacing: "0.08em" }}>
-                    {fmt(exp.start_date)} — {fmt(exp.end_date)}
-                </span>
-                {exp.description && <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "0.78rem", color: "rgba(160,200,240,0.5)", margin: 0, marginTop: "0.25rem", lineHeight: 1.5 }}>{exp.description}</p>}
-            </div>
-            <div style={{ display: "flex", gap: "0.4rem", flexShrink: 0 }}>
-                <IconBtn onClick={onEdit} title="Edit" color="rgba(0,212,255,0.5)" hoverColor="#00d4ff">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                </IconBtn>
-                <IconBtn onClick={onDelete} title="Delete" color="rgba(239,68,68,0.4)" hoverColor="#ef4444">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                </IconBtn>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+                <div className="w-8 h-8 rounded-full border-2 border-cyan-400/30 border-t-cyan-400 animate-spin" />
+                <span className="font-mono text-[0.6rem] tracking-[0.2em] uppercase text-muted/40">Loading profile…</span>
             </div>
         </div>
     );
 }
 
 /* ─────────────────────────────────────────────
-   EDUCATION ENTRY ROW
+   HELPERS — map API response → ProfileData
 ───────────────────────────────────────────── */
-function EduRow({ edu, onEdit, onDelete, isOnly }: { edu: Education; onEdit: () => void; onDelete: () => void; isOnly: boolean }) {
-    return (
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem", padding: "0.9rem 1rem", background: "rgba(255,255,255,0.025)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.055)" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" as const }}>
-                    <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: "0.9rem", color: "#f0f8ff" }}>{edu.institution}</span>
-                    {edu.gpa && <span style={{ fontFamily: "'DM Mono',monospace", fontSize: "0.58rem", letterSpacing: "0.1em", color: "rgba(16,185,129,0.7)", background: "rgba(16,185,129,0.07)", border: "1px solid rgba(16,185,129,0.18)", borderRadius: "999px", padding: "0.15rem 0.55rem" }}>GPA {edu.gpa}</span>}
-                </div>
-                <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "0.82rem", color: "rgba(160,200,240,0.65)" }}>{edu.degree} in {edu.area_of_study}</span>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: "0.6rem", color: "rgba(160,200,240,0.35)", letterSpacing: "0.08em" }}>{edu.start_year} — {edu.end_year}</span>
-            </div>
-            <div style={{ display: "flex", gap: "0.4rem", flexShrink: 0 }}>
-                <IconBtn onClick={onEdit} title="Edit" color="rgba(16,185,129,0.5)" hoverColor="#10b981">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                </IconBtn>
-                <IconBtn onClick={onDelete} title="Delete" color="rgba(239,68,68,0.4)" hoverColor="#ef4444" disabled={isOnly}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                </IconBtn>
-            </div>
-        </div>
-    );
+function mapApiToForm(raw: any): ProfileData {
+    const p = raw?.applicant_profile ?? raw ?? {};
+    return {
+        preferred_name: p.preferred_name ?? "",
+        contact_email:  p.contact_email  ?? "",
+        phone_number:   p.phone_number   ?? "",
+        linkedin_url:   p.linkedin_url   ?? "",
+        portfolio_url:  p.portfolio_url  ?? "",
+        github_url:     p.github_url     ?? "",
+        bio:            p.bio            ?? "",
+        pronouns:       p.pronouns       ?? "",
+        nationality:    p.nationality    ?? "",
+        date_of_birth:  p.date_of_birth  ?? "",
+        address_line_1: p.address_line_1 ?? "",
+        address_line_2: p.address_line_2 ?? "",
+        city:           p.city           ?? "",
+        state:          p.state          ?? "",
+        zip_code:       p.zip_code       ?? "",
+        country:        p.country        ?? "",
+        work_experiences: (p.work_experiences ?? []).map((w: any) => ({
+            id:          w.id,
+            employer:    w.employer    ?? "",
+            job_title:   w.job_title   ?? "",
+            start_date:  w.start_date  ?? "",
+            end_date:    w.end_date    ?? null,
+            current:     w.current     ?? false,
+            description: w.description ?? "",
+        })),
+        educations: (p.educations ?? []).length > 0
+            ? (p.educations ?? []).map((e: any) => ({
+                id:            e.id,
+                institution:   e.institution   ?? "",
+                degree:        e.degree        ?? "",
+                area_of_study: e.area_of_study ?? "",
+                start_year:    e.start_year    ?? "",
+                end_year:      e.end_year      ?? "",
+                gpa:           e.gpa != null   ? String(e.gpa) : "",
+            }))
+            : [blankEdu()],
+    };
 }
 
-/* ─────────────────────────────────────────────
-   ICON BUTTON
-───────────────────────────────────────────── */
-function IconBtn({ onClick, title, color, hoverColor, children, disabled }: { onClick: () => void; title: string; color: string; hoverColor: string; children: React.ReactNode; disabled?: boolean }) {
-    return (
-        <button type="button" title={title} onClick={disabled ? undefined : onClick} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", padding: "0.35rem", cursor: disabled ? "not-allowed" : "pointer", color, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.18s", opacity: disabled ? 0.3 : 1 }}
-                onMouseEnter={e => { if (!disabled) { const el = e.currentTarget as HTMLButtonElement; el.style.color = hoverColor; el.style.borderColor = `${hoverColor}44`; el.style.background = `${hoverColor}11`; } }}
-                onMouseLeave={e => { if (!disabled) { const el = e.currentTarget as HTMLButtonElement; el.style.color = color; el.style.borderColor = "rgba(255,255,255,0.08)"; el.style.background = "rgba(255,255,255,0.04)"; } }}
-        >{children}</button>
-    );
-}
-
-/* ─────────────────────────────────────────────
-   ADD BUTTON
-───────────────────────────────────────────── */
-function AddBtn({ label, onClick, accent }: { label: string; onClick: () => void; accent: string }) {
-    return (
-        <button type="button" onClick={onClick} style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontFamily: "'DM Mono',monospace", fontSize: "0.6rem", letterSpacing: "0.14em", textTransform: "uppercase" as const, color: accent, background: "none", border: `1px dashed ${accent}55`, borderRadius: "8px", padding: "0.55rem 1rem", cursor: "pointer", transition: "all 0.2s", width: "100%" }}
-                onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.background = `${accent}0d`; el.style.borderColor = `${accent}99`; }}
-                onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.background = "none"; el.style.borderColor = `${accent}55`; }}
-        >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            {label}
-        </button>
-    );
-}
 
 /* ─────────────────────────────────────────────
    MAIN PAGE
 ───────────────────────────────────────────── */
 export default function ProfileEditPage() {
 
-    /* profile state */
-    const [form,    setForm]    = useState<ProfileData>({ ...API_DATA });
-    const [saved,   setSaved]   = useState<ProfileData>({ ...API_DATA });
-    const [errors,  setErrors]  = useState<Record<string, string>>({});
-    const [loading, setLoading] = useState(false);
+    const [form,     setForm]     = useState<ProfileData>({ ...EMPTY_PROFILE });
+    const [saved,    setSaved]    = useState<ProfileData>({ ...EMPTY_PROFILE });
+    const [errors,   setErrors]   = useState<Record<string, string>>({});
+    const [loading,  setLoading]  = useState(false);
+    const [fetching, setFetching] = useState(true);
     const [feedback, setFeedback] = useState<FeedbackState>(null);
 
-    /* delete */
-    const [deleteLoading, setDeleteLoading] = useState(false);
-
     /* work modal */
-    const workModal  = useDisclosure();
-    const [editWork, setEditWork] = useState<WorkExperience | null>(null);
+    const workModal    = useDisclosure();
+    const [editWork,    setEditWork]    = useState<WorkExperience | null>(null);
     const [editWorkIdx, setEditWorkIdx] = useState<number | null>(null);
 
     /* edu modal */
-    const eduModal  = useDisclosure();
+    const eduModal     = useDisclosure();
     const [editEdu,    setEditEdu]    = useState<Education | null>(null);
     const [editEduIdx, setEditEduIdx] = useState<number | null>(null);
 
     const isDirty = JSON.stringify(form) !== JSON.stringify(saved);
+
+    /* ── Fetch on mount ── */
+    useEffect(() => {
+        (async () => {
+            try {
+                const raw = await apiRouter.profile.getProfile();
+                const mapped = mapApiToForm(raw);
+                setForm(mapped);
+                setSaved(mapped);
+            } catch (err) {
+                setFeedback({ kind: "error", msg: "Failed to load profile. Please refresh." });
+            } finally {
+                setFetching(false);
+            }
+        })();
+    }, []);
 
     const setField = useCallback(<K extends keyof ProfileData>(key: K) =>
         (v: ProfileData[K]) => {
@@ -375,27 +507,25 @@ export default function ProfileEditPage() {
             setErrors(p => { const n = { ...p }; delete n[key as string]; return n; });
         }, []);
 
-    /* ── Work experience handlers ── */
-    const openAddWork = () => { setEditWork(null); setEditWorkIdx(null); workModal.onOpen(); };
+    /* ── Work handlers ── */
+    const openAddWork  = () => { setEditWork(null); setEditWorkIdx(null); workModal.onOpen(); };
     const openEditWork = (idx: number) => { setEditWork(form.work_experiences[idx]); setEditWorkIdx(idx); workModal.onOpen(); };
-    const saveWork = (w: WorkExperience) => {
+    const saveWork     = (w: WorkExperience) => {
         setForm(p => {
             const exps = [...p.work_experiences];
-            if (editWorkIdx !== null) exps[editWorkIdx] = w;
-            else exps.push(w);
+            if (editWorkIdx !== null) exps[editWorkIdx] = w; else exps.push(w);
             return { ...p, work_experiences: exps };
         });
     };
     const deleteWork = (idx: number) => setForm(p => ({ ...p, work_experiences: p.work_experiences.filter((_, i) => i !== idx) }));
 
     /* ── Education handlers ── */
-    const openAddEdu = () => { setEditEdu(null); setEditEduIdx(null); eduModal.onOpen(); };
+    const openAddEdu  = () => { setEditEdu(null); setEditEduIdx(null); eduModal.onOpen(); };
     const openEditEdu = (idx: number) => { setEditEdu(form.educations[idx]); setEditEduIdx(idx); eduModal.onOpen(); };
-    const saveEdu = (e: Education) => {
+    const saveEdu     = (e: Education) => {
         setForm(p => {
             const edus = [...p.educations];
-            if (editEduIdx !== null) edus[editEduIdx] = e;
-            else edus.push(e);
+            if (editEduIdx !== null) edus[editEduIdx] = e; else edus.push(e);
             return { ...p, educations: edus };
         });
     };
@@ -410,117 +540,228 @@ export default function ProfileEditPage() {
         const errs = validateProfile(form);
         setErrors(errs);
         if (Object.keys(errs).length) return;
+
         setLoading(true);
-        await new Promise(r => setTimeout(r, 900)); // TODO: wire API
-        setLoading(false);
-        setSaved({ ...form });
-        setFeedback({ kind: "success", msg: "Profile saved successfully." });
-        setTimeout(() => setFeedback(null), 4000);
+        setFeedback(null);
+        try {
+            // 1. PATCH core profile fields
+            await apiRouter.profile.patchProfile({
+                applicant_profile: {
+                    preferred_name:  form.preferred_name  || undefined,
+                    contact_email:   form.contact_email   || undefined,
+                    phone_number:    form.phone_number    || undefined,
+                    linkedin_url:    form.linkedin_url    || undefined,
+                    portfolio_url:   form.portfolio_url   || undefined,
+                    github_url:      form.github_url      || undefined,
+                    bio:             form.bio             || undefined,
+                    pronouns:        form.pronouns        || undefined,
+                    nationality:     form.nationality     || undefined,
+                    date_of_birth:   form.date_of_birth   || undefined,
+                    address_line_1:  form.address_line_1  || undefined,
+                    address_line_2:  form.address_line_2  || undefined,
+                    city:            form.city            || undefined,
+                    state:           form.state           || undefined,
+                    zip_code:        form.zip_code        || undefined,
+                    country:         form.country         || undefined,
+                },
+            });
+
+            // 2. Work experiences — delete removed, update existing, create new
+            const savedWorkIds = new Set(saved.work_experiences.filter(w => w.id).map(w => w.id!));
+            const formWorkIds  = new Set(form.work_experiences.filter(w => w.id).map(w => w.id!));
+
+            await Promise.all([...savedWorkIds].filter(id => !formWorkIds.has(id)).map(id =>
+                apiRouter.profile.deleteWorkExperience(id)
+            ));
+            await Promise.all(form.work_experiences.filter(w => w.id).map(w =>
+                apiRouter.profile.updateWorkExperience(w.id!, {
+                    employer:    w.employer,
+                    job_title:   w.job_title,
+                    start_date:  w.start_date,
+                    end_date:    w.current ? undefined : w.end_date ?? undefined,
+                    current:     !!w.current,
+                    description: w.description || undefined,
+                })
+            ));
+            await Promise.all(form.work_experiences.filter(w => !w.id).map(w =>
+                apiRouter.profile.createWorkExperience({
+                    employer:    w.employer,
+                    job_title:   w.job_title,
+                    start_date:  w.start_date,
+                    end_date:    w.current ? undefined : w.end_date ?? undefined,
+                    current:     !!w.current,
+                    description: w.description || undefined,
+                })
+            ));
+
+            // 3. Education — delete removed, update existing, create new
+            const savedEduIds = new Set(saved.educations.filter(e => e.id).map(e => e.id!));
+            const formEduIds  = new Set(form.educations.filter(e => e.id).map(e => e.id!));
+
+            await Promise.all([...savedEduIds].filter(id => !formEduIds.has(id)).map(id =>
+                apiRouter.profile.deleteEducation(id)
+            ));
+            await Promise.all(form.educations.filter(e => e.id).map(e =>
+                apiRouter.profile.updateEducation(e.id!, {
+                    institution:   e.institution,
+                    degree:        e.degree,
+                    area_of_study: e.area_of_study,
+                    start_year:    parseInt(String(e.start_year)) || undefined,
+                    end_year:      parseInt(String(e.end_year))   || undefined,
+                    gpa:           parseFloat(e.gpa)              || undefined,
+                })
+            ));
+            await Promise.all(form.educations.filter(e => !e.id).map(e =>
+                apiRouter.profile.createEducation({
+                    institution:   e.institution,
+                    degree:        e.degree,
+                    area_of_study: e.area_of_study,
+                    start_year:    parseInt(String(e.start_year)) || undefined,
+                    end_year:      parseInt(String(e.end_year))   || undefined,
+                    gpa:           parseFloat(e.gpa)              || undefined,
+                })
+            ));
+
+            setSaved({ ...form });
+            setFeedback({ kind: "success", msg: "Profile saved successfully." });
+            setTimeout(() => setFeedback(null), 4000);
+        } catch (err) {
+            setFeedback({ kind: "error", msg: "Failed to save. Please try again." });
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleClear = () => { setForm({ ...saved }); setErrors({}); setFeedback(null); };
 
-    const handleDelete = async () => {
-        setDeleteLoading(true);
-        await new Promise(r => setTimeout(r, 1200)); // TODO: wire API
-        setDeleteLoading(false);
-        console.log("Account deletion requested");
-    };
-
-    const divider = <div style={{ height: 1, background: "rgba(255,255,255,0.055)" }} />;
+    if (fetching) return <Skeleton />;
 
     return (
-        <div style={{ minHeight: "100vh", background: "linear-gradient(160deg,#00020a 0%,#020b18 45%,#050e1f 100%)" }}>
-            <div style={{ display: "flex", flexDirection: "column" }}>
+        <div className="min-h-screen bg-background">
+            <div className="flex flex-col">
 
-                {/* Nav */}
-                <nav className="pf-nav" style={{ position: "sticky", top: 0, zIndex: 10, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", boxSizing: "border-box" as const, backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", background: "rgba(0,2,10,0.6)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                    <Link href="/" style={{ fontFamily: "'DM Mono',monospace", fontSize: "0.78rem", letterSpacing: "0.22em", color: "rgba(0,212,255,0.65)", textTransform: "uppercase", textDecoration: "none", transition: "color 0.2s" }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = "#00d4ff"; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = "rgba(0,212,255,0.65)"; }}>
+                {/* ── Nav ── */}
+                <nav className="sticky top-0 z-10 shrink-0 flex items-center justify-between px-8 py-5 backdrop-blur-xl bg-background/80 border-b border-border/30 max-sm:px-4 max-sm:py-3.5">
+                    <Link
+                        href="/"
+                        className="font-mono text-[0.78rem] tracking-[0.22em] uppercase text-cyan-400/65 no-underline transition-colors duration-200 hover:text-cyan-400"
+                    >
                         ApplyOS
                     </Link>
-                    <Link href="/settings" className="pf-nav-link" style={{ fontFamily: "'DM Sans',sans-serif", fontWeight: 500, fontSize: "0.84rem", padding: "0.5rem 1.4rem", borderRadius: "6px", background: "rgba(0,212,255,0.07)", color: "rgba(0,212,255,0.88)", border: "1px solid rgba(0,212,255,0.22)", textDecoration: "none", display: "inline-block", transition: "all 0.2s" }}
-                          onMouseEnter={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.background = "rgba(0,212,255,0.14)"; el.style.borderColor = "rgba(0,212,255,0.52)"; el.style.boxShadow = "0 0 22px rgba(0,212,255,0.2)"; }}
-                          onMouseLeave={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.background = "rgba(0,212,255,0.07)"; el.style.borderColor = "rgba(0,212,255,0.22)"; el.style.boxShadow = "none"; }}>
+                    <Link
+                        href="/settings"
+                        className="font-sans font-medium text-[0.84rem] px-5 py-2 rounded-md bg-cyan-400/[0.07] text-cyan-400/88 border border-cyan-400/22 no-underline transition-all duration-200 hover:bg-cyan-400/14 hover:border-cyan-400/52 hover:shadow-[0_0_22px_rgba(0,212,255,0.2)] max-sm:text-xs max-sm:px-3.5 max-sm:py-1.5"
+                    >
                         ← Settings
                     </Link>
                 </nav>
 
-                {/* Body */}
-                <div className="pf-body" style={{ boxSizing: "border-box" as const, display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                {/* ── Body ── */}
+                <div className="flex flex-col gap-6 px-8 pt-10 pb-16 max-sm:px-5 max-sm:pt-6 max-sm:gap-4">
 
                     {/* Header */}
                     <div>
-                        <div style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem", fontFamily: "'DM Mono',monospace", fontSize: "0.6rem", letterSpacing: "0.2em", color: "rgba(0,212,255,0.55)", textTransform: "uppercase" as const, marginBottom: "0.8rem", border: "1px solid rgba(0,212,255,0.12)", padding: "0.28rem 0.75rem", borderRadius: "999px", background: "rgba(0,212,255,0.04)" }}>
-                            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#00d4ff", boxShadow: "0 0 6px #00d4ff", display: "inline-block" }} />
+                        <div className="inline-flex items-center gap-1.5 font-mono text-[0.6rem] tracking-[0.2em] uppercase text-cyan-400/55 border border-cyan-400/12 bg-cyan-400/[0.04] px-3 py-1 rounded-full mb-3">
+                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_theme(colors.cyan.400)] inline-block" />
                             Autofill Information
                         </div>
-                        <h1 className="pf-h1" style={{ fontFamily: "'Syne','Helvetica Neue',sans-serif", fontWeight: 800, fontSize: "clamp(1.5rem,5vw,2.6rem)", letterSpacing: "-0.03em", color: "#f0f8ff", margin: 0, lineHeight: 1.05 }}>
+                        <h1 className="font-[family-name:var(--font-syne)] font-extrabold text-[clamp(1.5rem,5vw,2.6rem)] tracking-tight text-heading leading-[1.05] m-0">
                             Edit autofill{" "}
-                            <span style={{ background: "linear-gradient(90deg,#00d4ff 0%,#7c3aed 55%,#10b981 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>information</span>
+                            <span className="bg-gradient-to-r from-cyan-400 via-violet-500 to-emerald-400 bg-clip-text text-transparent">
+                information
+              </span>
                         </h1>
-                        <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "0.82rem", color: "rgba(160,200,240,0.42)", marginTop: "0.4rem" }}>
+                        <p className="text-[0.82rem] text-muted/42 mt-1.5">
                             This information is used to autofill job applications — keep it accurate and up to date.
                         </p>
                     </div>
 
-                    {/* Form */}
-                    <form onSubmit={handleSave} noValidate style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                    {/* ── Form ── */}
+                    <form onSubmit={handleSave} noValidate className="flex flex-col gap-5">
 
-                        {/* ROW 1: Identity + Contact */}
-                        <div className="pf-grid-2" style={{ display: "grid", gap: "1.25rem" }}>
-                            <Card eyebrow="Identity" title="Personal Details" accentColor="rgba(0,212,255,0.18)" dotColor="#00d4ff">
+                        {/* Row 1 — Identity + Contact */}
+                        <div className="grid grid-cols-2 gap-5 max-md:grid-cols-1">
+
+                            {/* Identity */}
+                            <Card accent="cyan" eyebrow="Identity" title="Personal Details">
                                 <Input label="Preferred Name" placeholder="What should we call you?" value={form.preferred_name} onValueChange={v => setField("preferred_name")(v)} variant="bordered" classNames={iCN("cyan")} />
                                 <Input label="Pronouns" placeholder="he/him, she/her, they/them…" value={form.pronouns} onValueChange={v => setField("pronouns")(v)} variant="bordered" classNames={iCN("cyan")} />
                                 <Input label="Nationality" placeholder="American" value={form.nationality} onValueChange={v => setField("nationality")(v)} variant="bordered" classNames={iCN("cyan")} />
                                 <Input label="Date of Birth" type="date" value={form.date_of_birth} onValueChange={v => setField("date_of_birth")(v)} variant="bordered" classNames={iCN("cyan")} />
                                 <div>
-                                    <Textarea label="Bio" placeholder="Short paragraph about you, your skills, or what you're looking for…" value={form.bio} onValueChange={v => setField("bio")(v)} variant="bordered" minRows={3} maxRows={5} isInvalid={!!errors.bio} errorMessage={errors.bio} classNames={taCN("cyan")} />
-                                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.3rem" }}>
-                                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: "0.55rem", letterSpacing: "0.1em", color: form.bio.length > 300 ? "rgba(245,158,11,0.7)" : "rgba(160,200,240,0.25)" }}>{form.bio.length} / 320</span>
+                                    <Textarea
+                                        label="Bio"
+                                        placeholder="Short paragraph about you, your skills, or what you're looking for…"
+                                        value={form.bio}
+                                        onValueChange={v => setField("bio")(v)}
+                                        variant="bordered"
+                                        minRows={3} maxRows={5}
+                                        isInvalid={!!errors.bio}
+                                        errorMessage={errors.bio}
+                                        classNames={taCN("cyan")}
+                                    />
+                                    <div className="flex justify-end mt-1">
+                    <span className={`font-mono text-[0.55rem] tracking-[0.1em] ${form.bio.length > 300 ? "text-amber-400/70" : "text-muted/25"}`}>
+                      {form.bio.length} / 320
+                    </span>
                                     </div>
                                 </div>
                             </Card>
 
-                            <Card eyebrow="Contact" title="Contact Details" accentColor="rgba(124,58,237,0.18)" dotColor="#7c3aed">
+                            {/* Contact */}
+                            <Card accent="violet" eyebrow="Contact" title="Contact Details">
                                 <Input label="Contact Email" type="email" placeholder="recruiter@email.com" value={form.contact_email} onValueChange={v => setField("contact_email")(v)} variant="bordered" isInvalid={!!errors.contact_email} errorMessage={errors.contact_email} classNames={iCN("violet")} />
                                 <Input label="Phone Number" type="tel" placeholder="+1 (555) 000-0000" value={form.phone_number} onValueChange={v => setField("phone_number")(v)} variant="bordered" isInvalid={!!errors.phone_number} errorMessage={errors.phone_number} classNames={iCN("violet")} />
-                                <div style={{ height: 1, background: "rgba(255,255,255,0.055)" }} />
-                                <p style={{ fontFamily: "'DM Mono',monospace", fontSize: "0.58rem", letterSpacing: "0.14em", textTransform: "uppercase" as const, color: "rgba(160,200,240,0.3)", margin: 0 }}>Address</p>
+                                <div className="h-px bg-border/30" />
+                                <p className="font-mono text-[0.58rem] tracking-[0.14em] uppercase text-muted/30 m-0">Address</p>
                                 <Input label="Address Line 1" placeholder="123 Main St" value={form.address_line_1} onValueChange={v => setField("address_line_1")(v)} variant="bordered" classNames={iCN("violet")} />
                                 <Input label="Address Line 2" placeholder="Apt 4B (optional)" value={form.address_line_2} onValueChange={v => setField("address_line_2")(v)} variant="bordered" classNames={iCN("violet")} />
-                                <div className="pf-grid-2b" style={{ display: "grid", gap: "0.75rem" }}>
+                                <div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
                                     <Input label="City" value={form.city} onValueChange={v => setField("city")(v)} variant="bordered" classNames={iCN("violet")} />
                                     <Input label="State" value={form.state} onValueChange={v => setField("state")(v)} variant="bordered" classNames={iCN("violet")} />
                                 </div>
-                                <div className="pf-grid-2b" style={{ display: "grid", gap: "0.75rem" }}>
+                                <div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
                                     <Input label="Zip Code" value={form.zip_code} onValueChange={v => setField("zip_code")(v)} variant="bordered" classNames={iCN("violet")} />
                                     <Input label="Country" value={form.country} onValueChange={v => setField("country")(v)} variant="bordered" classNames={iCN("violet")} />
                                 </div>
                             </Card>
                         </div>
 
-                        {/* ROW 2: Links */}
-                        <Card eyebrow="Links" title="Online Presence" accentColor="rgba(16,185,129,0.18)" dotColor="#10b981">
-                            <div className="pf-grid-3" style={{ display: "grid", gap: "1rem" }}>
-                                <Input label="LinkedIn URL" placeholder="https://linkedin.com/in/yourprofile" value={form.linkedin_url} onValueChange={v => setField("linkedin_url")(v)} variant="bordered" isInvalid={!!errors.linkedin_url} errorMessage={errors.linkedin_url} classNames={iCN("emerald")}
-                                       startContent={<svg width="13" height="13" viewBox="0 0 24 24" fill="rgba(16,185,129,0.55)" style={{ flexShrink: 0 }}><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>} />
-                                <Input label="Portfolio URL" placeholder="https://yoursite.dev" value={form.portfolio_url} onValueChange={v => setField("portfolio_url")(v)} variant="bordered" isInvalid={!!errors.portfolio_url} errorMessage={errors.portfolio_url} classNames={iCN("emerald")}
-                                       startContent={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(16,185,129,0.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>} />
-                                <Input label="GitHub URL" placeholder="https://github.com/yourhandle" value={form.github_url} onValueChange={v => setField("github_url")(v)} variant="bordered" isInvalid={!!errors.github_url} errorMessage={errors.github_url} classNames={iCN("emerald")}
-                                       startContent={<svg width="13" height="13" viewBox="0 0 24 24" fill="rgba(16,185,129,0.55)" style={{ flexShrink: 0 }}><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>} />
+                        {/* Row 2 — Links */}
+                        <Card accent="emerald" eyebrow="Links" title="Online Presence">
+                            <div className="grid grid-cols-3 gap-4 max-md:grid-cols-2 max-sm:grid-cols-1">
+                                <Input
+                                    label="LinkedIn URL" placeholder="https://linkedin.com/in/yourprofile"
+                                    value={form.linkedin_url} onValueChange={v => setField("linkedin_url")(v)}
+                                    variant="bordered" isInvalid={!!errors.linkedin_url} errorMessage={errors.linkedin_url}
+                                    classNames={iCN("emerald")}
+                                    startContent={<svg width="13" height="13" viewBox="0 0 24 24" fill="rgba(16,185,129,0.55)" className="shrink-0"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>}
+                                />
+                                <Input
+                                    label="Portfolio URL" placeholder="https://yoursite.dev"
+                                    value={form.portfolio_url} onValueChange={v => setField("portfolio_url")(v)}
+                                    variant="bordered" isInvalid={!!errors.portfolio_url} errorMessage={errors.portfolio_url}
+                                    classNames={iCN("emerald")}
+                                    startContent={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(16,185,129,0.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>}
+                                />
+                                <Input
+                                    label="GitHub URL" placeholder="https://github.com/yourhandle"
+                                    value={form.github_url} onValueChange={v => setField("github_url")(v)}
+                                    variant="bordered" isInvalid={!!errors.github_url} errorMessage={errors.github_url}
+                                    classNames={iCN("emerald")}
+                                    startContent={<svg width="13" height="13" viewBox="0 0 24 24" fill="rgba(16,185,129,0.55)" className="shrink-0"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>}
+                                />
                             </div>
                         </Card>
 
-                        {/* ROW 3: Work + Education */}
-                        <div className="pf-grid-2" style={{ display: "grid", gap: "1.25rem" }}>
-                            <Card eyebrow="Experience" title="Work Experience" accentColor="rgba(124,58,237,0.18)" dotColor="#7c3aed"
-                                  action={<AddBtn label="Add" onClick={openAddWork} accent="#7c3aed" />}>
+                        {/* Row 3 — Work + Education */}
+                        <div className="grid grid-cols-2 gap-5 max-md:grid-cols-1">
+                            <Card accent="violet" eyebrow="Experience" title="Work Experience"
+                                  action={<AddBtn label="Add" onClick={openAddWork} accent="violet" />}>
                                 {form.work_experiences.length === 0 ? (
-                                    <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "0.82rem", color: "rgba(160,200,240,0.3)", textAlign: "center", padding: "1.5rem 0", margin: 0 }}>No work experience added yet.</p>
+                                    <p className="text-[0.82rem] text-muted/30 text-center py-6 m-0">No work experience added yet.</p>
                                 ) : (
-                                    <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+                                    <div className="flex flex-col gap-2.5">
                                         {form.work_experiences.map((exp, i) => (
                                             <WorkRow key={exp.id ?? i} exp={exp} onEdit={() => openEditWork(i)} onDelete={() => deleteWork(i)} />
                                         ))}
@@ -528,9 +769,9 @@ export default function ProfileEditPage() {
                                 )}
                             </Card>
 
-                            <Card eyebrow="Education" title="Education" accentColor="rgba(16,185,129,0.18)" dotColor="#10b981"
-                                  action={<AddBtn label="Add" onClick={openAddEdu} accent="#10b981" />}>
-                                <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+                            <Card accent="emerald" eyebrow="Education" title="Education"
+                                  action={<AddBtn label="Add" onClick={openAddEdu} accent="emerald" />}>
+                                <div className="flex flex-col gap-2.5">
                                     {form.educations.map((edu, i) => (
                                         <EduRow key={edu.id ?? i} edu={edu} onEdit={() => openEditEdu(i)} onDelete={() => deleteEdu(i)} isOnly={form.educations.length === 1} />
                                     ))}
@@ -538,86 +779,45 @@ export default function ProfileEditPage() {
                             </Card>
                         </div>
 
-                        {/* FORM ACTIONS */}
+                        {/* Form actions */}
                         {feedback && <Feedback state={feedback} />}
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" as const, gap: "0.75rem" }}>
-                            <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" as const }}>
-                                <Button type="submit" isLoading={loading} isDisabled={!isDirty && !loading} variant="bordered" className="border-cyan-500/30 bg-cyan-500/10 text-slate-100 hover:bg-cyan-500/20 hover:border-cyan-500/55 font-bold tracking-wide disabled:opacity-40">
+                        <div className="flex items-center justify-between flex-wrap gap-3">
+                            <div className="flex gap-2.5 flex-wrap">
+                                <Button
+                                    type="submit"
+                                    isLoading={loading}
+                                    isDisabled={!isDirty && !loading}
+                                    variant="bordered"
+                                    className="border-cyan-500/30 bg-cyan-500/10 text-foreground hover:bg-cyan-500/20 hover:border-cyan-500/55 font-bold tracking-wide disabled:opacity-40"
+                                >
                                     Save Changes
                                 </Button>
-                                <Button type="button" onPress={handleClear} isDisabled={!isDirty} variant="bordered" className="border-white/10 bg-white/[0.03] text-slate-400 hover:bg-white/[0.07] hover:text-slate-200 hover:border-white/20 font-medium tracking-wide disabled:opacity-30">
-                                    Clear Form
+                                <Button
+                                    type="button"
+                                    onPress={handleClear}
+                                    isDisabled={!isDirty}
+                                    variant="bordered"
+                                    className="border-border/50 bg-foreground/[0.03] text-muted hover:bg-foreground/[0.07] hover:text-subheading hover:border-border font-medium tracking-wide disabled:opacity-30"
+                                >
+                                    Discard
                                 </Button>
                             </div>
                             {isDirty && (
-                                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: "0.58rem", letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(245,158,11,0.65)", display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#f59e0b", display: "inline-block" }} />
-                                    Unsaved changes
-                                </span>
+                                <span className="font-mono text-[0.58rem] tracking-[0.12em] uppercase text-amber-400/65 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
+                  Unsaved changes
+                </span>
                             )}
                         </div>
-
-                        {/* DANGER ZONE */}
-                        {divider}
-                        <Card eyebrow="Irreversible Actions" title="Danger Zone" accentColor="rgba(239,68,68,0.22)" dotColor="#ef4444">
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" as const, gap: "1rem" }}>
-                                <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                                    <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "0.875rem", color: "rgba(160,200,240,0.7)", fontWeight: 500 }}>Delete account</span>
-                                    <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "0.8rem", color: "rgba(160,200,240,0.38)", lineHeight: 1.5 }}>
-                                        Permanently removes your account and all data.{" "}
-                                        <span style={{ color: "rgba(252,165,165,0.7)" }}>This cannot be undone.</span>
-                                    </span>
-                                </div>
-                                <Button
-                                    onPress={handleDelete}
-                                    isLoading={deleteLoading}
-                                    variant="bordered"
-                                    className="border-red-500/30 bg-red-500/10 text-red-300 hover:bg-red-500/20 hover:border-red-500/55 font-bold tracking-wide flex-shrink-0"
-                                >
-                                    Delete My Account
-                                </Button>
-                            </div>
-                        </Card>
-
                     </form>
-                    <div style={{ height: "2rem" }} />
+
+                    <div className="h-8" />
                 </div>
             </div>
 
             {/* Modals */}
             <WorkModal isOpen={workModal.isOpen} onClose={workModal.onClose} initial={editWork} onSave={saveWork} />
-            <EduModal  isOpen={eduModal.isOpen}  onClose={eduModal.onClose}  initial={editEdu}  onSave={saveEdu}  isOnly={form.educations.length === 1} />
-
-            <style>{`
-                .pf-nav      { padding: 1.2rem 2rem; }
-                .pf-body     { padding: 2.5rem 2rem 4rem; }
-                .pf-grid-2   { grid-template-columns: repeat(2,1fr); }
-                .pf-grid-3   { grid-template-columns: repeat(3,1fr); }
-                .pf-grid-2b  { grid-template-columns: repeat(2,1fr); }
-                .pf-modal-grid { grid-template-columns: repeat(2,1fr); }
-
-                @media (max-width: 900px) {
-                    .pf-nav  { padding: 1rem 1.25rem; }
-                    .pf-body { padding: 2rem 1.25rem 3rem; }
-                    .pf-grid-3 { grid-template-columns: repeat(2,1fr); }
-                }
-                @media (max-width: 640px) {
-                    .pf-nav        { padding: 0.85rem 1rem; }
-                    .pf-nav-link   { font-size: 0.75rem !important; padding: 0.4rem 0.9rem !important; }
-                    .pf-body       { padding: 1.25rem 1rem 3rem; gap: 1rem; }
-                    .pf-grid-2     { grid-template-columns: 1fr !important; }
-                    .pf-grid-3     { grid-template-columns: 1fr !important; }
-                    .pf-grid-2b    { grid-template-columns: 1fr !important; }
-                    .pf-modal-grid { grid-template-columns: 1fr !important; }
-                    .pf-card       { padding: 1.25rem !important; }
-                    .pf-h1         { font-size: 1.5rem !important; }
-                }
-                @media (max-width: 375px) {
-                    .pf-nav  { padding: 0.75rem; }
-                    .pf-body { padding: 1rem 0.75rem 2.5rem; }
-                    .pf-card { padding: 1rem !important; }
-                }
-            `}</style>
+            <EduModal  isOpen={eduModal.isOpen}  onClose={eduModal.onClose}  initial={editEdu}  onSave={saveEdu} />
         </div>
     );
 }

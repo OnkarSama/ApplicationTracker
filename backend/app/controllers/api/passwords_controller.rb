@@ -1,35 +1,35 @@
 class Api::PasswordsController < ApplicationController
   allow_unauthenticated_access
-  before_action :set_user_by_token, only: %i[ edit update ]
-  rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_password_path, alert: "Try again later." }
+  before_action :set_user_by_token, only: [:update]
+  rate_limit to: 10, within: 3.minutes, only: :create
 
-  def new
-  end
-
+  # POST /api/passwords
+  # { email_address: "..." }
   def create
-    if user = User.find_by(email_address: params[:email_address])
+    if (user = User.find_by(email_address: params[:email_address]))
       PasswordsMailer.reset(user).deliver_later
     end
-
-    redirect_to new_session_path, notice: "Password reset instructions sent (if user with that email address exists)."
+    # Always render success to avoid email enumeration
+    render json: { message: "If that email exists you'll receive reset instructions shortly." }
   end
 
-  def edit
-  end
-
+  # PATCH /api/passwords/:token
+  # { password: "...", password_confirmation: "..." }
   def update
     if @user.update(params.permit(:password, :password_confirmation))
       @user.sessions.destroy_all
-      redirect_to new_session_path, notice: "Password has been reset."
+      render json: { message: "Password reset successfully. Please log in." }
     else
-      redirect_to edit_password_path(params[:token]), alert: "Passwords did not match."
+      render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
     end
   end
 
   private
-    def set_user_by_token
-      @user = User.find_by_password_reset_token!(params[:token])
-    rescue ActiveSupport::MessageVerifier::InvalidSignature
-      redirect_to new_password_path, alert: "Password reset link is invalid or has expired."
+
+  def set_user_by_token
+    @user = User.find_by_token_for(:password_reset, params[:token])
+    unless @user
+      render json: { error: "Reset link is invalid or has expired." }, status: :unprocessable_entity
     end
+  end
 end

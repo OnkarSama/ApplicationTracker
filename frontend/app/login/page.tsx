@@ -107,6 +107,16 @@ export default function Component() {
               Sign In
             </Button>
           </Form>
+
+          <p className="text-center text-sm text-default-500">
+            <button
+                type="button"
+                onClick={() => router.push("/forgot-password")}
+                className="text-primary hover:underline cursor-pointer font-medium"
+            >
+              Forgot password?
+            </button>
+          </p>
         </div>
       </div>
   );

@@ -90,7 +90,7 @@ export const Navbar = () => {
     const queryClient = useQueryClient();
 
     const { data: userData } = useQuery({
-        queryKey: ["showUser"],
+        queryKey: ["currentUser"],
         queryFn: () => apiRouter.sessions.showUser(),
     });
 
@@ -183,7 +183,8 @@ export const Navbar = () => {
                             as="button"
                             className="transition-transform"
                             color="secondary"
-                            name={userData?.user?.name}
+                            src={userData?.user?.avatar_url ?? undefined}
+                            name={userData?.user ? `${userData.user.first_name} ${userData.user.last_name}` : undefined}
                             size="sm"
                         />
                     </DropdownTrigger>

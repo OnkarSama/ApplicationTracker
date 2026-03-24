@@ -23,6 +23,13 @@ const endpoints = {
 
     },
 
+    changePassword: async (current_password: string, password: string, password_confirmation: string) => {
+        return await api('/users/change_password', {
+            method: 'patch',
+            data: { current_password, password, password_confirmation },
+        })
+    },
+
     uploadAvatar: async (file: File) => {
         const formData = new FormData();
         formData.append("avatar", file);
