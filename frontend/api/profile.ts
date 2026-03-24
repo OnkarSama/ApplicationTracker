@@ -95,6 +95,59 @@ const endpoints = {
         return await api('/applicant_profile')
     },
 
+    patchProfile: async (data: ProfilePayload) => {
+        return await api('/applicant_profile', {
+            method: 'patch',
+            data,
+        })
+    },
+
+    // ── Work Experiences ──────────────────────────────
+
+    createWorkExperience: async (w: WorkExperiencePayload['work_experience']) => {
+        return await api('/applicant_profile/work_experiences', {
+            method: 'post',
+            data: { work_experience: w } satisfies WorkExperiencePayload,
+        })
+    },
+
+    updateWorkExperience: async (id: number, w: WorkExperiencePayload['work_experience']) => {
+        return await api(`/applicant_profile/work_experiences/${id}`, {
+            method: 'patch',
+            data: { work_experience: w } satisfies WorkExperiencePayload,
+        })
+    },
+
+    deleteWorkExperience: async (id: number) => {
+        return await api(`/applicant_profile/work_experiences/${id}`, {
+            method: 'delete',
+        })
+    },
+
+    // ── Education ─────────────────────────────────────
+
+    createEducation: async (e: EducationPayload['education']) => {
+        return await api('/applicant_profile/educations', {
+            method: 'post',
+            data: { education: e } satisfies EducationPayload,
+        })
+    },
+
+    updateEducation: async (id: number, e: EducationPayload['education']) => {
+        return await api(`/applicant_profile/educations/${id}`, {
+            method: 'patch',
+            data: { education: e } satisfies EducationPayload,
+        })
+    },
+
+    deleteEducation: async (id: number) => {
+        return await api(`/applicant_profile/educations/${id}`, {
+            method: 'delete',
+        })
+    },
+
+    // ── Wizard (used by onboarding flow) ─────────────
+
     updateProfile: async (wizard: WizardData) => {
         await api('/applicant_profile', {
             method: 'patch',

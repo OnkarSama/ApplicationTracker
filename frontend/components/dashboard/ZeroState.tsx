@@ -45,7 +45,7 @@ export default function ZeroState() {
             const geo = new THREE.BoxGeometry(w, h, 0.05);
             const card = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
                 color: c, roughness: 0.05, metalness: 0.8, transparent: true, opacity: 0.11,
-            })) as FM;
+            })) as unknown as FM;
             card.position.set(x, y, z);
             card.rotation.set((Math.random() - .5) * .6, (Math.random() - .5) * .6, (Math.random() - .5) * .4);
             card.userData = {

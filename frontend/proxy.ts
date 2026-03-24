@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/"];
+const PUBLIC_PATHS = ["/login", "/signup", "/", "/forgot-password", "/reset-password"];
 const REFERRER_GATED_PATHS: { path: string; allowedReferrers: string[]; fallback?: string }[] = [
     { path: "/onboarding", allowedReferrers: ["/signup"], fallback: "/" },
 ];

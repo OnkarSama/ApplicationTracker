@@ -1,11 +1,11 @@
 import Link from "next/link";
-import NotesPanel from "@/components/Applications/Notespanel";
+import InterviewsPanel from "@/components/Applications/InterviewsPanel";
 
-interface NotesPageProps {
+interface InterviewsPageProps {
     params: Promise<{ id: string }>;
 }
 
-export default async function NotesPage({ params }: NotesPageProps) {
+export default async function InterviewsPage({ params }: InterviewsPageProps) {
     const { id } = await params;
     const applicationId = Number(id);
 
@@ -20,20 +20,12 @@ export default async function NotesPage({ params }: NotesPageProps) {
                 >
                     ← Dashboard
                 </Link>
-                <div className="flex items-center gap-2">
-                    <Link
-                        href={`/application/${id}/interviews`}
-                        className="font-sans font-medium text-[0.84rem] px-5 py-2 rounded-md bg-foreground/[0.04] text-muted border border-border/40 no-underline transition-all duration-200 hover:text-foreground hover:border-border/70 max-sm:text-xs max-sm:px-3.5 max-sm:py-1.5"
-                    >
-                        Interviews
-                    </Link>
-                    <Link
-                        href={`/application/${id}`}
-                        className="font-sans font-medium text-[0.84rem] px-5 py-2 rounded-md bg-foreground/[0.04] text-muted border border-border/40 no-underline transition-all duration-200 hover:text-foreground hover:border-border/70 max-sm:text-xs max-sm:px-3.5 max-sm:py-1.5"
-                    >
-                        Edit Application
-                    </Link>
-                </div>
+                <Link
+                    href={`/application/${id}`}
+                    className="font-sans font-medium text-[0.84rem] px-5 py-2 rounded-md bg-foreground/[0.04] text-muted border border-border/40 no-underline transition-all duration-200 hover:text-foreground hover:border-border/70 max-sm:text-xs max-sm:px-3.5 max-sm:py-1.5"
+                >
+                    Edit Application
+                </Link>
             </nav>
 
             {/* ── Body ── */}
@@ -43,17 +35,17 @@ export default async function NotesPage({ params }: NotesPageProps) {
                 <div className="mb-8">
                     <div className="inline-flex items-center gap-1.5 font-mono text-[0.6rem] tracking-[0.2em] uppercase text-primary/55 border border-primary/12 bg-primary/[0.04] px-3 py-1 rounded-full mb-3">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_theme(colors.indigo.500)] inline-block" />
-                        Application Notes
+                        Interview Scheduler
                     </div>
                     <h1 className="font-sora font-extrabold text-[clamp(1.5rem,4vw,2.2rem)] tracking-tight text-heading leading-tight m-0">
-                        Notes
+                        Interviews
                     </h1>
                     <p className="text-sm text-muted/50 mt-1.5">
-                        Track follow-ups, interview prep, and anything else worth remembering.
+                        Track your interview rounds, prep notes, and upcoming dates.
                     </p>
                 </div>
 
-                <NotesPanel applicationId={applicationId} />
+                <InterviewsPanel applicationId={applicationId} />
 
             </div>
         </div>

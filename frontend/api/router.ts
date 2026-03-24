@@ -5,6 +5,7 @@ import signupEndpoints from './signup'
 import profileEndpoints from './profile'
 import notesEndpoints from './note'
 import passwordEndpoints from './password'
+import interviewEndpoints from './interview'
 
 const endpoints = {
     applications : applicationEndpoints,
@@ -14,6 +15,7 @@ const endpoints = {
     profile : profileEndpoints,
     notes : notesEndpoints,
     passwords : passwordEndpoints,
+    interviews : interviewEndpoints,
 
 }
 
