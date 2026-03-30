@@ -1,3 +1,11 @@
+import type * as React from "react";
+
+export type IconSvgProps = React.SVGProps<SVGSVGElement> & {
+    size?: number;
+    width?: number;
+    height?: number;
+};
+
 export type ApplicationStatus =
     | "Applied"
     | "Interview"

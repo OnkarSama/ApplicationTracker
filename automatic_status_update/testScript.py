@@ -56,7 +56,7 @@ def scrape_status(app):
 
             status = soup.find('strong', string=lambda t: 'Current Application Status' in t).next_sibling
         except AttributeError:
-            status = "DNE"
+            status = "Applied"
 
 
     return status.strip()

@@ -1,133 +1,175 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
-import type { JobApplication, ApplicationStatus, ApplicationPriority } from "./types";
+
+import { useState } from "react";
 import {
-  Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
-  Button, Input, Textarea,
+    Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button,
 } from "@heroui/react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { addToast } from "@heroui/react";
+import apiRouter from "@/api/router";
 
-const statuses: ApplicationStatus[] = ["Applied", "Interview", "Offer", "Rejected", "Wishlist"];
-const priorities: ApplicationPriority[] = ["High", "Medium", "Low"];
+const STATUS_OPTIONS   = ["Applied", "Wishlist", "Interview", "Offer", "Rejected"] as const;
+const CATEGORY_OPTIONS = ["Internship", "Full-time", "Graduate School", "Fellowship", "Research", "Other"] as const;
+const PRIORITY_OPTIONS = [
+    { key: 0, label: "Normal",    color: "text-muted" },
+    { key: 1, label: "Important", color: "text-warning" },
+    { key: 2, label: "Urgent",    color: "text-danger" },
+] as const;
 
-const nativeSelectStyle: React.CSSProperties = {
-  width: "100%",
-  borderRadius: 8,
-  border: "2px solid #e2e8f0",
-  background: "#f8fafc",
-  padding: "8px 12px",
-  fontSize: 14,
-  color: "#0f172a",
-  outline: "none",
-  cursor: "pointer",
-  fontFamily: "inherit",
-};
+const inputCls = [
+    "w-full rounded-xl border border-border/50 bg-foreground/[0.04] px-4 py-2.5 text-sm text-foreground",
+    "placeholder:text-muted/40 focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/20 transition-colors",
+].join(" ");
 
-export function AddApplicationModal({
-  isOpen,
-  onClose,
-  onSave,
-  initial,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (app: JobApplication) => void;
-  initial?: JobApplication | null;
-}) {
-  const isEdit = !!initial;
-  const [company, setCompany]       = useState("");
-  const [role, setRole]             = useState("");
-  const [location, setLocation]     = useState("");
-  const [status, setStatus]         = useState<ApplicationStatus>("Applied");
-  const [priority, setPriority]     = useState<ApplicationPriority>("Medium");
-  const [salary, setSalary]         = useState("");
-  const [appliedDate, setAppliedDate] = useState("");
-  const [url, setUrl]               = useState("");
-  const [notes, setNotes]           = useState("");
+interface Props {
+    isOpen: boolean;
+    onClose: () => void;
+}
 
-  useEffect(() => {
-    if (!isOpen) return;
-    setCompany(initial?.company ?? "");
-    setRole(initial?.role ?? "");
-    setLocation(initial?.location ?? "");
-    setStatus(initial?.status ?? "Applied");
-    setPriority(initial?.priority ?? "Medium");
-    setSalary(initial?.salary ?? "");
-    setAppliedDate(initial?.appliedDate ?? "");
-    setUrl(initial?.url ?? "");
-    setNotes(initial?.notes ?? "");
-  }, [isOpen, initial]);
+export function AddApplicationModal({ isOpen, onClose }: Props) {
+    const queryClient = useQueryClient();
 
-  const canSave = useMemo(() => company.trim() && role.trim(), [company, role]);
+    const [title,    setTitle]    = useState("");
+    const [status,   setStatus]   = useState<string>("Applied");
+    const [category, setCategory] = useState<string>("");
+    const [priority, setPriority] = useState<number>(0);
 
-  function handleSave() {
-    if (!canSave) return;
-    const app: JobApplication = {
-      id: initial?.id ?? crypto.randomUUID(),
-      company: company.trim(),
-      role: role.trim(),
-      location: location.trim() || undefined,
-      status,
-      priority,
-      salary: salary.trim() || undefined,
-      appliedDate: appliedDate || undefined,
-      url: url.trim() || undefined,
-      notes: notes.trim() || undefined,
+    const reset = () => {
+        setTitle(""); setStatus("Applied"); setCategory(""); setPriority(0);
     };
-    onClose();
-    onSave(app);
-  }
 
-  return (
-    <Modal isOpen={isOpen} onOpenChange={(open) => (!open ? onClose() : null)} size="lg">
-      <ModalContent>
-        <ModalHeader>{isEdit ? "Edit Application" : "Add Application"}</ModalHeader>
-        <ModalBody className="gap-4">
+    const handleClose = () => { reset(); onClose(); };
 
-          {/* Company + Role */}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Input label="Company" placeholder="e.g., Google" value={company} onValueChange={setCompany} isRequired />
-            <Input label="Role" placeholder="e.g., Software Engineer" value={role} onValueChange={setRole} isRequired />
-          </div>
+    const createMutation = useMutation({
+        mutationFn: () =>
+            apiRouter.applications.createApplication({
+                application: { title: title.trim(), status, category, priority },
+            }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["getApplications"] });
+            addToast({
+                title:       "Application added",
+                description: `"${title.trim()}" has been saved.`,
+                color:       "success",
+                timeout:     3000,
+                shouldShowTimeoutProgress: true,
+            });
+            handleClose();
+        },
+        onError: () => {
+            addToast({
+                title:       "Something went wrong",
+                description: "Please try again.",
+                color:       "danger",
+                timeout:     4000,
+                shouldShowTimeoutProgress: true,
+            });
+        },
+    });
 
-          {/* Location */}
-          <Input label="Location" placeholder="e.g., Remote, New York, NY" value={location} onValueChange={setLocation} />
+    const canSave = title.trim().length > 0;
 
-          {/* Status + Priority */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-default-500">Status</label>
-              <select value={status} onChange={(e) => setStatus(e.target.value as ApplicationStatus)} style={nativeSelectStyle}>
-                {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-default-500">Priority</label>
-              <select value={priority} onChange={(e) => setPriority(e.target.value as ApplicationPriority)} style={nativeSelectStyle}>
-                {priorities.map((p) => <option key={p} value={p}>{p}</option>)}
-              </select>
-            </div>
-          </div>
+    return (
+        <Modal
+            isOpen={isOpen}
+            onOpenChange={open => !open && handleClose()}
+            size="lg"
+            classNames={{
+                base:   "bg-card border border-border/50 backdrop-blur-2xl",
+                header: "border-b border-border/30",
+                footer: "border-t border-border/30",
+            }}
+        >
+            <ModalContent>
+                <ModalHeader className="font-sora font-extrabold text-heading text-[1.05rem]">
+                    New Application
+                </ModalHeader>
 
-          {/* Salary + Date */}
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Salary" placeholder="e.g., $120,000" value={salary} onValueChange={setSalary} />
-            <Input label="Applied Date" type="date" value={appliedDate} onValueChange={setAppliedDate} />
-          </div>
+                <ModalBody className="flex flex-col gap-4 py-5">
 
-          {/* URL */}
-          <Input label="Job URL" placeholder="https://..." value={url} onValueChange={setUrl} />
+                    {/* Title */}
+                    <div className="flex flex-col gap-1.5">
+                        <label className="font-mono text-[0.6rem] tracking-[0.16em] uppercase text-muted/60">
+                            Title <span className="text-danger">*</span>
+                        </label>
+                        <input
+                            autoFocus
+                            value={title}
+                            onChange={e => setTitle(e.target.value)}
+                            onKeyDown={e => { if (e.key === "Enter" && canSave) createMutation.mutate(); }}
+                            placeholder="e.g. Google — Software Engineer Intern"
+                            className={inputCls}
+                        />
+                    </div>
 
-          {/* Notes */}
-          <Textarea label="Notes" placeholder="Anything you want to remember..." value={notes} onValueChange={setNotes} />
+                    {/* Status + Category */}
+                    <div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
+                        <div className="flex flex-col gap-1.5">
+                            <label className="font-mono text-[0.6rem] tracking-[0.16em] uppercase text-muted/60">Status</label>
+                            <select
+                                value={status}
+                                onChange={e => setStatus(e.target.value)}
+                                className={inputCls}
+                            >
+                                {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                            <label className="font-mono text-[0.6rem] tracking-[0.16em] uppercase text-muted/60">Category</label>
+                            <select
+                                value={category}
+                                onChange={e => setCategory(e.target.value)}
+                                className={inputCls}
+                            >
+                                <option value="">Select…</option>
+                                {CATEGORY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                        </div>
+                    </div>
 
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="flat" onPress={onClose}>Cancel</Button>
-          <Button color="primary" isDisabled={!canSave} onPress={handleSave}>
-            {isEdit ? "Save Changes" : "Add Application"}
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
-  );
+                    {/* Priority */}
+                    <div className="flex flex-col gap-1.5">
+                        <label className="font-mono text-[0.6rem] tracking-[0.16em] uppercase text-muted/60">Priority</label>
+                        <div className="flex gap-2">
+                            {PRIORITY_OPTIONS.map(({ key, label, color }) => (
+                                <button
+                                    key={key}
+                                    type="button"
+                                    onClick={() => setPriority(key)}
+                                    className={[
+                                        "flex-1 py-2 rounded-xl text-xs font-semibold border transition-all duration-150",
+                                        priority === key
+                                            ? `border-primary/50 bg-primary/10 ${color}`
+                                            : "border-border/50 bg-foreground/[0.04] text-muted hover:border-primary/30",
+                                    ].join(" ")}
+                                >
+                                    {label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                </ModalBody>
+
+                <ModalFooter>
+                    <Button
+                        variant="bordered"
+                        onPress={handleClose}
+                        className="border-border/50 bg-foreground/[0.03] text-muted hover:bg-foreground/[0.07] hover:text-subheading"
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        isDisabled={!canSave}
+                        isLoading={createMutation.isPending}
+                        onPress={() => createMutation.mutate()}
+                        variant="bordered"
+                        className="border-primary/30 bg-primary/10 text-foreground hover:bg-primary/20 hover:border-primary/55 font-bold disabled:opacity-40"
+                    >
+                        Add Application
+                    </Button>
+                </ModalFooter>
+            </ModalContent>
+        </Modal>
+    );
 }

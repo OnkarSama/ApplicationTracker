@@ -6,7 +6,13 @@ import { Select, SelectItem, addToast } from "@heroui/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import apiRouter from "@/api/router";
-import type { ApplicationPayload } from "@/api/application";
+type EditFormState = {
+    title: string;
+    status: string;
+    priority: number;
+    category: string;
+    notes: string;
+};
 
 /* ── Shared primitives (same as create page) ─────────────── */
 function PageShell({ children }: { children: React.ReactNode }) {
@@ -148,8 +154,8 @@ export default function EditApplicationPage({ params }: PageProps) {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleting,       setDeleting]       = useState(false);
 
-    const [formState, setFormState] = useState<ApplicationPayload["application"]>({
-        id: 0, title: "", notes: "", status: "Applied", priority: 0, category: "",
+    const [formState, setFormState] = useState<EditFormState>({
+        title: "", notes: "", status: "Applied", priority: 0, category: "",
     });
 
     const { title, notes, status, priority, category } = formState;
@@ -164,9 +170,8 @@ export default function EditApplicationPage({ params }: PageProps) {
     useEffect(() => {
         if (!application) return;
         setFormState({
-            id:       application.id,
             title:    application.title    || "",
-            notes:    application.notes    || "",
+            notes:    "",
             status:   application.status   || "Applied",
             priority: application.priority ?? 0,
             category: application.category || "",
@@ -175,8 +180,10 @@ export default function EditApplicationPage({ params }: PageProps) {
 
     /* ── Update ── */
     const updateMutation = useMutation({
-        mutationFn: async (payload: typeof formState) =>
-            apiRouter.applications.updateApplication(applicationId, { application: payload }),
+        mutationFn: async (payload: EditFormState) =>
+            apiRouter.applications.updateApplication(applicationId, {
+                application: { title: payload.title, status: payload.status, priority: payload.priority, category: payload.category },
+            }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["getApplications"] });
             refetch();
@@ -244,7 +251,7 @@ export default function EditApplicationPage({ params }: PageProps) {
         if (!application) return;
         setFormState({
             title:    application.title    || "",
-            notes:    application.notes    || "",
+            notes:    "",
             status:   application.status   || "Applied",
             priority: application.priority ?? 0,
             category: application.category || "",

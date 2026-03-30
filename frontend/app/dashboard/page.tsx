@@ -1,72 +1,64 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+
+import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { addToast, Button, Card, CardBody, CardHeader } from "@heroui/react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import { AuthGate } from "@/components/auth/AuthGate";
-import {addToast, Button, Card, CardBody, CardHeader} from "@heroui/react";
-import type {ApplicationStatus, ApplicationPriority } from "@/components/dashboard/types";
 import ApplicationTable from "@/components/dashboard/ApplicationTable";
 import ApplicationTableHeader from "@/components/dashboard/ApplicationTableHeader";
 import { AddApplicationModal } from "@/components/dashboard/AddApplicationModal";
+import EmptyDashboard from "@/components/dashboard/ZeroState";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import {useMutation, useQuery, useQueryClient, QueryClient} from "@tanstack/react-query";
 import apiRouter from "@/api/router";
-
-import type {Application} from "@/api/application";
-import type {LoginPayload} from "@/api/session";
-
-
-const STATUSES: ApplicationStatus[] = ["Applied", "Interview", "Offer", "Rejected", "Wishlist"];
-const PRIORITIES: ApplicationPriority[] = ["High", "Medium", "Low"];
+import type { Application } from "@/api/application";
 
 export default function DashboardPage() {
-
-    const router = useRouter();
-
     const queryClient = useQueryClient();
-
     const searchParams = useSearchParams();
     const q = searchParams.get("q") ?? "";
 
-    const { data = [] as Application[], isLoading, error } = useQuery({
+    const [createOpen,     setCreateOpen]     = useState(false);
+    const [statusFilter,   setStatusFilter]   = useState("All");
+    const [priorityFilter, setPriorityFilter] = useState<number | null>(null);
+
+    const { data = [] as Application[], isLoading } = useQuery({
         queryKey: ["getApplications", q],
-        queryFn: () => apiRouter.applications.getApplications(q),
+        queryFn:  () => apiRouter.applications.getApplications(q),
     });
 
-    const handleNewApplication = () => {
-        router.push("/application/create");
-    };
+    const filteredData = useMemo(() => {
+        let result = data;
+        if (statusFilter !== "All")  result = result.filter(a => a.status === statusFilter);
+        if (priorityFilter !== null) result = result.filter(a => a.priority === priorityFilter);
+        return result;
+    }, [data, statusFilter, priorityFilter]);
 
     const syncMutation = useMutation({
-        mutationFn: () =>
-            apiRouter.applications.syncApplications(),
+        mutationFn: () => apiRouter.applications.syncApplications(),
         onSuccess: (response: any) => {
             addToast({
-                title: "Success",
-                description: response.isUpdated ? "Statuses were updated!" : "No changes found",
-                timeout: 1000,
+                title:       "Sync complete",
+                description: response.isUpdated ? "Statuses were updated!" : "No changes found.",
+                timeout:     3000,
                 shouldShowTimeoutProgress: true,
-                variant: "solid",
-                color: "success",
+                variant:     "solid",
+                color:       "success",
             });
-            queryClient.invalidateQueries({ queryKey: ["getApplications"] })
+            queryClient.invalidateQueries({ queryKey: ["getApplications"] });
         },
         onError: (error: any) => {
             addToast({
-                title: "Error",
-                description: Object.values(error.response.data.errors).flat().join(","),
-                timeout: 3000,
+                title:       "Sync failed",
+                description: Object.values(error?.response?.data?.errors ?? {}).flat().join(", ") || "Please try again.",
+                timeout:     4000,
                 shouldShowTimeoutProgress: true,
-                variant: "solid",
-                color: "danger",
+                variant:     "solid",
+                color:       "danger",
             });
         },
     });
-
-    const handleSync = () => {
-        syncMutation.mutate();
-    };
-
-
 
     const stats = useMemo(() => ({
         total:      data.length,
@@ -75,69 +67,65 @@ export default function DashboardPage() {
         offers:     data.filter((a: Application) => a.status === "Offer").length,
     }), [data]);
 
-
-    function pill(label: string, active: boolean, onClick: () => void, prefix = "") {
-        return (
-            <button
-                key={prefix + label}
-                onClick={onClick}
-                className={[
-                    "px-3.5 py-1 rounded-full text-xs font-semibold border whitespace-nowrap transition-all duration-150 cursor-pointer",
-                    active
-                        ? "border-indigo-500 bg-violet-100 text-indigo-500"
-                        : "border-slate-200 bg-white text-slate-500",
-                ].join(" ")}
-            >
-                {label}
-            </button>
-        );
-    }
+    // True zero-state: user has no applications at all (not a search/filter miss)
+    const isEmpty        = !isLoading && data.length === 0 && !q && statusFilter === "All" && priorityFilter === null;
+    const hasNoResults   = !isLoading && !isEmpty && filteredData.length === 0;
 
     return (
         <AuthGate>
-            {/* Import fonts via a link tag in _document or layout, or keep a minimal style for @import only */}
-            <style>{`@import url('https://fonts.googleapis.com/css2?family=Sora:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');`}</style>
-
-            <div className="min-h-svh bg-background font-['DM_Sans',sans-serif]">
+            <div className="min-h-svh bg-background">
                 <main className="max-w-7xl mx-auto p-6">
 
                     <ApplicationTableHeader
-                        onNewApplication={() => console.log("New application clicked")}
+                        onNewApplication={() => setCreateOpen(true)}
                         stats={stats}
+                        statusFilter={statusFilter}
+                        onStatusChange={setStatusFilter}
+                        priorityFilter={priorityFilter}
+                        onPriorityChange={setPriorityFilter}
                     />
 
-                    {/* Table card */}
-                    <Card className="bg-foreground border border-slate-200 rounded-2xl shadow-sm">
-                        <CardHeader className="flex items-center justify-between border-table_border px-4.5 py-3.5">
-                            <div className=" text-table_subheading text-[13px] tracking-[0.04em] uppercase font-semibold m-0">
+                    <Card className="bg-card border border-border/40 rounded-2xl shadow-sm">
+                        <CardHeader className="flex items-center justify-between border-b border-border/30 px-5 py-3.5">
+                            <span className="text-muted text-[13px] tracking-[0.06em] uppercase font-semibold">
                                 Applications
-                                {/*<span className="ml-2 text-table_subheading font-normal">({filtered.length})</span>*/}
-                                {/*{hasFilters && <span className="ml-2 text-indigo-500 text-[11px] font-semibold">● filtered</span>}*/}
-                            </div>
-                            <Button
-                                onPress={handleSync}>
-                                update statuses
-                            </Button>
+                            </span>
+                            {!isEmpty && (
+                                <Button
+                                    size="sm"
+                                    variant="bordered"
+                                    isLoading={syncMutation.isPending}
+                                    onPress={() => syncMutation.mutate()}
+                                    className="border-border/50 text-muted hover:text-foreground hover:border-border text-xs"
+                                >
+                                    Sync Statuses
+                                </Button>
+                            )}
                         </CardHeader>
                         <CardBody>
-                            <ApplicationTable applications={data}/>
+                            {isLoading ? (
+                                <div className="flex items-center justify-center py-16">
+                                    <div className="w-6 h-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+                                </div>
+                            ) : isEmpty ? (
+                                <EmptyDashboard />
+                            ) : hasNoResults ? (
+                                <div className="flex flex-col items-center justify-center py-16 gap-2">
+                                    <span className="text-muted text-sm">No applications match your search or filters.</span>
+                                </div>
+                            ) : (
+                                <ApplicationTable applications={filteredData} />
+                            )}
                         </CardBody>
                     </Card>
 
-                    {/*<AddApplicationModal*/}
-                    {/*    isOpen={open}*/}
-                    {/*    onClose={() => setOpen(false)}*/}
-                    {/*    initial={editing}*/}
-                    {/*    onSave={(app) => {*/}
-                    {/*        setApps((prev) => {*/}
-                    {/*            const exists = prev.some((p) => p.id === app.id);*/}
-                    {/*            if (!exists) return [app, ...prev];*/}
-                    {/*            return prev.map((p) => (p.id === app.id ? app : p));*/}
-                    {/*        });*/}
-                    {/*    }}*/}
-                    {/*/>*/}
                 </main>
             </div>
+
+            <AddApplicationModal
+                isOpen={createOpen}
+                onClose={() => setCreateOpen(false)}
+            />
         </AuthGate>
     );
 }

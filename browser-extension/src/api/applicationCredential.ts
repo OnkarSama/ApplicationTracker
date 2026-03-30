@@ -8,6 +8,13 @@ export type ApplicationCredential = {
 
 const endpoints = {
 
+    createCredential: async (appId: number, payload: { application_credential: ApplicationCredential }) => {
+        return await api(`/applications/${appId}/application_credential`, {
+            method: 'post',
+            data: payload,
+        });
+    },
+
     updateCredential: async (appId: number, payload: { application_credential: ApplicationCredential }) => {
         return await api(`/applications/${appId}/application_credential`, {
             method: 'patch',

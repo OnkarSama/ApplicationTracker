@@ -16,11 +16,10 @@ module ApiAuthentication
     end
 
     def verify_api_key
-        if ENV['AUTOMATIC_STATUS_UPDATE_API_KEY'] != request.headers['Authorization'].split(" ")[1]
-            return false
-        else
-            return true
-        end
+      auth_header = request.headers['Authorization']
+      return false unless auth_header
+
+      ENV['AUTOMATIC_STATUS_UPDATE_API_KEY'] != auth_header.split(" ")[1] ? false : true
     end
 
 end

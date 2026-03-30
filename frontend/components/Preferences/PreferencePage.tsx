@@ -328,8 +328,21 @@ export function AccountCard() {
     const [showNew, setShowNew] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [pwErrors, setPwErrors] = useState<Record<string, string>>({});
-    const [pwLoading, setPwLoading] = useState(false);
     const [pwFeedback, setPwFeedback] = useState<FeedbackState>(null);
+
+    const pwMutation = useMutation({
+        mutationFn: () => apiRouter.users.changePassword(currentPw, newPw, confirmPw),
+        onSuccess: () => {
+            setCurrentPw(""); setNewPw(""); setConfirmPw(""); setPwErrors({});
+            setPwFeedback({ kind: "success", msg: "Password changed successfully." });
+            setTimeout(() => setPwFeedback(null), 4000);
+        },
+        onError: (error: any) => {
+            const msg = error?.response?.data?.errors?.join(", ") ?? "Failed to change password.";
+            setPwFeedback({ kind: "error", msg });
+            setTimeout(() => setPwFeedback(null), 5000);
+        },
+    });
 
     const validateEmail = () => {
         const e: Record<string, string> = {};
@@ -366,15 +379,10 @@ export function AccountCard() {
         setTimeout(() => setEmailFeedback(null), 4000);
     };
 
-    const handlePwSubmit = async (e: React.FormEvent) => {
+    const handlePwSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!validatePw()) return;
-        setPwLoading(true);
-        await new Promise(r => setTimeout(r, 900));
-        setPwLoading(false);
-        setCurrentPw(""); setNewPw(""); setConfirmPw(""); setPwErrors({});
-        setPwFeedback({ kind: "success", msg: "Password changed successfully." });
-        setTimeout(() => setPwFeedback(null), 4000);
+        pwMutation.mutate();
     };
 
     return (
@@ -457,7 +465,7 @@ export function AccountCard() {
                 />
                 {pwFeedback && <Feedback state={pwFeedback} />}
                 <div className="flex justify-end">
-                    <Button type="submit" isLoading={pwLoading} variant="bordered"
+                    <Button type="submit" isLoading={pwMutation.isPending} variant="bordered"
                             className="border-secondary/30 bg-secondary/10 text-foreground hover:bg-secondary/20 hover:border-secondary/55 font-bold tracking-wide">
                         Update Password
                     </Button>

@@ -17,23 +17,37 @@ type CredentialField = {
 export default function AppDetailView({ app, onBack }: { app: Application; onBack: () => void }) {
     const queryClient = useQueryClient();
     const [isEditing, setIsEditing] = useState(false);
+    const [fetchingUrl, setFetchingUrl] = useState(false);
     const [form, setForm] = useState<CredentialField>({
-        username: app.credential.username,
-        password_digest: app.credential.password_digest,
-        portal_link: app.credential.portal_link,
+        username:        app.credential?.username        ?? '',
+        password_digest: app.credential?.password_digest ?? '',
+        portal_link:     app.credential?.portal_link     ?? '',
     });
+
+    // Track whether a credential record already exists so we know POST vs PATCH
+    const [credentialExists, setCredentialExists] = useState(
+        !!(app.credential?.username || app.credential?.password_digest || app.credential?.portal_link)
+    );
 
     const updateMutation = useMutation({
         mutationFn: () =>
-            apiRouter.applicationCredentials.updateCredential(app.id, {
-                application_credential: form,
-            }),
+            credentialExists
+                ? apiRouter.applicationCredentials.updateCredential(app.id, { application_credential: form })
+                : apiRouter.applicationCredentials.createCredential(app.id, { application_credential: form }),
         onSuccess: () => {
+            setCredentialExists(true);
             queryClient.invalidateQueries({ queryKey: ["getApplications"] });
-            // Do NOT reset form — it now holds the saved values and drives the display
             setIsEditing(false);
         },
     });
+
+    function useCurrentPage() {
+        setFetchingUrl(true);
+        chrome.runtime.sendMessage({ type: 'GET_CURRENT_TAB_URL' }, (res) => {
+            setForm(f => ({ ...f, portal_link: res?.url ?? '' }));
+            setFetchingUrl(false);
+        });
+    }
 
     function copyToClipboard(text: string) {
         navigator.clipboard.writeText(text)
@@ -60,9 +74,9 @@ export default function AppDetailView({ app, onBack }: { app: Application; onBac
                         if (isEditing) {
                             // Cancel — reset form back to last saved values
                             setForm({
-                                username: app.credential.username,
-                                password_digest: app.credential.password_digest,
-                                portal_link: app.credential.portal_link,
+                                username:        app.credential?.username        ?? '',
+                                password_digest: app.credential?.password_digest ?? '',
+                                portal_link:     app.credential?.portal_link     ?? '',
                             });
                         }
                         setIsEditing(!isEditing);
@@ -150,12 +164,25 @@ export default function AppDetailView({ app, onBack }: { app: Application; onBac
                     <Divider />
                     <CardBody>
                         {isEditing ? (
-                            <Input
-                                size="sm"
-                                variant="bordered"
-                                value={form.portal_link}
-                                onChange={(e) => setForm({ ...form, portal_link: e.target.value })}
-                            />
+                            <div className="flex flex-col gap-2">
+                                <Input
+                                    size="sm"
+                                    variant="bordered"
+                                    placeholder="https://portal.company.com/login"
+                                    value={form.portal_link}
+                                    onChange={(e) => setForm({ ...form, portal_link: e.target.value })}
+                                />
+                                <Button
+                                    size="sm"
+                                    variant="flat"
+                                    color="secondary"
+                                    isLoading={fetchingUrl}
+                                    onPress={useCurrentPage}
+                                    className="text-xs"
+                                >
+                                    📌 Use current page URL
+                                </Button>
+                            </div>
                         ) : (
                             <Link
                                 isExternal

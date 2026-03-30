@@ -1,34 +1,16 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
-    Table,
-    TableHeader,
-    TableColumn,
-    TableBody,
-    TableRow,
-    TableCell,
-    Chip,
-    Pagination,
-    SortDescriptor,
-    Dropdown,
-    DropdownTrigger,
-    DropdownMenu,
-    DropdownItem,
+    Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
+    Chip, Pagination, SortDescriptor,
+    Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button,
 } from "@heroui/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import apiRouter from "@/api/router";
 
-interface Application {
-    id: number;
-    title: string;
-    notes: string;
-    status: string;
-    priority: number;
-    category: string;
-    created_at: string;
-}
+import {Application} from "@/api/application";
 
 interface Props {
     applications?: Application[];
@@ -37,202 +19,228 @@ interface Props {
 const STATUSES = ["Applied", "Interview", "Offer", "Rejected", "Wishlist"] as const;
 
 const statusColorMap: Record<string, any> = {
-    Applied:   "primary",
+    Applied: "primary",
     Interview: "warning",
-    Offer:     "success",
-    Rejected:  "danger",
-    Wishlist:  "secondary",
+    Offer: "success",
+    Rejected: "danger",
+    Wishlist: "secondary",
 };
 
 const priorityMap: Record<number, { label: string; color: any }> = {
-    0: { label: "Low",    color: "success" },
-    1: { label: "Medium", color: "warning" },
-    2: { label: "High",   color: "danger"  },
+    0: { label: "Normal", color: "default" },
+    1: { label: "Important", color: "warning" },
+    2: { label: "Urgent", color: "danger" },
 };
 
 export default function ApplicationTable({ applications = [] }: Props) {
-    const router       = useRouter();
+    const router = useRouter();
     const searchParams = useSearchParams();
-    const queryClient  = useQueryClient();
+    const queryClient = useQueryClient();
 
-    const initialPage = Number(searchParams.get("page")) || 1;
+    const [quickEdit, setQuickEdit] = useState<Application | null>(null);
+
+    const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
     const rowsPerPage = 10;
 
-    const [page, setPage] = React.useState(initialPage);
-    const [sortDescriptor, setSortDescriptor] = React.useState<SortDescriptor>({
-        column:    "created_at",
+    const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
+        column: "created_at",
         direction: "descending",
     });
 
-    /* ---------- STATUS UPDATE MUTATION ---------- */
     const statusMutation = useMutation({
         mutationFn: ({ id, status }: { id: number; status: string }) =>
             apiRouter.applications.updateApplication(id, {
-                application: { status },
+                application: { status } as any,
             }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["getApplications"] });
         },
     });
 
-    /* ---------- SORT ---------- */
-    const sortedApps = React.useMemo(() => {
-        const sorted = [...applications];
-        const { column, direction } = sortDescriptor;
+    const sortedApps = [...applications];
 
-        sorted.sort((a, b) => {
-            let first: any  = a[column as keyof Application];
-            let second: any = b[column as keyof Application];
-
-            if (typeof first === "number" && typeof second === "number") {
-                return direction === "descending" ? second - first : first - second;
-            }
-            if (column === "created_at") {
-                return direction === "descending"
-                    ? new Date(second).getTime() - new Date(first).getTime()
-                    : new Date(first).getTime() - new Date(second).getTime();
-            }
-            first  = String(first  ?? "").toLowerCase();
-            second = String(second ?? "").toLowerCase();
-            if (first < second) return direction === "descending" ?  1 : -1;
-            if (first > second) return direction === "descending" ? -1 :  1;
-            return 0;
-        });
-
-        return sorted;
-    }, [applications, sortDescriptor]);
-
-    /* ---------- PAGINATION ---------- */
-    const displayedApps = React.useMemo(() => {
-        const start = (page - 1) * rowsPerPage;
-        return sortedApps.slice(start, start + rowsPerPage);
-    }, [sortedApps, page]);
+    const displayedApps = sortedApps.slice(
+        (page - 1) * rowsPerPage,
+        page * rowsPerPage
+    );
 
     const pages = Math.max(1, Math.ceil(sortedApps.length / rowsPerPage));
 
-    React.useEffect(() => {
-        if (page > pages) setPage(pages);
-    }, [pages]);
+    const goToApp = (id: number) => {
+        router.push(`/application/${id}?${searchParams.toString()}`);
+    };
 
-    React.useEffect(() => {
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("page", String(page));
-        router.replace(`?${params.toString()}`, { scroll: false });
-    }, [page]);
-
-    console.log("Applications in table:", applications);
-
-    /* ---------- TABLE ---------- */
     return (
         <>
-            <div className="relative overflow-x-auto">
-                <Table
-                    removeWrapper
-                    isHeaderSticky
-                    sortDescriptor={sortDescriptor}
-                    onSortChange={setSortDescriptor}
-                    className="bg-table_bg rounded-xl border border-table_border shadow-[0_18px_40px_rgba(0,0,0,0.35)] w-full"
-                >
-                    <TableHeader>
-                        <TableColumn key="title"      allowsSorting>Title</TableColumn>
-                        <TableColumn key="status"     allowsSorting>Status</TableColumn>
-                        <TableColumn key="priority"   allowsSorting>Priority</TableColumn>
-                        <TableColumn key="category"   allowsSorting>Category</TableColumn>
-                        <TableColumn key="notes"                   >Notes</TableColumn>
-                        <TableColumn key="created_at" allowsSorting>Created</TableColumn>
-                    </TableHeader>
+            {/* QUICK EDIT */}
+            {quickEdit && (
+                <>
+                    <div
+                        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+                        onClick={() => setQuickEdit(null)}
+                    />
+                    <div className="fixed right-0 top-0 h-full w-full max-w-sm bg-card border-l border-border z-50 p-6 flex flex-col gap-4">
+                        <h2 className="text-lg font-bold text-foreground">
+                            {quickEdit.title}
+                        </h2>
 
-                    <TableBody emptyContent="No applications found." items={displayedApps}>
-                        {(app) => (
-                            <TableRow key={app.id}>
+                        {/* STATUS */}
+                        <div className="flex flex-wrap gap-2">
+                            {STATUSES.map((s) => (
+                                <button
+                                    key={s}
+                                    onClick={() =>
+                                        setQuickEdit((p) => p && { ...p, status: s })
+                                    }
+                                    className={`px-3 py-1 rounded-lg text-xs border transition
+                                    ${
+                                        quickEdit.status === s
+                                            ? "bg-primary/20 text-primary border-primary"
+                                            : "border-border text-muted"
+                                    }`}
+                                >
+                                    {s}
+                                </button>
+                            ))}
+                        </div>
 
-                                <TableCell className="text-table_text">{app.title}</TableCell>
+                        {/* PRIORITY */}
+                        <div className="flex gap-2">
+                            {[0, 1, 2].map((p) => (
+                                <button
+                                    key={p}
+                                    onClick={() =>
+                                        setQuickEdit((prev) =>
+                                            prev ? { ...prev, priority: p } : prev
+                                        )
+                                    }
+                                    className={`flex-1 py-2 rounded-lg text-xs border
+                                    ${
+                                        quickEdit.priority === p
+                                            ? "bg-primary/20 border-primary text-primary"
+                                            : "border-border text-muted"
+                                    }`}
+                                >
+                                    {priorityMap[p].label}
+                                </button>
+                            ))}
+                        </div>
 
-                                {/* ── Status — pill that opens a dropdown ── */}
-                                <TableCell>
-                                    <Dropdown>
-                                        <DropdownTrigger>
-                                            <button className="outline-none cursor-pointer">
-                                                <Chip
-                                                    size="sm"
-                                                    color={statusColorMap[app.status] || "primary"}
-                                                    className="cursor-pointer"
-                                                    endContent={
-                                                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="opacity-60 ml-0.5">
-                                                            <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                                                        </svg>
-                                                    }
-                                                >
-                                                    {app.status}
-                                                </Chip>
-                                            </button>
-                                        </DropdownTrigger>
+                        <button
+                            onClick={() => {
+                                apiRouter.applications
+                                    .updateApplication(quickEdit.id, {
+                                        application: quickEdit,
+                                    })
+                                    .then(() => {
+                                        queryClient.invalidateQueries({
+                                            queryKey: ["getApplications"],
+                                        });
+                                        setQuickEdit(null);
+                                    });
+                            }}
+                            className="bg-primary text-white py-2 rounded-lg"
+                        >
+                            Save
+                        </button>
+                    </div>
+                </>
+            )}
 
-                                        <DropdownMenu
-                                            aria-label="Change status"
-                                            selectedKeys={new Set([app.status])}
-                                            selectionMode="single"
-                                            onAction={(key) => {
-                                                if (key !== app.status) {
-                                                    statusMutation.mutate({ id: app.id, status: key as string });
-                                                }
-                                            }}
-                                        >
-                                            {STATUSES.map((s) => (
-                                                <DropdownItem
-                                                    key={s}
-                                                    textValue={s}
-                                                >
-                                                    <Chip size="sm" color={statusColorMap[s]} variant="flat">
-                                                        {s}
-                                                    </Chip>
-                                                </DropdownItem>
-                                            ))}
-                                        </DropdownMenu>
-                                    </Dropdown>
-                                </TableCell>
+            <Table
+                removeWrapper
+                isHeaderSticky
+                className="bg-table_bg border border-table_border rounded-xl"
+            >
+                <TableHeader>
+                    <TableColumn>Title</TableColumn>
+                    <TableColumn>Status</TableColumn>
+                    <TableColumn>Priority</TableColumn>
+                    <TableColumn>Category</TableColumn>
+                    <TableColumn>Notes</TableColumn>
+                    <TableColumn>Last Updated</TableColumn>
+                    <TableColumn>{""}</TableColumn>
+                    <TableColumn>{""}</TableColumn>
+                </TableHeader>
 
-                                <TableCell>
-                                    <Chip size="sm" color={priorityMap[app.priority]?.color || "default"}>
-                                        {priorityMap[app.priority]?.label || "Unknown"}
-                                    </Chip>
-                                </TableCell>
+                <TableBody items={displayedApps}>
+                    {(app) => (
+                        <TableRow
+                            key={app.id}
+                            onClick={() => goToApp(app.id)}
+                            className="cursor-pointer hover:bg-table_hover"
+                        >
+                            <TableCell className="text-table_text">
+                                {app.title}
+                            </TableCell>
 
-                                <TableCell>
-                                    <Chip size="sm" variant="flat">{app.category}</Chip>
-                                </TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                                <Dropdown>
+                                    <DropdownTrigger>
+                                        <button>
+                                            <Chip color={statusColorMap[app.status]}>
+                                                {app.status}
+                                            </Chip>
+                                        </button>
+                                    </DropdownTrigger>
 
-                                <TableCell>
-                                    <span className="text-table_text line-clamp-2">{app.notes}</span>
-                                </TableCell>
+                                    <DropdownMenu
+                                        onAction={(key) =>
+                                            statusMutation.mutate({
+                                                id: app.id,
+                                                status: key as string,
+                                            })
+                                        }
+                                    >
+                                        {STATUSES.map((s) => (
+                                            <DropdownItem key={s}>{s}</DropdownItem>
+                                        ))}
+                                    </DropdownMenu>
+                                </Dropdown>
+                            </TableCell>
 
-                                <TableCell>
-                                    <span className="text-table_text">
-                                        {new Date(app.created_at).toLocaleDateString("en-US", {
-                                            month: "2-digit",
-                                            day:   "2-digit",
-                                            year:  "numeric",
-                                        })}
-                                    </span>
-                                </TableCell>
+                            <TableCell>
+                                <Chip color={priorityMap[app.priority].color}>
+                                    {priorityMap[app.priority].label}
+                                </Chip>
+                            </TableCell>
 
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
+                            <TableCell>
+                                <Chip variant="flat">{app.category}</Chip>
+                            </TableCell>
 
-            {/* PAGINATION */}
+                            <TableCell className="text-table_text">
+                                {app.notes?.at(-1)?.content ?? "—"}
+                            </TableCell>
+
+                            <TableCell className="text-table_text">
+                                {new Date(app.updated_at).toLocaleDateString()}
+                            </TableCell>
+
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                                <Button
+                                    onPress={() => setQuickEdit(app)}
+                                    className="text-xs text-muted hover:text-primary"
+                                >
+                                    Edit
+                                </Button>
+                            </TableCell>
+
+                            <TableCell className="text-table_text">
+                                <Button
+                                    onPress={() => router.push(`/application/${app.id}/notes`)}
+                                    className="text-xs text-muted hover:text-primary"
+                                    >
+                                    Notes
+                                </Button>
+                            </TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
+
             <div className="mt-4">
-                <Pagination
-                    showControls
-                    isCompact
-                    showShadow
-                    page={page}
-                    total={pages}
-                    variant="flat"
-                    onChange={setPage}
-                />
+                <Pagination page={page} total={pages} onChange={setPage} />
             </div>
         </>
     );
