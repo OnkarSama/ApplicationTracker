@@ -18,6 +18,15 @@ const config = {
 
                 sora: ["Sora", "sans-serif"],
             },
+
+            backgroundImage: {
+                // bg-button-gradient → "Add Application" button
+                'button-gradient': 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                'card-glow': 'radial-gradient(circle at top, rgba(99,102,241,.25), transparent)',
+                'hero-gradient': 'linear-gradient(90deg, hsl(var(--heroui-info)) 0%, hsl(var(--heroui-primary)) 40%, hsl(var(--heroui-secondary)) 70%, hsl(var(--heroui-success)) 100%)',
+                'radial-gradient': 'radial-gradient(ellipse 70% 60% at 50% 50%, transparent 28%, hsl(var(--heroui-background) / 0.72) 100%)',
+                'linear-gradient' : 'linear-gradient(to top, hsl(var(--heroui-background) / 0.88) 0%, transparent 100%)'
+            },
         },
     },
 

@@ -644,13 +644,13 @@ export default function ProfileEditPage() {
                 <nav className="sticky top-0 z-10 shrink-0 flex items-center justify-between px-8 py-5 backdrop-blur-xl bg-background/80 border-b border-border/30 max-sm:px-4 max-sm:py-3.5">
                     <Link
                         href="/"
-                        className="font-mono text-[0.78rem] tracking-[0.22em] uppercase text-cyan-400/65 no-underline transition-colors duration-200 hover:text-cyan-400"
+                        className="font-mono text-[0.78rem] tracking-[0.22em] uppercase text-heading no-underline transition-colors duration-200 hover:text-cyan-400"
                     >
                         ApplyOS
                     </Link>
                     <Link
-                        href="/settings"
-                        className="font-sans font-medium text-[0.84rem] px-5 py-2 rounded-md bg-cyan-400/[0.07] text-cyan-400/88 border border-cyan-400/22 no-underline transition-all duration-200 hover:bg-cyan-400/14 hover:border-cyan-400/52 hover:shadow-[0_0_22px_rgba(0,212,255,0.2)] max-sm:text-xs max-sm:px-3.5 max-sm:py-1.5"
+                        href="/preferences"
+                        className="font-sans font-medium text-[0.84rem] px-5 py-2 rounded-md bg-cyan-400/[0.07] text-heading border border-cyan-400/22 no-underline transition-all duration-200 hover:bg-cyan-400/14 hover:border-cyan-400/52 hover:shadow-[0_0_22px_rgba(0,212,255,0.2)] max-sm:text-xs max-sm:px-3.5 max-sm:py-1.5"
                     >
                         ← Settings
                     </Link>
@@ -661,13 +661,13 @@ export default function ProfileEditPage() {
 
                     {/* Header */}
                     <div>
-                        <div className="inline-flex items-center gap-1.5 font-mono text-[0.6rem] tracking-[0.2em] uppercase text-cyan-400/55 border border-cyan-400/12 bg-cyan-400/[0.04] px-3 py-1 rounded-full mb-3">
-                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_theme(colors.cyan.400)] inline-block" />
+                        <div className="inline-flex items-center gap-1.5 font-mono text-[0.6rem] tracking-[0.2em] uppercase text-heading border bg-background px-3 py-1 rounded-full mb-3">
+                            <span className="w-1.5 h-1.5 rounded-full bg-foreground inline-block" />
                             Autofill Information
                         </div>
                         <h1 className="font-[family-name:var(--font-syne)] font-extrabold text-[clamp(1.5rem,5vw,2.6rem)] tracking-tight text-heading leading-[1.05] m-0">
                             Edit autofill{" "}
-                            <span className="bg-gradient-to-r from-cyan-400 via-violet-500 to-emerald-400 bg-clip-text text-transparent">
+                            <span className="text-transparent bg-clip-text bg-hero-gradient">
                 information
               </span>
                         </h1>
@@ -797,7 +797,7 @@ export default function ProfileEditPage() {
                                     onPress={handleClear}
                                     isDisabled={!isDirty}
                                     variant="bordered"
-                                    className="border-border/50 bg-foreground/[0.03] text-muted hover:bg-foreground/[0.07] hover:text-subheading hover:border-border font-medium tracking-wide disabled:opacity-30"
+                                    className="border-border/50 bg-foreground/3 text-muted hover:bg-foreground/[0.07] hover:text-subheading hover:border-border font-medium tracking-wide disabled:opacity-30"
                                 >
                                     Discard
                                 </Button>

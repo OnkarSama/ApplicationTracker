@@ -73,7 +73,7 @@ export function SectionCard({
         <div className={`flex flex-col gap-4 rounded-xl p-5 bg-card border ${borderClass} w-full h-full flex-1`}>
             <div className="flex flex-col gap-0.5">
                 <div className="inline-flex items-center gap-1.5 w-fit px-3 py-1 rounded-full border border-border bg-background">
-                    <span className={`inline-block w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotClass}`} />
+                    <span className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${dotClass}`} />
                     <span className="text-muted text-[0.6rem] tracking-[0.2em] uppercase font-mono">
                         {eyebrow}
                     </span>
@@ -620,7 +620,7 @@ export function DeleteAccountModal({ isOpen, onClose }: { isOpen: boolean; onClo
                     <>
                         <ModalHeader>
                             <div className="flex items-center gap-2.5">
-                                <div className="flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0 bg-danger/10 border border-danger/25">
+                                <div className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0 bg-danger/10 border border-danger/25">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-danger">
                                         <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
                                         <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
@@ -644,7 +644,7 @@ export function DeleteAccountModal({ isOpen, onClose }: { isOpen: boolean; onClo
                                     "Notification preferences & settings",
                                 ].map(item => (
                                     <li key={item} className="flex items-center gap-2.5 text-sm text-muted">
-                                        <span className="inline-block w-1 h-1 rounded-full flex-shrink-0 bg-danger" />
+                                        <span className="inline-block w-1 h-1 rounded-full shrink-0 bg-danger" />
                                         {item}
                                     </li>
                                 ))}
@@ -709,7 +709,7 @@ export default function PreferencePage() {
             {/* Page header */}
             <div className="flex flex-col gap-0.5">
                 <div className="inline-flex items-center gap-1.5 w-fit px-3 py-1 rounded-full border border-border bg-card mb-1">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-success flex-shrink-0" />
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-success shrink-0" />
                     <span className="text-muted text-[0.6rem] tracking-[0.2em] uppercase font-mono">
                         Account Settings
                     </span>
@@ -742,7 +742,7 @@ export default function PreferencePage() {
                     variant="bordered"
                     onPress={onOpen}
                     size="sm"
-                    className="flex-shrink-0 border-danger/40 text-danger hover:bg-danger/10 hover:border-danger/70 font-semibold tracking-wide text-xs"
+                    className="shrink-0 border-danger/40 text-danger hover:bg-danger/10 hover:border-danger/70 font-semibold tracking-wide text-xs"
                 >
                     Delete account
                 </Button>
