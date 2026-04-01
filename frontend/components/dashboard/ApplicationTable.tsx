@@ -26,6 +26,15 @@ const statusColorMap: Record<string, any> = {
     Wishlist: "secondary",
 };
 
+const categoryColorMap: Record<string, any> = {
+    "Internship": "secondary",
+    "Full-time": "primary",
+    "Graduate School": "success",
+    "Fellowship": "warning",
+    "Research": "danger",
+    "Other": "default",
+};
+
 const priorityMap: Record<number, { label: string; color: any }> = {
     0: { label: "Normal", color: "default" },
     1: { label: "Important", color: "warning" },
@@ -206,7 +215,7 @@ export default function ApplicationTable({ applications = [] }: Props) {
                             </TableCell>
 
                             <TableCell>
-                                <Chip variant="flat">{app.category}</Chip>
+                                <Chip color={categoryColorMap[app.category]}>{app.category}</Chip>
                             </TableCell>
 
                             <TableCell className="text-table_text">
