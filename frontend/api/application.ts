@@ -6,6 +6,7 @@ export type ApplicationPayload = {
         status: string | "Applied",
         priority: number,
         category: string,
+        salary?: number | null,
     }
 }
 
@@ -16,6 +17,7 @@ export type Application = {
     status: string
     priority: number
     category: string
+    salary?: number | null
     created_at: string
     updated_at: string
 }

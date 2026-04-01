@@ -33,9 +33,10 @@ export function AddApplicationModal({ isOpen, onClose }: Props) {
     const [status,   setStatus]   = useState<string>("Applied");
     const [category, setCategory] = useState<string>("");
     const [priority, setPriority] = useState<number>(0);
+    const [salary,   setSalary]   = useState<string>("");
 
     const reset = () => {
-        setTitle(""); setStatus("Applied"); setCategory(""); setPriority(0);
+        setTitle(""); setStatus("Applied"); setCategory(""); setPriority(0); setSalary("");
     };
 
     const handleClose = () => { reset(); onClose(); };
@@ -43,7 +44,7 @@ export function AddApplicationModal({ isOpen, onClose }: Props) {
     const createMutation = useMutation({
         mutationFn: () =>
             apiRouter.applications.createApplication({
-                application: { title: title.trim(), status, category, priority },
+                application: { title: title.trim(), status, category, priority, salary: salary ? Number(salary) : null },
             }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["getApplications"] });
@@ -125,6 +126,19 @@ export function AddApplicationModal({ isOpen, onClose }: Props) {
                                 {CATEGORY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                         </div>
+                    </div>
+
+                    {/* Salary */}
+                    <div className="flex flex-col gap-1.5">
+                        <label className="font-mono text-[0.6rem] tracking-[0.16em] uppercase text-muted/60">Salary</label>
+                        <input
+                            type="number"
+                            min="0"
+                            value={salary}
+                            onChange={e => setSalary(e.target.value)}
+                            placeholder="e.g. 85000"
+                            className={inputCls}
+                        />
                     </div>
 
                     {/* Priority */}

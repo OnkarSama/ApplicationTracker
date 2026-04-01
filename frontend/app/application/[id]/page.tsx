@@ -17,6 +17,7 @@ type FormState = {
     status: string;
     priority: number;
     category: string;
+    salary: string;
 };
 
 const STATUS_OPTIONS   = ["Applied", "Interview", "Offer", "Rejected"];
@@ -42,7 +43,7 @@ export default function EditApplicationPage({ params }: PageProps) {
     const queryClient  = useQueryClient();
 
     const [form, setForm] = useState<FormState>({
-        title: "", status: "Applied", priority: 0, category: "",
+        title: "", status: "Applied", priority: 0, category: "", salary: "",
     });
 
     /* ── Fetch ── */
@@ -60,6 +61,7 @@ export default function EditApplicationPage({ params }: PageProps) {
             status:   application.status   || "Applied",
             priority: application.priority ?? 0,
             category: application.category || "",
+            salary:   application.salary != null ? String(application.salary) : "",
         });
     }, [application]);
 
@@ -67,14 +69,15 @@ export default function EditApplicationPage({ params }: PageProps) {
         form.title    !== (application.title    || "") ||
         form.status   !== (application.status   || "Applied") ||
         form.priority !== (application.priority ?? 0) ||
-        form.category !== (application.category || "")
+        form.category !== (application.category || "") ||
+        form.salary   !== (application.salary != null ? String(application.salary) : "")
     );
 
     /* ── Update ── */
     const updateMutation = useMutation({
         mutationFn: () =>
             apiRouter.applications.updateApplication(applicationId, {
-                application: { ...form },
+                application: { ...form, salary: form.salary ? Number(form.salary) : null },
             }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["getApplications"] });
@@ -103,13 +106,7 @@ export default function EditApplicationPage({ params }: PageProps) {
     };
 
     const handleReset = () => {
-        if (!application) return;
-        setForm({
-            title:    application.title    || "",
-            status:   application.status   || "Applied",
-            priority: application.priority ?? 0,
-            category: application.category || "",
-        });
+        router.push(`/dashboard?${searchParams.toString()}`);
     };
 
     /* ── Loading ── */
@@ -244,6 +241,18 @@ export default function EditApplicationPage({ params }: PageProps) {
                             ))}
                         </Select>
 
+                        {/* Salary */}
+                        <Input
+                            label="Salary"
+                            placeholder="e.g. 85000"
+                            type="number"
+                            min="0"
+                            value={form.salary}
+                            onChange={e => setForm(p => ({ ...p, salary: e.target.value }))}
+                            variant="bordered"
+                            classNames={inputCN}
+                        />
+
                     </div>
 
                     {/* Error banner */}
@@ -269,7 +278,7 @@ export default function EditApplicationPage({ params }: PageProps) {
                             <Button
                                 type="button"
                                 onPress={handleReset}
-                                isDisabled={!isDirty || isBusy}
+                                isDisabled={isBusy}
                                 variant="bordered"
                                 className="border-border/50 bg-foreground/[0.03] text-muted hover:bg-foreground/[0.07] hover:text-subheading hover:border-border font-medium tracking-wide disabled:opacity-30"
                             >

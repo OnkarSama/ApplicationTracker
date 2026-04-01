@@ -122,9 +122,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_23_043441) do
     t.datetime "created_at", null: false
     t.text "message"
     t.string "notification_type"
+<<<<<<< HEAD
+    t.boolean "read", default: false, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id", "read"], name: "index_notifications_on_user_id_and_read"
+=======
     t.boolean "read"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+>>>>>>> cb69e4fbcb3700420ede3fce4088db042220dc0d
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
