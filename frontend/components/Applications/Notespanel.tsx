@@ -180,7 +180,7 @@ export default function NotesPanel({ applicationId }: NotesPanelProps) {
 
                 {!isLoading && !isError && notes.length === 0 && <EmptyState />}
 
-                {notes.map(note => (
+                {[...notes].reverse().map(note => (
                     <div
                         key={note.id}
                         className="group bg-card border border-border/30 rounded-xl p-4 transition-colors hover:border-border/60"
