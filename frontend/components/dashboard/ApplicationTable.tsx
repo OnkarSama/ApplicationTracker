@@ -17,6 +17,7 @@ interface Props {
 }
 
 const STATUSES = ["Applied", "Interview", "Offer", "Rejected", "Wishlist"] as const;
+const CATEGORIES = ["Internship", "Full-time", "Graduate School", "Fellowship", "Research", "Other"] as const;
 
 const statusColorMap: Record<string, any> = {
     Applied: "primary",
@@ -135,6 +136,42 @@ export default function ApplicationTable({ applications = [] }: Props) {
                             ))}
                         </div>
 
+                        {/* SALARY */}
+                        <input
+                            type="number"
+                            min="0"
+                            value={quickEdit.salary ?? ""}
+                            onChange={e =>
+                                setQuickEdit(prev =>
+                                    prev ? { ...prev, salary: e.target.value ? Number(e.target.value) : null } : prev
+                                )
+                            }
+                            placeholder="Salary (e.g. 85000)"
+                            className="w-full rounded-lg border border-border bg-foreground/[0.04] px-3 py-2 text-sm text-foreground placeholder:text-muted/40 focus:outline-none focus:border-primary/50 transition-colors"
+                        />
+
+                        {/* CATEGORY */}
+                        <div className="flex flex-wrap gap-2">
+                            {CATEGORIES.map((c) => (
+                                <button
+                                    key={c}
+                                    onClick={() =>
+                                        setQuickEdit((prev) =>
+                                            prev ? { ...prev, category: c } : prev
+                                        )
+                                    }
+                                    className={`px-3 py-1 rounded-lg text-xs border transition
+                                    ${
+                                        quickEdit.category === c
+                                            ? "bg-primary/20 text-primary border-primary"
+                                            : "border-border text-muted"
+                                    }`}
+                                >
+                                    {c}
+                                </button>
+                            ))}
+                        </div>
+
                         <button
                             onClick={() => {
                                 apiRouter.applications
@@ -166,6 +203,7 @@ export default function ApplicationTable({ applications = [] }: Props) {
                     <TableColumn>Status</TableColumn>
                     <TableColumn>Priority</TableColumn>
                     <TableColumn>Category</TableColumn>
+                    <TableColumn>Salary</TableColumn>
                     <TableColumn>Notes</TableColumn>
                     <TableColumn>Last Updated</TableColumn>
                     <TableColumn>{""}</TableColumn>
@@ -216,6 +254,10 @@ export default function ApplicationTable({ applications = [] }: Props) {
 
                             <TableCell>
                                 <Chip color={categoryColorMap[app.category]}>{app.category}</Chip>
+                            </TableCell>
+
+                            <TableCell className="text-table_text">
+                                {app.salary != null ? `$${Number(app.salary).toLocaleString()}` : "—"}
                             </TableCell>
 
                             <TableCell className="text-table_text">
