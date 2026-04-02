@@ -41,6 +41,43 @@ function isUpcoming(iso: string) {
     return new Date(iso) > new Date();
 }
 
+/* Within the next 7 days */
+function isWithinWeek(iso: string) {
+    const t = new Date(iso).getTime();
+    const now = Date.now();
+    return t > now && t <= now + 7 * 24 * 60 * 60 * 1000;
+}
+
+/*
+  Sort order:
+    1. Upcoming within 7 days  → soonest first  (most urgent at top)
+    2. Upcoming beyond 7 days  → soonest first
+    3. Past interviews         → most recent first
+*/
+function sortInterviews(list: Interview[]): Interview[] {
+    return [...list].sort((a, b) => {
+        const aTime = new Date(a.scheduled_at).getTime();
+        const bTime = new Date(b.scheduled_at).getTime();
+        const now = Date.now();
+        const week = now + 7 * 24 * 60 * 60 * 1000;
+
+        const bucket = (t: number) => {
+            if (t > now && t <= week) return 0;  // upcoming this week
+            if (t > week)            return 1;   // upcoming later
+            return 2;                             // past
+        };
+
+        const aBucket = bucket(aTime);
+        const bBucket = bucket(bTime);
+
+        if (aBucket !== bBucket) return aBucket - bBucket;
+
+        // Within the same bucket:
+        // upcoming → soonest first (ascending), past → most recent first (descending)
+        return aBucket === 2 ? bTime - aTime : aTime - bTime;
+    });
+}
+
 function TrashIcon() {
     return (
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -128,6 +165,8 @@ export default function InterviewsPanel({ applicationId }: InterviewsPanelProps)
 
     const inputCls = "w-full bg-foreground/[0.04] border border-border/40 rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted/40 focus:outline-none focus:border-primary/50 transition-colors";
 
+    const sortedInterviews = sortInterviews(interviews);
+
     return (
         <div className="flex flex-col gap-6">
 
@@ -202,24 +241,33 @@ export default function InterviewsPanel({ applicationId }: InterviewsPanelProps)
 
                 {!isLoading && !isError && interviews.length === 0 && <EmptyState />}
 
-                {interviews.map(interview => {
+                {sortedInterviews.map(interview => {
                     const upcoming = isUpcoming(interview.scheduled_at);
+                    const thisWeek = isWithinWeek(interview.scheduled_at);
                     return (
                         <div
                             key={interview.id}
-                            className="group bg-card border border-border/30 rounded-xl p-4 transition-colors hover:border-border/60"
+                            className={[
+                                "group bg-card border rounded-xl p-4 transition-colors hover:border-border/60",
+                                thisWeek
+                                    ? "border-primary/30 bg-primary/[0.02]"  // highlight upcoming-this-week
+                                    : "border-border/30",
+                            ].join(" ")}
                         >
                             <div className="flex items-start justify-between gap-3">
                                 <div className="flex flex-col gap-1.5 min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <span className="text-sm font-semibold text-foreground">{interview.interview_type}</span>
+                                        {/* Status badge */}
                                         <span className={[
                                             "font-mono text-[0.58rem] tracking-[0.1em] uppercase px-2 py-0.5 rounded-full border",
-                                            upcoming
-                                                ? "text-primary/80 border-primary/25 bg-primary/[0.07]"
-                                                : "text-muted/50 border-border/40 bg-foreground/[0.03]",
+                                            thisWeek
+                                                ? "text-primary border-primary/40 bg-primary/[0.1]"
+                                                : upcoming
+                                                    ? "text-primary/80 border-primary/25 bg-primary/[0.07]"
+                                                    : "text-muted/50 border-border/40 bg-foreground/[0.03]",
                                         ].join(" ")}>
-                                            {upcoming ? "Upcoming" : "Past"}
+                                            {thisWeek ? "This week" : upcoming ? "Upcoming" : "Past"}
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-1.5 text-muted/60">
@@ -236,11 +284,12 @@ export default function InterviewsPanel({ applicationId }: InterviewsPanelProps)
                                     </span>
                                 </div>
 
+                                {/* Delete — always visible on small screens, hover-only on desktop */}
                                 <button
                                     onClick={() => deleteMutation.mutate(interview.id)}
                                     disabled={deleteMutation.isPending}
                                     title="Delete interview"
-                                    className="flex items-center justify-center p-1.5 bg-foreground/[0.04] border border-border/40 rounded-md text-muted/50 hover:text-danger hover:border-danger/30 hover:bg-danger/[0.07] disabled:opacity-40 opacity-0 group-hover:opacity-100 transition-all shrink-0"
+                                    className="flex items-center justify-center p-1.5 bg-foreground/[0.04] border border-border/40 rounded-md text-muted/50 hover:text-danger hover:border-danger/30 hover:bg-danger/[0.07] disabled:opacity-40 opacity-0 group-hover:opacity-100 max-sm:opacity-100 transition-all shrink-0"
                                 >
                                     <TrashIcon />
                                 </button>
