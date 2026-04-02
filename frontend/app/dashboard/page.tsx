@@ -26,6 +26,7 @@ export default function DashboardPage() {
     const { data = [] as Application[], isLoading } = useQuery({
         queryKey: ["getApplications", q],
         queryFn:  () => apiRouter.applications.getApplications(q),
+        refetchOnMount: "always",
     });
 
     const filteredData = useMemo(() => {

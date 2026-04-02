@@ -64,7 +64,7 @@ class Api::ApplicationsController < ApplicationController
     private
 
     def application_params
-        params.require(:application).permit(:title, :notes, :status, :priority, :category)
+        params.require(:application).permit(:title, :notes, :status, :priority, :category, :salary)
     end
 
     def set_bearer_token
