@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_23_043441) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_02_052053) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -70,6 +70,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_23_043441) do
     t.datetime "created_at", null: false
     t.string "password_digest"
     t.string "portal_link"
+    t.string "status_page_link"
     t.datetime "updated_at", null: false
     t.string "username"
     t.index ["application_id"], name: "index_application_credentials_on_application_id"
@@ -122,16 +123,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_23_043441) do
     t.datetime "created_at", null: false
     t.text "message"
     t.string "notification_type"
-<<<<<<< HEAD
-    t.boolean "read", default: false, null: false
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.index ["user_id", "read"], name: "index_notifications_on_user_id_and_read"
-=======
     t.boolean "read"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
->>>>>>> cb69e4fbcb3700420ede3fce4088db042220dc0d
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
