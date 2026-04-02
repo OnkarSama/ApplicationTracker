@@ -61,6 +61,6 @@ class Api::ApplicationCredentialsController < ApplicationController
   end
 
   def credential_params
-    params.require(:application_credential).permit(:username, :password_digest, :portal_link)
+    params.require(:application_credential).permit(:username, :password_digest, :portal_link, :status_page_link)
   end
 end

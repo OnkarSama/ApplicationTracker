@@ -63,8 +63,10 @@ const pillBase: React.CSSProperties = {
 
 // ── component ─────────────────────────────────────────────────────────────────
 
-type PickerMode = 'fill' | 'save'
+type PickerMode = 'fill' | 'save' | 'status'
 type SaveStatus = 'saving' | 'saved' | 'error'
+
+const POST_LOGIN_FLAG = 'apptracker_post_login'
 
 export default function FillOverlay() {
     const [apps, setApps]             = useState<Application[]>([])
@@ -73,6 +75,7 @@ export default function FillOverlay() {
     const [showPicker, setShowPicker] = useState(false)
     const [pickerMode, setPickerMode] = useState<PickerMode>('fill')
     const [saveState, setSaveState]   = useState<Record<number, SaveStatus>>({})
+    const [showStatusPrompt, setShowStatusPrompt] = useState(false)
     const currentUrl = useRef(window.location.href)
 
     // ── fill: write saved credentials into the form ──────────────────────────
@@ -95,6 +98,25 @@ export default function FillOverlay() {
         chrome.runtime.sendMessage({ type: 'SAVE_PORTAL', appId: app.id, credential }, (res) => {
             setSaveState(s => ({ ...s, [app.id]: res?.success ? 'saved' : 'error' }))
         })
+    }, [])
+
+    const doSaveStatusPage = useCallback((app: Application) => {
+        setSaveState(s => ({ ...s, [app.id]: 'saving' }))
+        const credential = {
+            portal_link:      app.credential?.portal_link     ?? '',
+            status_page_link: currentUrl.current,
+            username:         app.credential?.username        ?? '',
+            password_digest:  app.credential?.password_digest ?? '',
+        }
+        chrome.runtime.sendMessage({ type: 'SAVE_PORTAL', appId: app.id, credential }, (res) => {
+            if (res?.success) sessionStorage.removeItem(POST_LOGIN_FLAG)
+            setSaveState(s => ({ ...s, [app.id]: res?.success ? 'saved' : 'error' }))
+        })
+    }, [])
+
+    const dismissStatusPrompt = useCallback(() => {
+        sessionStorage.removeItem(POST_LOGIN_FLAG)
+        setShowStatusPrompt(false)
     }, [])
 
     // ── save login: capture what the user typed + current URL ────────────────
@@ -125,6 +147,23 @@ export default function FillOverlay() {
             const fetchedApps: Application[] = response?.apps ?? []
             setApps(fetchedApps)
 
+            // ── post-login redirect detection ────────────────────────────────
+            const postLoginFlag = sessionStorage.getItem(POST_LOGIN_FLAG)
+            if (postLoginFlag === '1') {
+                const pwInput = getPasswordInput()
+                if (!pwInput) {
+                    // No login form — we're on a post-login page.
+                    // Keep the flag so it persists across further navigations (e.g. /apply → /apply/status)
+                    // until the user explicitly saves or dismisses.
+                    setShowStatusPrompt(true)
+                    return
+                }
+                // Still on a login-like page (e.g. 2FA step) — keep the flag so the
+                // next redirect will still trigger the check, and re-attach listeners
+                // so submitting this step also marks the next navigation.
+                attachLoginListeners(pwInput)
+            }
+
             function tryAutoFill(): 'filled' | 'no-match' | 'no-form' {
                 const pwInput = getPasswordInput()
                 if (!pwInput) return 'no-form'
@@ -143,22 +182,76 @@ export default function FillOverlay() {
             }
 
             const result = tryAutoFill()
-            if (result === 'filled') return
+            // Marks the flag + handles SPA navigation where there's no full page reload
+            function markLoginAndWatch() {
+                sessionStorage.setItem(POST_LOGIN_FLAG, '1')
+
+                // For SPAs: if the URL changes without a reload, check if the login form is gone
+                let lastHref = window.location.href
+                const navInterval = setInterval(() => {
+                    if (window.location.href !== lastHref) {
+                        lastHref = window.location.href
+                        currentUrl.current = window.location.href
+                        // Give the SPA time to render the new page
+                        setTimeout(() => {
+                            if (!getPasswordInput()) {
+                                clearInterval(navInterval)
+                                sessionStorage.removeItem(POST_LOGIN_FLAG)
+                                setShowStatusPrompt(true)
+                            }
+                        }, 600)
+                    }
+                }, 400)
+
+                // Clean up after 30s to avoid leaking intervals
+                setTimeout(() => clearInterval(navInterval), 30_000)
+            }
+
+            function attachLoginListeners(pwInput: HTMLInputElement) {
+                // Native form submit
+                document.addEventListener('submit', markLoginAndWatch, true)
+
+                // JS-driven submit: click on submit button inside the same form
+                const form = pwInput.closest('form')
+                const submitBtn = form
+                    ? form.querySelector<HTMLElement>('[type="submit"], button:not([type="button"])')
+                    : pwInput.parentElement?.querySelector<HTMLElement>('[type="submit"], button:not([type="button"])')
+                if (submitBtn) {
+                    submitBtn.addEventListener('click', markLoginAndWatch, { once: true, capture: true })
+                }
+            }
+
+            if (result === 'filled') {
+                // Set flag so the next page (after login redirect) triggers the status page prompt
+                attachLoginListeners(getPasswordInput()!)
+                return
+            }
 
             // Watch for dynamically rendered forms (SPAs)
             observer = new MutationObserver(() => {
                 if (didFill) { observer?.disconnect(); return }
                 const r = tryAutoFill()
-                if (r === 'filled') observer?.disconnect()
+                if (r === 'filled') {
+                    observer?.disconnect()
+                    attachLoginListeners(getPasswordInput()!)
+                }
             })
             observer.observe(document.body, { childList: true, subtree: true })
+
+            // If form is present (no match yet), still listen for submit to catch the redirect
+            const handleFormSubmit = () => {
+                if (fetchedApps.some(hostnameMatches)) {
+                    markLoginAndWatch()
+                }
+            }
+            document.addEventListener('submit', handleFormSubmit, true)
         }
 
         init()
         return () => observer?.disconnect()
     }, [])
 
-    if (!formDetected) return null
+    if (!formDetected && !showStatusPrompt) return null
 
     const openPicker = (mode: PickerMode) => {
         // reset save states when opening fresh
@@ -173,29 +266,77 @@ export default function FillOverlay() {
                 // ── pill buttons ─────────────────────────────────────────────
                 <div style={{ display: 'flex', gap: '8px', flexDirection: 'column', alignItems: 'flex-end' }}>
 
-                    {/* Save login — always visible when form is on page */}
-                    <button
-                        onClick={() => openPicker('save')}
-                        style={{
-                            ...pillBase,
-                            background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)',
-                            color: '#fff',
-                            boxShadow: '0 4px 18px rgba(99,102,241,0.5)',
-                        }}
-                        onMouseEnter={e => {
-                            e.currentTarget.style.transform = 'translateY(-2px)'
-                            e.currentTarget.style.boxShadow = '0 6px 24px rgba(99,102,241,0.6)'
-                        }}
-                        onMouseLeave={e => {
-                            e.currentTarget.style.transform = 'translateY(0)'
-                            e.currentTarget.style.boxShadow = '0 4px 18px rgba(99,102,241,0.5)'
-                        }}
-                    >
-                        💾 Save login
-                    </button>
+                    {/* Status page prompt — shown after post-login redirect */}
+                    {showStatusPrompt && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <button
+                                onClick={() => openPicker('status')}
+                                style={{
+                                    ...pillBase,
+                                    background: 'linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)',
+                                    color: '#fff',
+                                    boxShadow: '0 4px 18px rgba(14,165,233,0.5)',
+                                }}
+                                onMouseEnter={e => {
+                                    e.currentTarget.style.transform = 'translateY(-2px)'
+                                    e.currentTarget.style.boxShadow = '0 6px 24px rgba(14,165,233,0.65)'
+                                }}
+                                onMouseLeave={e => {
+                                    e.currentTarget.style.transform = 'translateY(0)'
+                                    e.currentTarget.style.boxShadow = '0 4px 18px rgba(14,165,233,0.5)'
+                                }}
+                            >
+                                📊 Save as status page?
+                            </button>
+                            <button
+                                onClick={dismissStatusPrompt}
+                                title="Dismiss"
+                                style={{
+                                    background: 'rgba(0,0,0,0.25)',
+                                    border: 'none',
+                                    borderRadius: '50%',
+                                    color: '#fff',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    width: '20px',
+                                    height: '20px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexShrink: 0,
+                                }}
+                            >
+                                ×
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Save login — only visible when login form is on page */}
+                    {formDetected && (
+                        <button
+                            onClick={() => openPicker('save')}
+                            style={{
+                                ...pillBase,
+                                background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)',
+                                color: '#fff',
+                                boxShadow: '0 4px 18px rgba(99,102,241,0.5)',
+                            }}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.transform = 'translateY(-2px)'
+                                e.currentTarget.style.boxShadow = '0 6px 24px rgba(99,102,241,0.6)'
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.transform = 'translateY(0)'
+                                e.currentTarget.style.boxShadow = '0 4px 18px rgba(99,102,241,0.5)'
+                            }}
+                        >
+                            💾 Save login
+                        </button>
+                    )}
 
                     {/* Fill — only shown when not yet autofilled */}
-                    {!autoFilled && (
+                    {!autoFilled && formDetected && (
                         <button
                             onClick={() => openPicker('fill')}
                             style={{
@@ -236,10 +377,10 @@ export default function FillOverlay() {
                         alignItems: 'center',
                         padding: '11px 14px',
                         borderBottom: '1px solid #f3f4f6',
-                        background: pickerMode === 'save' ? '#f5f3ff' : '#fff',
+                        background: pickerMode === 'save' ? '#f5f3ff' : pickerMode === 'status' ? '#f0f9ff' : '#fff',
                     }}>
                         <span style={{ fontWeight: 700, color: '#111827' }}>
-                            {pickerMode === 'save' ? '💾 Save login to…' : '🔑 Fill credentials from…'}
+                            {pickerMode === 'save' ? '💾 Save login to…' : pickerMode === 'status' ? '📊 Save status page to…' : '🔑 Fill credentials from…'}
                         </span>
                         <button
                             onClick={() => setShowPicker(false)}
@@ -252,7 +393,7 @@ export default function FillOverlay() {
                         </button>
                     </div>
 
-                    {/* save mode hint */}
+                    {/* mode hint */}
                     {pickerMode === 'save' && (
                         <div style={{
                             padding: '8px 14px',
@@ -262,6 +403,17 @@ export default function FillOverlay() {
                             fontSize: '11px',
                         }}>
                             Saves what you've typed in the form + this page URL
+                        </div>
+                    )}
+                    {pickerMode === 'status' && (
+                        <div style={{
+                            padding: '8px 14px',
+                            background: '#f0f9ff',
+                            borderBottom: '1px solid #f3f4f6',
+                            color: '#0369a1',
+                            fontSize: '11px',
+                        }}>
+                            Saves this page as the application status page
                         </div>
                     )}
 
@@ -329,6 +481,27 @@ export default function FillOverlay() {
                                                 >
                                                     {status === 'saving' ? '...' : status === 'saved' ? '✓ Saved' : status === 'error' ? '✗ Error' : 'Save here'}
                                                 </button>
+                                            ) : pickerMode === 'status' ? (
+                                                // Save status page button
+                                                <button
+                                                    onClick={() => doSaveStatusPage(app)}
+                                                    disabled={status === 'saving' || status === 'saved'}
+                                                    style={{
+                                                        padding: '5px 10px',
+                                                        borderRadius: '6px',
+                                                        border: '1px solid',
+                                                        borderColor: status === 'saved' ? '#10b981' : status === 'error' ? '#ef4444' : '#0ea5e9',
+                                                        background: status === 'saved' ? '#ecfdf5' : status === 'error' ? '#fef2f2' : status === 'saving' ? '#f0f9ff' : '#0ea5e9',
+                                                        color: status === 'saved' ? '#059669' : status === 'error' ? '#dc2626' : '#fff',
+                                                        fontSize: '11px',
+                                                        fontWeight: 600,
+                                                        cursor: status === 'saving' || status === 'saved' ? 'default' : 'pointer',
+                                                        whiteSpace: 'nowrap',
+                                                        transition: 'all 0.15s',
+                                                    }}
+                                                >
+                                                    {status === 'saving' ? '...' : status === 'saved' ? '✓ Saved' : status === 'error' ? '✗ Error' : 'Save'}
+                                                </button>
                                             ) : (
                                                 // Fill button — only for apps with credentials
                                                 hasCredentials ? (
@@ -359,22 +532,24 @@ export default function FillOverlay() {
                         )}
                     </div>
 
-                    {/* footer: switch mode */}
-                    <div style={{
-                        padding: '9px 14px',
-                        borderTop: '1px solid #f3f4f6',
-                        textAlign: 'center',
-                    }}>
-                        <button
-                            onClick={() => { setSaveState({}); setPickerMode(m => m === 'save' ? 'fill' : 'save') }}
-                            style={{
-                                background: 'none', border: 'none', cursor: 'pointer',
-                                color: '#6366f1', fontSize: '11px', fontWeight: 600,
-                            }}
-                        >
-                            {pickerMode === 'save' ? 'Switch to Fill mode' : 'Switch to Save mode'}
-                        </button>
-                    </div>
+                    {/* footer: switch mode (not shown in status mode) */}
+                    {pickerMode !== 'status' && (
+                        <div style={{
+                            padding: '9px 14px',
+                            borderTop: '1px solid #f3f4f6',
+                            textAlign: 'center',
+                        }}>
+                            <button
+                                onClick={() => { setSaveState({}); setPickerMode(m => m === 'save' ? 'fill' : 'save') }}
+                                style={{
+                                    background: 'none', border: 'none', cursor: 'pointer',
+                                    color: '#6366f1', fontSize: '11px', fontWeight: 600,
+                                }}
+                            >
+                                {pickerMode === 'save' ? 'Switch to Fill mode' : 'Switch to Save mode'}
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
