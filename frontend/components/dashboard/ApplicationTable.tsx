@@ -260,8 +260,10 @@ export default function ApplicationTable({ applications = [] }: Props) {
                                 {app.salary != null ? `$${Number(app.salary).toLocaleString()}` : "—"}
                             </TableCell>
 
-                            <TableCell className="text-table_text">
-                                {app.notes?.at(-1)?.content ?? "—"}
+                            <TableCell className="text-table_text max-w-50">
+                                <span className="line-clamp-2 text-sm" title={app.notes?.at(-1)?.content ?? undefined}>
+                                    {app.notes?.at(-1)?.content ?? "—"}
+                                </span>
                             </TableCell>
 
                             <TableCell className="text-table_text">
