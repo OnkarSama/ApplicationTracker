@@ -132,6 +132,11 @@ export default function NotesPanel({ applicationId }: NotesPanelProps) {
         updateMutation.mutate({ id, content: editText.trim() });
     };
 
+    /* ── Sort newest → oldest ── */
+    const sortedNotes = [...notes].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+
     return (
         <div className="flex flex-col gap-6">
 
@@ -180,7 +185,7 @@ export default function NotesPanel({ applicationId }: NotesPanelProps) {
 
                 {!isLoading && !isError && notes.length === 0 && <EmptyState />}
 
-                {notes.map(note => (
+                {sortedNotes.map(note => (
                     <div
                         key={note.id}
                         className="group bg-card border border-border/30 rounded-xl p-4 transition-colors hover:border-border/60"
@@ -199,7 +204,7 @@ export default function NotesPanel({ applicationId }: NotesPanelProps) {
                                     rows={3}
                                     className="w-full bg-foreground/[0.04] border border-primary/40 rounded-lg px-3 py-2 text-sm text-foreground resize-none focus:outline-none focus:border-primary/70 transition-colors"
                                 />
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between gap-2 flex-wrap">
                                     <span className="font-mono text-[0.58rem] text-muted/35 tracking-[0.08em]">⌘ + Enter to save · Esc to cancel</span>
                                     <div className="flex gap-2">
                                         <button
@@ -234,7 +239,8 @@ export default function NotesPanel({ applicationId }: NotesPanelProps) {
                                         )}
                                     </div>
                                 </div>
-                                <div className="flex gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                {/* Edit/delete always visible on touch devices, hover on desktop */}
+                                <div className="flex gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 max-sm:opacity-100 transition-opacity">
                                     <button
                                         onClick={() => startEdit(note)}
                                         title="Edit note"
