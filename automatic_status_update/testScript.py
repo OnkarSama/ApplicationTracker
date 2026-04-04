@@ -1,24 +1,41 @@
-import requests
+import re
+import asyncio
+
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 import os
 from fastapi import FastAPI, Header, Request
+from playwright.async_api import async_playwright
+import requests
 
 fastapi = FastAPI()
 load_dotenv()
 
+# Credentials used to authenticate with our own backend API
 EMAIL = os.getenv("EMAIL")
 PASSWORD = os.getenv("PASSWORD")
 
-PROTECTED_URL = lambda portal_link: f"{portal_link.split('/account')[0]}/apply/status"
-
-
+# Base URL for our backend's applications API
 LOGIN_API = os.getenv("LOGIN_API")
 APPLICATIONS_API = os.getenv("APPLICATIONS_API")
+
+# Builds the PATCH endpoint URL for a specific application by ID
 UPDATE_APPLICATIONS_API = lambda app_id: f"{APPLICATIONS_API}/{app_id}"
 
-def json_to_array(json_data):
 
+def json_to_array(json_data):
+    """
+    Converts the JSON response from the applications API into a flat list.
+
+    The API returns { "applications": [...] }, so this extracts that array
+    into a plain list for easier iteration.
+
+    Args:
+        json_data (dict): The parsed JSON response from the applications API.
+
+    Returns:
+        list: A list of application objects.
+    """
     apps_array = []
 
     for apps in json_data["applications"]:
@@ -28,61 +45,192 @@ def json_to_array(json_data):
 
 
 def get_apps(application_route, headers):
+    """
+    Fetches all applications from our backend API.
 
+    Makes a GET request to the applications endpoint and returns
+    the results as a flat list.
+
+    Args:
+        application_route (str): The full URL of the applications API endpoint.
+        headers (dict): Auth headers containing the Bearer token.
+
+    Returns:
+        list: A list of application objects from the API.
+    """
     apps = requests.get(application_route, headers=headers)
 
     return json_to_array(apps.json())
 
-def scrape_status(app):
 
+async def scrape_status(app, browser):
+    """
+    Logs into an application portal and scrapes the status page for status-related text.
+
+    Opens a new browser tab, navigates to the portal's login page, fills in the
+    stored credentials, submits the form, then navigates to the status page URL.
+    Strips script/style tags and searches for any text containing "application"
+    to identify status-related content.
+
+    Each call runs in its own browser tab so multiple apps can be scraped in parallel
+    without interfering with each other.
+
+    Args:
+        app (dict): A single application object from the API, including nested
+                    'application_credential' with portal_link, status_page_link,
+                    username, and password_digest.
+        browser: A Playwright browser instance shared across all parallel scrapes.
+
+    Returns:
+        tuple: (app_id, status) where status is a list of matched strings from the
+               page, or "Applied" if scraping fails.
+    """
     app_info = app['application_credential']
 
     login_route = app_info['portal_link']
+    status_route = app_info['status_page_link']
 
-    payload = {
-        'email': app_info['username'],
-        'password': app_info['password_digest']
+    # Open a new tab in the shared browser for this app
+    page = await browser.new_page()
+
+    # Navigate to the portal login page — only need the form to render, not full JS
+    await page.goto(login_route)
+    await page.wait_for_load_state('load')
+
+    # Try common input field selectors for the username/email field
+    # since different portals use different field names
+    for selector in ['input[type="email"]', 'input[name*="email"]', 'input[name*="user"]', 'input[name*="login"]']:
+        if await page.locator(selector).count() > 0:
+            await page.fill(selector, app_info['username'])
+            break
+
+    # Fill the password field and submit by pressing Enter —
+    # more reliable than clicking a submit button since portals
+    # often have multiple submit buttons (e.g. search bars) on the same page
+    await page.fill('input[type="password"]', app_info['password_digest'])
+    await page.press('input[type="password"]', 'Enter')
+    await page.wait_for_load_state('load')
+
+    # Always wait for networkidle to ensure JS-rendered content is fully loaded
+    await page.goto(status_route, wait_until='networkidle')
+
+    # Parse the fully rendered HTML with BeautifulSoup
+    soup = BeautifulSoup(await page.content(), 'html.parser')
+    await page.close()
+
+    # Remove script and style tags so they don't pollute the text search
+    for tag in soup(["script", "style"]):
+        tag.decompose()
+
+    # Priority-ordered keyword map — checked from most to least decisive
+    # so a "congratulations" page doesn't also match a generic "applied" mention
+    STATUS_KEYWORDS = [
+        ("Offer",              ["congratulations", "we are pleased", "pleased to inform", "offer of admission", "you have been accepted", "been admitted", "proud to offer"]),
+        ("Rejected",           ["unfortunately", "regret to inform", "not selected", "unable to offer", "not moving forward", "we will not be", "we are unable to", "cannot offer"]),
+        ("Awaiting Decision",  ["awaiting decision", "decision will be", "decision has been made", "decision is now available", "your decision is available", "decision released", "decision pending", "decision has been released"]),
+        ("Interview",          ["interview has been scheduled", "would like to schedule an interview", "invite you to interview", "phone screen scheduled", "we'd like to speak with you"]),
+        ("Under Review",       ["under review", "being reviewed", "ready for review", "currently reviewing", "in review", "being considered", "under consideration", "application is complete", "application is now complete"]),
+        ("Applied",            ["received your application", "application has been received", "thank you for submitting", "we have received your application"]),
+    ]
+
+    # Statuses ranked by progression — a status can only move forward, never back
+    STATUS_RANK = {
+        "Wishlist": 0, "Applied": 1, "Under Review": 2,
+        "Awaiting Decision": 3, "Interview": 4, "Offer": 5, "Rejected": 5,
     }
 
-    with requests.Session() as session:
+    status = app['status']
 
-        session.get(login_route, data=payload)
+    # Keyword match on full page text — ordered from most to least decisive
+    matched_phrase = None
+    page_text = soup.get_text(separator=' ', strip=True).lower()
+    for mapped_status, keywords in STATUS_KEYWORDS:
+        for kw in keywords:
+            if kw in page_text:
+                status = mapped_status
+                matched_phrase = f'keyword: "{kw}"'
+                break
+        if matched_phrase:
+            break
 
-        protected_page_response = session.get(PROTECTED_URL(login_route))
+    # Only update if new status is a forward progression — never downgrade
+    current_rank = STATUS_RANK.get(app['status'], 0)
+    new_rank = STATUS_RANK.get(status, 0)
+    if new_rank < current_rank:
+        status = app['status']
+        matched_phrase = f'blocked downgrade to "{status}"'
 
-        soup = BeautifulSoup(protected_page_response.content, 'html.parser')
-
-        try:
-
-            status = soup.find('strong', string=lambda t: 'Current Application Status' in t).next_sibling
-        except AttributeError:
-            status = "Applied"
-
-
-    return status.strip()
+    print(f'{app["company"]}: {status} (matched: {matched_phrase})')
+    return app['id'], status
 
 
 def is_status_change(new_status, old_status):
+    """
+    Checks whether the scraped status differs from the stored status.
 
+    Args:
+        new_status: The status scraped from the portal.
+        old_status: The status currently stored in our database.
+
+    Returns:
+        bool: True if the status has changed, False otherwise.
+    """
     return not(new_status == old_status)
 
-def update_status(new_status,app_id, headers):
 
-    requests.patch(UPDATE_APPLICATIONS_API(app_id),json={"status" : new_status},headers=headers)
+def update_status(new_status, app_id, headers):
+    """
+    Sends a PATCH request to our backend API to update an application's status.
 
-def main(apps):
+    Args:
+        new_status: The new status value to set.
+        app_id (int): The ID of the application to update.
+        headers (dict): Auth headers containing the Bearer token.
+    """
+    requests.patch(UPDATE_APPLICATIONS_API(app_id), json={"status": new_status}, headers=headers)
 
+
+async def main(apps):
+    """
+    Scrapes all applications in parallel and updates any whose status has changed.
+
+    Launches a single shared browser instance, then runs scrape_status for all
+    apps concurrently using asyncio.gather. After all scrapes complete, compares
+    each result to the stored status and patches any that have changed.
+
+    Args:
+        apps (list): A list of application objects to process.
+
+    Returns:
+        bool: True if at least one application's status was updated, False otherwise.
+    """
     headers = {
         'Authorization': f'Bearer {os.getenv("API_KEY")}',
         'Content-Type': 'application/json'
     }
 
-
     is_updated = False
-    for app in apps:
-        new_status = scrape_status(app)
-        if is_status_change(new_status,app['status']):
-            update_status(new_status,app['id'],headers)
+
+    async with async_playwright() as p:
+        # Launch one browser shared across all parallel scrapes to avoid
+        # the overhead of spinning up a new browser per application
+        browser = await p.chromium.launch(headless=True)
+
+        # Scrape all apps concurrently — return_exceptions means one failure
+        # doesn't cancel the rest
+        results = await asyncio.gather(*[scrape_status(app, browser) for app in apps], return_exceptions=True)
+
+        await browser.close()
+
+    # Build a lookup map so we can match scraped results back to their app objects
+    apps_by_id = {app['id']: app for app in apps}
+    for result in results:
+        if isinstance(result, Exception):
+            print(f'Scrape error: {result}')
+            continue
+        app_id, new_status = result
+        if is_status_change(new_status, apps_by_id[app_id]['status']):
+            update_status(new_status, app_id, headers)
             is_updated = True
 
     return is_updated
@@ -90,10 +238,25 @@ def main(apps):
 
 @fastapi.post("/automaticStatusUpdate")
 async def update_statuses(request: Request, authorization: str = Header(None)):
+    """
+    POST endpoint that triggers a status update check for all provided applications.
+
+    Validates the Bearer token from the Authorization header, then runs the
+    main scraping flow against the list of apps in the request body.
+
+    Args:
+        request (Request): The incoming FastAPI request. Body should be a list of
+                           application objects.
+        authorization (str): The Authorization header value (expected: "Bearer <token>").
+
+    Returns:
+        dict: {"Updated": True/False} on success, or {"Auth": "Not Authenticated"} if
+              the token is invalid.
+    """
     API_KEY = os.getenv("API_KEY")
     if authorization.split(" ")[1] == API_KEY:
         body = await request.json()
-        is_updated = main(body)
+        is_updated = await main(body)
         return {"Updated": is_updated}
     else:
         return {"Auth": "Not Authenticated"}
