@@ -7,14 +7,10 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addToast } from "@heroui/react";
 import apiRouter from "@/api/router";
+import { getPriorityOptions } from "@/utils/priority";
 
-const STATUS_OPTIONS   = ["Applied", "Wishlist", "Interview", "Offer", "Rejected"] as const;
+const STATUS_OPTIONS   = ["Wishlist", "Applied", "Under Review", "Awaiting Decision", "Interview", "Offer", "Rejected"] as const;
 const CATEGORY_OPTIONS = ["Internship", "Full-time", "Graduate School", "Fellowship", "Research", "Other"] as const;
-const PRIORITY_OPTIONS = [
-    { key: 0, label: "Normal",    color: "text-muted" },
-    { key: 1, label: "Important", color: "text-warning" },
-    { key: 2, label: "Urgent",    color: "text-danger" },
-] as const;
 
 const inputCls = [
     "w-full rounded-xl border border-border/50 bg-foreground/[0.04] px-4 py-2.5 text-sm text-foreground",
@@ -29,14 +25,15 @@ interface Props {
 export function AddApplicationModal({ isOpen, onClose }: Props) {
     const queryClient = useQueryClient();
 
-    const [title,    setTitle]    = useState("");
+    const [company,  setCompany]  = useState("");
+    const [position, setPosition] = useState("");
     const [status,   setStatus]   = useState<string>("Applied");
     const [category, setCategory] = useState<string>("");
-    const [priority, setPriority] = useState<number>(0);
+    const [priority, setPriority] = useState<string>("Low");
     const [salary,   setSalary]   = useState<string>("");
 
     const reset = () => {
-        setTitle(""); setStatus("Applied"); setCategory(""); setPriority(0); setSalary("");
+        setCompany(""); setPosition(""); setStatus("Applied"); setCategory(""); setPriority("Low"); setSalary("");
     };
 
     const handleClose = () => { reset(); onClose(); };
@@ -44,13 +41,13 @@ export function AddApplicationModal({ isOpen, onClose }: Props) {
     const createMutation = useMutation({
         mutationFn: () =>
             apiRouter.applications.createApplication({
-                application: { title: title.trim(), status, category, priority, salary: salary ? Number(salary) : null },
+                application: { company: company.trim(), position: position.trim() || undefined, status, category, priority, salary: salary ? Number(salary) : null },
             }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["getApplications"] });
             addToast({
                 title:       "Application added",
-                description: `"${title.trim()}" has been saved.`,
+                description: `"${company.trim()}" has been saved.`,
                 color:       "success",
                 timeout:     3000,
                 shouldShowTimeoutProgress: true,
@@ -68,7 +65,7 @@ export function AddApplicationModal({ isOpen, onClose }: Props) {
         },
     });
 
-    const canSave = title.trim().length > 0;
+    const canSave = company.trim().length > 0;
 
     return (
         <Modal
@@ -88,19 +85,30 @@ export function AddApplicationModal({ isOpen, onClose }: Props) {
 
                 <ModalBody className="flex flex-col gap-4 py-5">
 
-                    {/* Title */}
-                    <div className="flex flex-col gap-1.5">
-                        <label className="font-mono text-[0.6rem] tracking-[0.16em] uppercase text-muted/60">
-                            Title <span className="text-danger">*</span>
-                        </label>
-                        <input
-                            autoFocus
-                            value={title}
-                            onChange={e => setTitle(e.target.value)}
-                            onKeyDown={e => { if (e.key === "Enter" && canSave) createMutation.mutate(); }}
-                            placeholder="e.g. Google — Software Engineer Intern"
-                            className={inputCls}
-                        />
+                    {/* Company + Position */}
+                    <div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
+                        <div className="flex flex-col gap-1.5">
+                            <label className="font-mono text-[0.6rem] tracking-[0.16em] uppercase text-muted/60">
+                                Company <span className="text-danger">*</span>
+                            </label>
+                            <input
+                                autoFocus
+                                value={company}
+                                onChange={e => setCompany(e.target.value)}
+                                onKeyDown={e => { if (e.key === "Enter" && canSave) createMutation.mutate(); }}
+                                placeholder="e.g. Google"
+                                className={inputCls}
+                            />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                            <label className="font-mono text-[0.6rem] tracking-[0.16em] uppercase text-muted/60">Position</label>
+                            <input
+                                value={position}
+                                onChange={e => setPosition(e.target.value)}
+                                placeholder="e.g. SWE Intern"
+                                className={inputCls}
+                            />
+                        </div>
                     </div>
 
                     {/* Status + Category */}
@@ -145,7 +153,7 @@ export function AddApplicationModal({ isOpen, onClose }: Props) {
                     <div className="flex flex-col gap-1.5">
                         <label className="font-mono text-[0.6rem] tracking-[0.16em] uppercase text-muted/60">Priority</label>
                         <div className="flex gap-2">
-                            {PRIORITY_OPTIONS.map(({ key, label, color }) => (
+                            {getPriorityOptions(category).map(({ key, label, color }) => (
                                 <button
                                     key={key}
                                     type="button"

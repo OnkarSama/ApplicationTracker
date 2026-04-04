@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { addToast, Button, Card, CardBody, CardHeader } from "@heroui/react";
+import { Button, Card, CardBody, CardHeader } from "@heroui/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useStatusSync } from "@/hooks/useStatusSync";
 
 import { AuthGate } from "@/components/auth/AuthGate";
 import ApplicationTable from "@/components/dashboard/ApplicationTable";
@@ -21,7 +22,8 @@ export default function DashboardPage() {
 
     const [createOpen,     setCreateOpen]     = useState(false);
     const [statusFilter,   setStatusFilter]   = useState("All");
-    const [priorityFilter, setPriorityFilter] = useState<number | null>(null);
+    const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
+    const [isSyncing,      setIsSyncing]      = useState(false);
 
     const { data = [] as Application[], isLoading } = useQuery({
         queryKey: ["getApplications", q],
@@ -35,29 +37,13 @@ export default function DashboardPage() {
         return result;
     }, [data, statusFilter, priorityFilter]);
 
+    // Subscribe to ActionCable — toast + refetch fire only when scraping is fully done
+    const handleSyncDone = useCallback(() => setIsSyncing(false), []);
+    useStatusSync(handleSyncDone);
+
     const syncMutation = useMutation({
         mutationFn: () => apiRouter.applications.syncApplications(),
-        onSuccess: (response: any) => {
-            addToast({
-                title:       "Sync complete",
-                description: response.isUpdated ? "Statuses were updated!" : "No changes found.",
-                timeout:     3000,
-                shouldShowTimeoutProgress: true,
-                variant:     "solid",
-                color:       "success",
-            });
-            queryClient.invalidateQueries({ queryKey: ["getApplications"] });
-        },
-        onError: (error: any) => {
-            addToast({
-                title:       "Sync failed",
-                description: Object.values(error?.response?.data?.errors ?? {}).flat().join(", ") || "Please try again.",
-                timeout:     4000,
-                shouldShowTimeoutProgress: true,
-                variant:     "solid",
-                color:       "danger",
-            });
-        },
+        onSuccess: () => setIsSyncing(true),
     });
 
     const stats = useMemo(() => ({
@@ -68,7 +54,7 @@ export default function DashboardPage() {
     }), [data]);
 
     // True zero-state: user has no applications at all (not a search/filter miss)
-    const isEmpty        = !isLoading && data.length === 0 && !q && statusFilter === "All" && priorityFilter === null;
+    const isEmpty = !isLoading && data.length === 0 && !q && statusFilter === "All" && priorityFilter === null;
     const hasNoResults   = !isLoading && !isEmpty && filteredData.length === 0;
 
     return (
@@ -94,7 +80,7 @@ export default function DashboardPage() {
                                 <Button
                                     size="sm"
                                     variant="bordered"
-                                    isLoading={syncMutation.isPending}
+                                    isLoading={syncMutation.isPending || isSyncing}
                                     onPress={() => syncMutation.mutate()}
                                     className="border-border/50 text-muted hover:text-foreground hover:border-border text-xs"
                                 >
