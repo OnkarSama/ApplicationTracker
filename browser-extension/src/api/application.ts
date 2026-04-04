@@ -3,10 +3,11 @@ import api from './index'
 export type ApplicationPayload = {
     application: {
         id: number,
-        title: string,
+        company: string,
+        position?: string,
         notes: string,
         status: string | "Applied",
-        priority: number,
+        priority: string,
         category: string,
     }
 }
@@ -19,10 +20,10 @@ export type ApplicationCredential = {
 
 export type Application = {
     id: number
-    title: string
-    notes: string
+    company: string
+    position?: string
     status: string
-    priority: number
+    priority: string
     category: string
     credential: ApplicationCredential
 }

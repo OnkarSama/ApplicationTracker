@@ -11,6 +11,26 @@ async function fetchApps() {
     return data.applications
 }
 
+async function saveCredential(appId: number, credential: object, jwtToken: string): Promise<boolean> {
+    const headers = {
+        'Authorization': `Bearer ${jwtToken}`,
+        'Content-Type': 'application/json',
+    }
+    const body = JSON.stringify({ application_credential: credential })
+    const url  = `${baseUrl}/applications/${appId}/application_credential`
+
+    // Try PATCH first; if no record exists yet (404), fall back to POST
+    const patch = await fetch(url, { method: 'PATCH', headers, body })
+    if (patch.ok) return true
+
+    if (patch.status === 404) {
+        const post = await fetch(url, { method: 'POST', headers, body })
+        return post.ok
+    }
+
+    return false
+}
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.type === 'FETCH_APPS') {
         fetchApps().then((apps) => sendResponse({ apps }))
@@ -26,17 +46,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         const { appId, credential } = message
         chrome.storage.local.get('jwtToken', ({ jwtToken }) => {
             if (!jwtToken) { sendResponse({ success: false }); return }
-            fetch(`${baseUrl}/applications/${appId}/application_credential`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${jwtToken}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ application_credential: credential }),
-            })
-            .then(r => r.json())
-            .then(() => sendResponse({ success: true }))
-            .catch(() => sendResponse({ success: false }))
+            saveCredential(appId, credential, jwtToken)
+                .then(success => sendResponse({ success }))
+                .catch(() => sendResponse({ success: false }))
         })
     }
 

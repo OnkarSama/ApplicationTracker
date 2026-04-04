@@ -3,6 +3,8 @@ import type { Application } from '@/api/application.ts'
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
+const PENDING_LOGIN_KEY = '_crx_pending_login'
+
 function getPasswordInput(): HTMLInputElement | null {
     return document.querySelector('input[type="password"]')
 }
@@ -63,16 +65,18 @@ const pillBase: React.CSSProperties = {
 
 // ── component ─────────────────────────────────────────────────────────────────
 
-type PickerMode = 'fill' | 'save'
+type PickerMode = 'fill' | 'save' | 'status_page'
 type SaveStatus = 'saving' | 'saved' | 'error'
 
 export default function FillOverlay() {
-    const [apps, setApps]             = useState<Application[]>([])
+    const [apps, setApps]                 = useState<Application[]>([])
     const [formDetected, setFormDetected] = useState(false)
-    const [autoFilled, setAutoFilled] = useState(false)
-    const [showPicker, setShowPicker] = useState(false)
-    const [pickerMode, setPickerMode] = useState<PickerMode>('fill')
-    const [saveState, setSaveState]   = useState<Record<number, SaveStatus>>({})
+    const [autoFilled, setAutoFilled]     = useState(false)
+    const [showPicker, setShowPicker]     = useState(false)
+    const [pickerMode, setPickerMode]     = useState<PickerMode>('fill')
+    const [saveState, setSaveState]       = useState<Record<number, SaveStatus>>({})
+    // Credentials captured at form-submit time, carried to post-login page
+    const [capturedLogin, setCapturedLogin] = useState<{ username: string; password: string } | null>(null)
     const currentUrl = useRef(window.location.href)
 
     // ── fill: write saved credentials into the form ──────────────────────────
@@ -84,8 +88,8 @@ export default function FillOverlay() {
         setShowPicker(false)
     }, [])
 
-    // ── save portal URL only (no credential capture) ─────────────────────────
-    const doSaveUrl = useCallback((app: Application) => {
+    // ── save status page: just save current URL as portal_link ──────────────
+    const doSaveStatusPage = useCallback((app: Application) => {
         setSaveState(s => ({ ...s, [app.id]: 'saving' }))
         const credential = {
             portal_link:     currentUrl.current,
@@ -97,12 +101,12 @@ export default function FillOverlay() {
         })
     }, [])
 
-    // ── save login: capture what the user typed + current URL ────────────────
+    // ── save login: use form values if available, fall back to captured ───────
     const doSaveLogin = useCallback((app: Application) => {
-        const pwInput    = getPasswordInput()
-        const userInput  = pwInput ? getUsernameInput(pwInput) : null
-        const username   = userInput?.value?.trim() ?? ''
-        const password   = pwInput?.value ?? ''
+        const pwInput   = getPasswordInput()
+        const userInput = pwInput ? getUsernameInput(pwInput) : null
+        const username  = userInput?.value?.trim() || capturedLogin?.username || ''
+        const password  = pwInput?.value           || capturedLogin?.password || ''
 
         setSaveState(s => ({ ...s, [app.id]: 'saving' }))
         const credential = {
@@ -113,12 +117,27 @@ export default function FillOverlay() {
         chrome.runtime.sendMessage({ type: 'SAVE_PORTAL', appId: app.id, credential }, (res) => {
             setSaveState(s => ({ ...s, [app.id]: res?.success ? 'saved' : 'error' }))
         })
-    }, [])
+    }, [capturedLogin])
 
-    // ── form detection + autofill ─────────────────────────────────────────────
+    // ── form detection, autofill, submit capture ──────────────────────────────
     useEffect(() => {
         let observer: MutationObserver | null = null
         let didFill = false
+
+        // Check sessionStorage for credentials captured on the previous page's login form
+        try {
+            const stored = sessionStorage.getItem(PENDING_LOGIN_KEY)
+            if (stored) {
+                const { domain, username, password } = JSON.parse(stored)
+                if (domain === window.location.hostname) {
+                    setCapturedLogin({ username, password })
+                    setFormDetected(true)
+                    setPickerMode('status_page')
+                    setShowPicker(true)
+                }
+                sessionStorage.removeItem(PENDING_LOGIN_KEY)
+            }
+        } catch {}
 
         async function init() {
             const response = await chrome.runtime.sendMessage({ type: 'FETCH_APPS' })
@@ -128,6 +147,23 @@ export default function FillOverlay() {
             function tryAutoFill(): 'filled' | 'no-match' | 'no-form' {
                 const pwInput = getPasswordInput()
                 if (!pwInput) return 'no-form'
+
+                // Attach submit listener to capture credentials before redirect
+                const formEl = pwInput.closest('form')
+                if (formEl && !formEl.dataset.crxListening) {
+                    formEl.dataset.crxListening = '1'
+                    formEl.addEventListener('submit', () => {
+                        const pw   = getPasswordInput()
+                        const user = pw ? getUsernameInput(pw) : null
+                        try {
+                            sessionStorage.setItem(PENDING_LOGIN_KEY, JSON.stringify({
+                                domain:   window.location.hostname,
+                                username: user?.value?.trim() ?? '',
+                                password: pw?.value ?? '',
+                            }))
+                        } catch {}
+                    })
+                }
 
                 const matched = fetchedApps.find(hostnameMatches)
                 if (matched) {
@@ -145,7 +181,6 @@ export default function FillOverlay() {
             const result = tryAutoFill()
             if (result === 'filled') return
 
-            // Watch for dynamically rendered forms (SPAs)
             observer = new MutationObserver(() => {
                 if (didFill) { observer?.disconnect(); return }
                 const r = tryAutoFill()
@@ -161,7 +196,6 @@ export default function FillOverlay() {
     if (!formDetected) return null
 
     const openPicker = (mode: PickerMode) => {
-        // reset save states when opening fresh
         setSaveState({})
         setPickerMode(mode)
         setShowPicker(true)
@@ -239,7 +273,7 @@ export default function FillOverlay() {
                         background: pickerMode === 'save' ? '#f5f3ff' : '#fff',
                     }}>
                         <span style={{ fontWeight: 700, color: '#111827' }}>
-                            {pickerMode === 'save' ? '💾 Save login to…' : '🔑 Fill credentials from…'}
+                            {pickerMode === 'save' ? '💾 Save login to…' : pickerMode === 'status_page' ? '📍 Save status page for…' : '🔑 Fill credentials from…'}
                         </span>
                         <button
                             onClick={() => setShowPicker(false)}
@@ -252,8 +286,8 @@ export default function FillOverlay() {
                         </button>
                     </div>
 
-                    {/* save mode hint */}
-                    {pickerMode === 'save' && (
+                    {/* mode hint */}
+                    {(pickerMode === 'save' || pickerMode === 'status_page') && (
                         <div style={{
                             padding: '8px 14px',
                             background: '#faf5ff',
@@ -261,18 +295,33 @@ export default function FillOverlay() {
                             color: '#7c3aed',
                             fontSize: '11px',
                         }}>
-                            Saves what you've typed in the form + this page URL
+                            {pickerMode === 'status_page'
+                                ? `Saves ${window.location.hostname} as the status page URL`
+                                : capturedLogin
+                                    ? 'Saving credentials from your recent login'
+                                    : 'Saves what you\'ve typed in the form + this page URL'}
                         </div>
                     )}
 
                     {/* app list */}
                     <div style={{ maxHeight: '260px', overflowY: 'auto' }}>
-                        {apps.length === 0 ? (
-                            <div style={{ padding: '18px', textAlign: 'center', color: '#6b7280' }}>
-                                No applications found
-                            </div>
-                        ) : (
-                            apps.map(app => {
+                        {(() => {
+                            const pickerApps = pickerMode === 'fill'
+                                ? apps.filter(a => hostnameMatches(a) && !!a.credential?.username)
+                                : [
+                                    ...apps.filter(hostnameMatches),
+                                    ...apps.filter(a => !a.credential?.portal_link),
+                                  ]
+
+                            if (pickerApps.length === 0) return (
+                                <div style={{ padding: '18px', textAlign: 'center', color: '#6b7280', fontSize: '12px' }}>
+                                    {pickerMode === 'fill'
+                                        ? 'No saved credentials for this site'
+                                        : 'No matching applications for this domain'}
+                                </div>
+                            )
+
+                            return pickerApps.map(app => {
                                 const status = saveState[app.id]
                                 const hasCredentials = !!app.credential?.username
 
@@ -294,11 +343,19 @@ export default function FillOverlay() {
                                                 fontWeight: 600, color: '#111827', fontSize: '13px',
                                                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                                             }}>
-                                                {app.title}
+                                                {app.company}
                                             </div>
+                                            {app.position && (
+                                                <div style={{
+                                                    color: '#6b7280', fontSize: '11px', marginTop: '1px',
+                                                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                                }}>
+                                                    {app.position}
+                                                </div>
+                                            )}
                                             {hasCredentials && (
                                                 <div style={{
-                                                    color: '#6b7280', fontSize: '11px', marginTop: '2px',
+                                                    color: '#9ca3af', fontSize: '10px', marginTop: '1px',
                                                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                                                 }}>
                                                     {app.credential.username}
@@ -309,7 +366,6 @@ export default function FillOverlay() {
                                         {/* action button */}
                                         <div style={{ flexShrink: 0 }}>
                                             {pickerMode === 'save' ? (
-                                                // Save login button
                                                 <button
                                                     onClick={() => doSaveLogin(app)}
                                                     disabled={status === 'saving' || status === 'saved'}
@@ -330,7 +386,6 @@ export default function FillOverlay() {
                                                     {status === 'saving' ? '...' : status === 'saved' ? '✓ Saved' : status === 'error' ? '✗ Error' : 'Save here'}
                                                 </button>
                                             ) : (
-                                                // Fill button — only for apps with credentials
                                                 hasCredentials ? (
                                                     <button
                                                         onClick={() => doFill(app)}
@@ -356,7 +411,7 @@ export default function FillOverlay() {
                                     </div>
                                 )
                             })
-                        )}
+                        })()}
                     </div>
 
                     {/* footer: switch mode */}
