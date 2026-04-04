@@ -60,7 +60,7 @@ export default function DashboardPage() {
     return (
         <AuthGate>
             <div className="min-h-svh bg-background">
-                <main className="max-w-7xl mx-auto p-6">
+                <main className="w-[93%] mx-auto p-6">
 
                     <ApplicationTableHeader
                         onNewApplication={() => setCreateOpen(true)}
