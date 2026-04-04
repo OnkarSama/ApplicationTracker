@@ -77,3 +77,4 @@ gem 'net-http'
 gem "resend", "~> 1.0"
 
 gem 'dotenv-rails'
+

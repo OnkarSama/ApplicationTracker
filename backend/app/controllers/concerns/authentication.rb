@@ -1,6 +1,8 @@
 module Authentication
   extend ActiveSupport::Concern
 
+  SESSION_TIMEOUT = 60.minutes
+
   included do
     before_action :require_authentication
     helper_method :authenticated?
@@ -22,7 +24,18 @@ module Authentication
     end
 
     def resume_session
-      Current.session ||= find_session_by_cookie || find_session_by_jwt
+      return Current.session if Current.session
+
+      session = find_session_by_cookie || find_session_by_jwt
+      return nil unless session
+
+      if session_expired?(session)
+        expire_session(session)
+        return nil
+      end
+
+      session.update_column(:last_activity_at, Time.current) # 👈 refresh activity
+      Current.session = session
     end
 
     def find_session_by_cookie
@@ -62,14 +75,30 @@ module Authentication
     end
 
     def start_new_session_for(user)
-      user.sessions.create!(user_agent: request.user_agent, ip_address: request.remote_ip).tap do |session|
+      user.sessions.create!(
+        user_agent: request.user_agent,
+        ip_address: request.remote_ip,
+        last_activity_at: Time.current
+      ).tap do |session|
         Current.session = session
-        cookies.signed.permanent[:session_id] = { value: session.id, httponly: true, same_site: :lax }
+        cookies.signed.permanent[:session_id] = {
+          value: session.id,
+          httponly: true,
+          same_site: :lax
+        }
       end
     end
 
     def terminate_session
       Current.session.destroy
       cookies.delete(:session_id)
+    end
+
+    def session_expired?(session)
+      session.last_activity_at && session.last_activity_at < SESSION_TIMEOUT.ago
+    end
+
+    def expire_session(session)
+      session.destroy
     end
 end
