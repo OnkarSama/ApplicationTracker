@@ -11,6 +11,17 @@ async function fetchApps() {
     return data.applications
 }
 
+async function fetchProfile() {
+    const { jwtToken } = await chrome.storage.local.get('jwtToken')
+    if (!jwtToken) return null
+
+    const response = await fetch(`${baseUrl}/applicant_profile`, {
+        headers: { Authorization: `Bearer ${jwtToken}` }
+    })
+    if (!response.ok) return null
+    return await response.json()
+}
+
 async function saveCredential(appId: number, credential: object, jwtToken: string): Promise<boolean> {
     const headers = {
         'Authorization': `Bearer ${jwtToken}`,
@@ -42,11 +53,15 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         })
     }
 
+    if (message.type === 'FETCH_PROFILE') {
+        fetchProfile().then((profile) => sendResponse({ profile }))
+    }
+
     if (message.type === 'SAVE_PORTAL') {
         const { appId, credential } = message
         chrome.storage.local.get('jwtToken', ({ jwtToken }) => {
             if (!jwtToken) { sendResponse({ success: false }); return }
-            saveCredential(appId, credential, jwtToken)
+            saveCredential(appId, credential, jwtToken as string)
                 .then(success => sendResponse({ success }))
                 .catch(() => sendResponse({ success: false }))
         })

@@ -5,26 +5,27 @@ import './index.css'
 import { useState, useEffect } from "react";
 import type { Application } from "@/api/application.ts";
 
+export type Theme = 'dark' | 'light'
+
 type View = 'login' | 'appList' | 'appDetail'
 
 export default function App() {
     const [currentView, setCurrentView] = useState<View | null>(null)
-    const [selectedApp, setSelectedApp] = useState<Application | null>(null)
+    const [selectedApp, setSelectedApp]  = useState<Application | null>(null)
+    const [theme, setTheme]              = useState<Theme>('dark')
 
-    // On mount: check auth and restore view
     useEffect(() => {
-        chrome.storage.local.get(['jwtToken', 'currentView', 'selectedApp'], (result) => {
-            if (!result.jwtToken) {
-                setCurrentView('login')
-                return
-            }
-            // Restore last view, but never restore login if authed
+        chrome.storage.local.get(['jwtToken', 'currentView', 'selectedApp', 'theme'], (result) => {
+            const t = (result.theme as Theme) || 'dark'
+            setTheme(t)
+
+            if (!result.jwtToken) { setCurrentView('login'); return }
+
             const savedView = result.currentView as View
             if (savedView && savedView !== 'login') {
                 setCurrentView(savedView)
                 if (savedView === 'appDetail' && result.selectedApp) {
-                    // @ts-ignore
-                    setSelectedApp(result.selectedApp)
+                    setSelectedApp(result.selectedApp as Application)
                 }
             } else {
                 setCurrentView('appList')
@@ -32,8 +33,13 @@ export default function App() {
         })
     }, [])
 
+    const toggleTheme = () => {
+        const next: Theme = theme === 'dark' ? 'light' : 'dark'
+        setTheme(next)
+        chrome.storage.local.set({ theme: next })
+    }
+
     const navigate = (view: View, app: Application | null = null) => {
-        // Block navigation to protected views if not authed
         chrome.storage.local.get('jwtToken', (result) => {
             if (!result.jwtToken && view !== 'login') {
                 setCurrentView('login')
@@ -42,10 +48,7 @@ export default function App() {
             }
             setCurrentView(view)
             setSelectedApp(app)
-            chrome.storage.local.set({
-                currentView: view,
-                selectedApp: app ?? null
-            })
+            chrome.storage.local.set({ currentView: view, selectedApp: app ?? null })
         })
     }
 
@@ -56,34 +59,24 @@ export default function App() {
         })
     }
 
-    // Null = still loading from storage, avoid flash
     if (currentView === null) return null
 
     const renderComponent = () => {
         switch (currentView) {
             case 'login':
-                return <LoginView onLoginSuccess={() => navigate('appList')} />
+                return <LoginView theme={theme} toggleTheme={toggleTheme} onLoginSuccess={() => navigate('appList')} />
             case 'appList':
-                return <AppListView
-                    onAppClick={(app) => navigate('appDetail', app)}
-                    onLogout={handleLogout}
-                />
+                return <AppListView theme={theme} toggleTheme={toggleTheme} onAppClick={(app) => navigate('appDetail', app)} onLogout={handleLogout} />
             case 'appDetail':
-                if (!selectedApp) {
-                    navigate('appList')
-                    return null
-                }
-                return <AppDetailView
-                    app={selectedApp}
-                    onBack={() => navigate('appList')}
-                />
+                if (!selectedApp) { navigate('appList'); return null }
+                return <AppDetailView theme={theme} toggleTheme={toggleTheme} app={selectedApp} onBack={() => navigate('appList')} />
             default:
                 return null
         }
     }
 
     return (
-        <div style={{ width: '400px', height: '600px' }} className="h-full bg-heroui-background overflow-hidden">
+        <div className={`${theme} w-[400px] h-[600px] bg-heroui-background overflow-hidden`}>
             {renderComponent()}
         </div>
     )
