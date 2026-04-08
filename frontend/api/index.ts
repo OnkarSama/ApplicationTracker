@@ -6,7 +6,19 @@ const axiosInstance = axios.create({
     baseURL: baseUrl,
     timeout: 10000,
     withCredentials: true,
+
+
 });
+
+axiosInstance.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            window.location.href = "/login?timeout=true";
+        }
+        return Promise.reject(error);
+    }
+);
 
 type ApiOptions = {
     data?: object | string | FormData;

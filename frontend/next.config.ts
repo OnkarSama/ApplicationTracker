@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
                 source: "/rails/:path*",
                 destination: "http://localhost:4000/rails/:path*",
             },
+            {
+                source: "/cable",
+                destination: "http://localhost:4000/cable",
+            },
         ];
     },
 };

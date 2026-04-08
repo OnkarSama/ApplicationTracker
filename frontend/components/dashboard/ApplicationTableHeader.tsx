@@ -2,12 +2,8 @@
 
 import { siteConfig } from "@/config/site";
 
-const STATUSES   = ["Applied", "Interview", "Offer", "Rejected", "Wishlist"] as const;
-const PRIORITIES = [
-    { key: 0, label: "Normal" },
-    { key: 1, label: "Important" },
-    { key: 2, label: "Urgent" },
-] as const;
+const STATUSES   = ["Wishlist", "Applied", "Under Review", "Awaiting Decision", "Interview", "Offer", "Rejected"] as const;
+const PRIORITIES = ["Low", "Medium", "High"] as const;
 
 interface Stats {
     total:      number;
@@ -21,8 +17,8 @@ interface Props {
     stats:            Stats;
     statusFilter:     string;
     onStatusChange:   (s: string) => void;
-    priorityFilter:   number | null;
-    onPriorityChange: (p: number | null) => void;
+    priorityFilter:   string | null;
+    onPriorityChange: (p: string | null) => void;
 }
 
 function Pill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
@@ -103,8 +99,8 @@ export default function ApplicationTableHeader({
 
                 <span className="text-[11px] font-bold text-muted/60 tracking-widest uppercase whitespace-nowrap">Priority</span>
                 <Pill label="All"   active={priorityFilter === null} onClick={() => onPriorityChange(null)} />
-                {PRIORITIES.map(({ key, label }) => (
-                    <Pill key={key} label={label} active={priorityFilter === key} onClick={() => onPriorityChange(key)} />
+                {PRIORITIES.map(p => (
+                    <Pill key={p} label={p} active={priorityFilter === p} onClick={() => onPriorityChange(p)} />
                 ))}
 
                 {hasFilters && (

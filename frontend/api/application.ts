@@ -2,20 +2,24 @@ import api from './index'
 
 export type ApplicationPayload = {
     application: {
-        title: string,
+        company: string,
+        position?: string,
         status: string | "Applied",
-        priority: number,
+        priority: string,
         category: string,
+        salary?: number | null,
     }
 }
 
 export type Application = {
     id: number
-    title: string
+    company: string
+    position?: string
     notes: { id: number; content: string; created_at: string }[]
     status: string
-    priority: number
+    priority: string
     category: string
+    salary?: number | null
     created_at: string
     updated_at: string
 }
@@ -23,7 +27,7 @@ const endpoints = {
 
     getApplications: async (q?: string) => {
         if (!q) return await api("/applications");
-        return await api(`/applications?q[title_or_status_or_category_cont]=${encodeURIComponent(q)}`);
+        return await api(`/applications?q[company_or_position_or_status_or_category_cont]=${encodeURIComponent(q)}`);
     },
 
     getApplicationById: async (id: number) => {

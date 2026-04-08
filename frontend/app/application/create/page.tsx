@@ -6,6 +6,7 @@ import { Select, SelectItem, addToast } from "@heroui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import apiRouter from "@/api/router";
+import { getPriorityOptions } from "@/utils/priority";
 
 export default function NewApplicationPage() {
     const router       = useRouter();
@@ -13,16 +14,17 @@ export default function NewApplicationPage() {
     const queryClient  = useQueryClient();
 
     const [status,   setStatus]   = useState("Applied");
-    const [priority, setPriority] = useState("0");
+    const [priority, setPriority] = useState("Low");
     const [category, setCategory] = useState("");
 
     const createMutation = useMutation({
-        mutationFn: (title: string) =>
+        mutationFn: ({ company, position }: { company: string; position: string }) =>
             apiRouter.applications.createApplication({
                 application: {
-                    title,
+                    company,
+                    position: position || undefined,
                     status,
-                    priority: Number(priority),
+                    priority,
                     category,
                 },
             }),
@@ -50,9 +52,11 @@ export default function NewApplicationPage() {
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const title = (new FormData(e.currentTarget).get("title") as string).trim();
-        if (!title) return;
-        createMutation.mutate(title);
+        const data = new FormData(e.currentTarget);
+        const company = (data.get("company") as string).trim();
+        const position = (data.get("position") as string).trim();
+        if (!company) return;
+        createMutation.mutate({ company, position });
     };
 
     const inputCls = [
@@ -92,18 +96,29 @@ export default function NewApplicationPage() {
                     <form onSubmit={handleSubmit}>
                         <div className="px-6 py-6 flex flex-col gap-5">
 
-                            {/* Title */}
+                            {/* Company */}
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-xs font-semibold text-muted tracking-[0.08em] uppercase">
-                                    Title <span className="text-danger">*</span>
+                                    Company <span className="text-danger">*</span>
                                 </label>
                                 <input
                                     required
-                                    name="title"
-                                    placeholder="e.g. Google SWE Intern · MIT MS CS · Rhodes Scholarship"
+                                    name="company"
+                                    placeholder="e.g. Google · MIT · Rhodes Trust"
                                     className={inputCls}
                                 />
-                                <p className="text-xs text-muted/60">Company name, program, or role</p>
+                            </div>
+
+                            {/* Position */}
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-semibold text-muted tracking-[0.08em] uppercase">
+                                    Position
+                                </label>
+                                <input
+                                    name="position"
+                                    placeholder="e.g. SWE Intern · MS Computer Science"
+                                    className={inputCls}
+                                />
                             </div>
 
                             {/* Status + Category */}
@@ -122,6 +137,8 @@ export default function NewApplicationPage() {
                                     >
                                         <SelectItem key="Wishlist">Wishlist</SelectItem>
                                         <SelectItem key="Applied">Applied</SelectItem>
+                                        <SelectItem key="Under Review">Under Review</SelectItem>
+                                        <SelectItem key="Awaiting Decision">Awaiting Decision</SelectItem>
                                         <SelectItem key="Interview">Interview</SelectItem>
                                         <SelectItem key="Offer">Offer</SelectItem>
                                         <SelectItem key="Rejected">Rejected</SelectItem>
@@ -155,11 +172,7 @@ export default function NewApplicationPage() {
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-xs font-semibold text-muted tracking-[0.08em] uppercase">Priority</label>
                                 <div className="flex gap-2">
-                                    {[
-                                        { key: "0", label: "Normal",    active: "text-foreground border-primary bg-primary/10"  },
-                                        { key: "1", label: "Important", active: "text-warning border-warning bg-warning/10"     },
-                                        { key: "2", label: "Urgent",    active: "text-danger border-danger bg-danger/10"        },
-                                    ].map(({ key, label, active }) => (
+                                    {getPriorityOptions(category).map(({ key, label, color }) => (
                                         <button
                                             key={key}
                                             type="button"
@@ -167,7 +180,7 @@ export default function NewApplicationPage() {
                                             className={[
                                                 "flex-1 py-2 rounded-xl text-xs font-semibold border transition-all duration-150",
                                                 priority === key
-                                                    ? active
+                                                    ? `border-primary/50 bg-primary/10 ${color}`
                                                     : "border-border/50 bg-transparent text-muted hover:border-primary/40 hover:text-foreground",
                                             ].join(" ")}
                                         >

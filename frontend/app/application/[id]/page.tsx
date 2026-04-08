@@ -7,25 +7,23 @@ import { Button, Input, Select, SelectItem } from "@heroui/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import apiRouter from "@/api/router";
+import { getPriorityOptions } from "@/utils/priority";
 
 interface PageProps {
     params: Promise<{ id: string }>;
 }
 
 type FormState = {
-    title: string;
+    company: string;
+    position: string;
     status: string;
-    priority: number;
+    priority: string;
     category: string;
+    salary: string;
 };
 
-const STATUS_OPTIONS   = ["Applied", "Interview", "Offer", "Rejected"];
-const CATEGORY_OPTIONS = ["Internship", "Full-time", "Research", "Other"];
-const PRIORITY_OPTIONS = [
-    { key: "0", label: "Normal" },
-    { key: "1", label: "Important" },
-    { key: "2", label: "Urgent" },
-];
+const STATUS_OPTIONS   = ["Wishlist", "Applied", "Under Review", "Awaiting Decision", "Interview", "Offer", "Rejected"];
+const CATEGORY_OPTIONS = ["Internship", "Full-time", "Graduate School", "Fellowship", "Research", "Other"];
 
 const inputCN = {
     inputWrapper: "border-border/50 bg-foreground/[0.04] hover:border-primary/40 data-[focus=true]:border-primary/60",
@@ -42,7 +40,7 @@ export default function EditApplicationPage({ params }: PageProps) {
     const queryClient  = useQueryClient();
 
     const [form, setForm] = useState<FormState>({
-        title: "", status: "Applied", priority: 0, category: "",
+        company: "", position: "", status: "Applied", priority: "Low", category: "", salary: "",
     });
 
     /* ── Fetch ── */
@@ -56,25 +54,29 @@ export default function EditApplicationPage({ params }: PageProps) {
     useEffect(() => {
         if (!application) return;
         setForm({
-            title:    application.title    || "",
+            company:  application.company  || "",
+            position: application.position || "",
             status:   application.status   || "Applied",
-            priority: application.priority ?? 0,
+            priority: application.priority || "Low",
             category: application.category || "",
+            salary:   application.salary != null ? String(application.salary) : "",
         });
     }, [application]);
 
     const isDirty = application && (
-        form.title    !== (application.title    || "") ||
+        form.company  !== (application.company  || "") ||
+        form.position !== (application.position || "") ||
         form.status   !== (application.status   || "Applied") ||
-        form.priority !== (application.priority ?? 0) ||
-        form.category !== (application.category || "")
+        form.priority !== (application.priority || "Low") ||
+        form.category !== (application.category || "") ||
+        form.salary   !== (application.salary != null ? String(application.salary) : "")
     );
 
     /* ── Update ── */
     const updateMutation = useMutation({
         mutationFn: () =>
             apiRouter.applications.updateApplication(applicationId, {
-                application: { ...form },
+                application: { ...form, salary: form.salary ? Number(form.salary) : null },
             }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["getApplications"] });
@@ -98,18 +100,12 @@ export default function EditApplicationPage({ params }: PageProps) {
     };
 
     const handleDelete = () => {
-        if (!confirm(`Delete "${application?.title}"? This cannot be undone.`)) return;
+        if (!confirm(`Delete "${application?.company}"? This cannot be undone.`)) return;
         deleteMutation.mutate();
     };
 
     const handleReset = () => {
-        if (!application) return;
-        setForm({
-            title:    application.title    || "",
-            status:   application.status   || "Applied",
-            priority: application.priority ?? 0,
-            category: application.category || "",
-        });
+        router.push(`/dashboard?${searchParams.toString()}`);
     };
 
     /* ── Loading ── */
@@ -177,8 +173,11 @@ export default function EditApplicationPage({ params }: PageProps) {
                         Edit Application
                     </div>
                     <h1 className="font-sora font-extrabold text-[clamp(1.4rem,4vw,2rem)] tracking-tight text-heading leading-tight m-0 truncate">
-                        {application.title}
+                        {application.company}
                     </h1>
+                    {application.position && (
+                        <p className="text-sm text-muted/70 mt-0.5">{application.position}</p>
+                    )}
                     <p className="text-sm text-muted/50 mt-1.5">Update the details for this application.</p>
                 </div>
 
@@ -187,13 +186,23 @@ export default function EditApplicationPage({ params }: PageProps) {
 
                     <div className="flex flex-col gap-4 bg-card border border-border/40 rounded-2xl p-6">
 
-                        {/* Title */}
+                        {/* Company */}
                         <Input
                             isRequired
-                            label="Company / Role"
-                            placeholder="e.g. Google — Software Engineer"
-                            value={form.title}
-                            onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
+                            label="Company"
+                            placeholder="e.g. Google"
+                            value={form.company}
+                            onChange={e => setForm(p => ({ ...p, company: e.target.value }))}
+                            variant="bordered"
+                            classNames={inputCN}
+                        />
+
+                        {/* Position */}
+                        <Input
+                            label="Position"
+                            placeholder="e.g. Software Engineer Intern"
+                            value={form.position}
+                            onChange={e => setForm(p => ({ ...p, position: e.target.value }))}
                             variant="bordered"
                             classNames={inputCN}
                         />
@@ -233,16 +242,28 @@ export default function EditApplicationPage({ params }: PageProps) {
                         <Select
                             label="Priority"
                             variant="bordered"
-                            selectedKeys={[String(form.priority)]}
+                            selectedKeys={[form.priority]}
                             onSelectionChange={keys =>
-                                setForm(p => ({ ...p, priority: Number(Array.from(keys)[0]) }))
+                                setForm(p => ({ ...p, priority: Array.from(keys)[0] as string }))
                             }
                             classNames={inputCN}
                         >
-                            {PRIORITY_OPTIONS.map(({ key, label }) => (
+                            {getPriorityOptions(form.category).map(({ key, label }) => (
                                 <SelectItem key={key}>{label}</SelectItem>
                             ))}
                         </Select>
+
+                        {/* Salary */}
+                        <Input
+                            label="Salary"
+                            placeholder="e.g. 85000"
+                            type="number"
+                            min="0"
+                            value={form.salary}
+                            onChange={e => setForm(p => ({ ...p, salary: e.target.value }))}
+                            variant="bordered"
+                            classNames={inputCN}
+                        />
 
                     </div>
 
@@ -269,7 +290,7 @@ export default function EditApplicationPage({ params }: PageProps) {
                             <Button
                                 type="button"
                                 onPress={handleReset}
-                                isDisabled={!isDirty || isBusy}
+                                isDisabled={isBusy}
                                 variant="bordered"
                                 className="border-border/50 bg-foreground/[0.03] text-muted hover:bg-foreground/[0.07] hover:text-subheading hover:border-border font-medium tracking-wide disabled:opacity-30"
                             >

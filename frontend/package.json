@@ -11,6 +11,7 @@
   "dependencies": {
     "@heroui/react": "^2.8.8",
     "@iconify/react": "^6.0.2",
+    "@rails/actioncable": "^8.1.300",
     "@react-aria/ssr": "^3.9.10",
     "@react-aria/visually-hidden": "^3.8.30",
     "@react-types/shared": "^3.33.0",
@@ -25,6 +26,7 @@
     "next-themes": "^0.4.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-idle-timer": "^5.7.3",
     "three": "^0.183.2"
   },
   "devDependencies": {

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { Button, Input, Form, addToast } from "@heroui/react";
+import React from "react";
+import { Button, Input, Form, addToast, Alert } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { useMutation } from "@tanstack/react-query";
 import apiRouter from "@/api/router";
@@ -10,12 +10,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { LoginPayload } from "@/api/session";
 
 export default function Component() {
-
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [isVisible, setIsVisible] = React.useState(false);
   const toggleVisibility = () => setIsVisible((v) => !v);
+
+  // ✅ FIXED
+  const timedOut = searchParams.get("timeout");
 
   const redirectTo = (() => {
     const param = searchParams.get("redirect");
@@ -62,6 +64,8 @@ export default function Component() {
   return (
       <div className="flex h-full w-full items-center justify-center">
         <div className="rounded-large flex w-full max-w-sm flex-col gap-4">
+
+          {/* Header */}
           <div className="flex flex-col items-center pb-6">
             <p className="text-xl font-medium">Welcome</p>
             <p className="text-small text-default-500">
@@ -69,6 +73,14 @@ export default function Component() {
             </p>
           </div>
 
+          {/* ✅ Timeout Message */}
+          {timedOut && (
+              <Alert color="warning" variant="flat">
+                Your session expired due to inactivity. Please log in again.
+              </Alert>
+          )}
+
+          {/* Form */}
           <Form
               className="flex flex-col gap-3"
               validationBehavior="native"
@@ -82,6 +94,7 @@ export default function Component() {
                 type="email"
                 variant="bordered"
             />
+
             <Input
                 isRequired
                 name="password"
@@ -98,6 +111,7 @@ export default function Component() {
                   </button>
                 }
             />
+
             <Button
                 className="w-full"
                 color="primary"
@@ -108,6 +122,7 @@ export default function Component() {
             </Button>
           </Form>
 
+          {/* Forgot Password */}
           <p className="text-center text-sm text-default-500">
             <button
                 type="button"

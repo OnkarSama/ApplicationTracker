@@ -7,6 +7,7 @@ import { siteConfig } from "@/config/site";
 
 import HideableNavbar from "@/components/ui/HideableNavbar";
 import { ThemeSwitcher } from "@/components/ui/ThemeSwitcher";
+import IdleHandler from "@/components/auth/IdleHandler";
 
 export const metadata: Metadata = {
     title: {
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <html className="m-0 p-0" suppressHydrationWarning lang="en">
         <body className="min-h-screen text-foreground bg-background font-sans antialiased">
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
+            <IdleHandler/>
             <div className="relative flex flex-col min-h-screen">
                 <HideableNavbar />
 

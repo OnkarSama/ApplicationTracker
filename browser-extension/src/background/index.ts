@@ -11,6 +11,37 @@ async function fetchApps() {
     return data.applications
 }
 
+async function fetchProfile() {
+    const { jwtToken } = await chrome.storage.local.get('jwtToken')
+    if (!jwtToken) return null
+
+    const response = await fetch(`${baseUrl}/applicant_profile`, {
+        headers: { Authorization: `Bearer ${jwtToken}` }
+    })
+    if (!response.ok) return null
+    return await response.json()
+}
+
+async function saveCredential(appId: number, credential: object, jwtToken: string): Promise<boolean> {
+    const headers = {
+        'Authorization': `Bearer ${jwtToken}`,
+        'Content-Type': 'application/json',
+    }
+    const body = JSON.stringify({ application_credential: credential })
+    const url  = `${baseUrl}/applications/${appId}/application_credential`
+
+    // Try PATCH first; if no record exists yet (404), fall back to POST
+    const patch = await fetch(url, { method: 'PATCH', headers, body })
+    if (patch.ok) return true
+
+    if (patch.status === 404) {
+        const post = await fetch(url, { method: 'POST', headers, body })
+        return post.ok
+    }
+
+    return false
+}
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.type === 'FETCH_APPS') {
         fetchApps().then((apps) => sendResponse({ apps }))
@@ -22,21 +53,17 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         })
     }
 
+    if (message.type === 'FETCH_PROFILE') {
+        fetchProfile().then((profile) => sendResponse({ profile }))
+    }
+
     if (message.type === 'SAVE_PORTAL') {
         const { appId, credential } = message
         chrome.storage.local.get('jwtToken', ({ jwtToken }) => {
             if (!jwtToken) { sendResponse({ success: false }); return }
-            fetch(`${baseUrl}/applications/${appId}/application_credential`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${jwtToken}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ application_credential: credential }),
-            })
-            .then(r => r.json())
-            .then(() => sendResponse({ success: true }))
-            .catch(() => sendResponse({ success: false }))
+            saveCredential(appId, credential, jwtToken as string)
+                .then(success => sendResponse({ success }))
+                .catch(() => sendResponse({ success: false }))
         })
     }
 
