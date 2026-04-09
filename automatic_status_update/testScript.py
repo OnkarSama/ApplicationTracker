@@ -85,13 +85,24 @@ async def scrape_status(app, browser):
         tuple: (app_id, status) where status is a list of matched strings from the
                page, or "Applied" if scraping fails.
     """
+    if not app.get('application_credential'):
+        print(f"{app.get('company', app['id'])}: skipped (no credentials)")
+        return app['id'], app['status']
+
     app_info = app['application_credential']
 
     login_route = app_info['portal_link']
     status_route = app_info['status_page_link']
 
+    if not status_route:
+        print(f"{app['company']}: skipped (no status page URL)")
+        return app['id'], app['status']
+
     # Open a new tab in the shared browser for this app
-    page = await browser.new_page()
+    page = await browser.new_page(
+        user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+    )
+    await page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
     # Navigate to the portal login page — only need the form to render, not full JS
     await page.goto(login_route)
@@ -99,17 +110,49 @@ async def scrape_status(app, browser):
 
     # Try common input field selectors for the username/email field
     # since different portals use different field names
-    for selector in ['input[type="email"]', 'input[name*="email"]', 'input[name*="user"]', 'input[name*="login"]']:
-        if await page.locator(selector).count() > 0:
-            await page.fill(selector, app_info['username'])
+    email_selectors = ['[data-automation-id="formField-email"] input', 'input[data-automation-id="email"]', 'input[type="email"]', 'input[name*="email"]', 'input[name*="user"]', 'input[name*="login"]']
+    for selector in email_selectors:
+        try:
+            await page.wait_for_selector(selector, state='visible', timeout=5000)
+            await page.locator(selector).click()
+            await page.locator(selector).fill(app_info['username'])
+            print(f"[{app['company']}] filled email with selector: {selector}")
             break
+        except Exception:
+            continue
 
-    # Fill the password field and submit by pressing Enter —
-    # more reliable than clicking a submit button since portals
-    # often have multiple submit buttons (e.g. search bars) on the same page
-    await page.fill('input[type="password"]', app_info['password_digest'])
-    await page.press('input[type="password"]', 'Enter')
+    # Fill password — Workday uses data-automation-id, others use type="password"
+    password_selector = 'input[data-automation-id="password"]' if await page.locator('input[data-automation-id="password"]').count() > 0 else 'input[type="password"]'
+    await page.locator(password_selector).click()
+    await page.locator(password_selector).fill(app_info['password_digest'])
+
+    # Workday hides the real submit button behind a div overlay (click_filter);
+    # force=True bypasses the overlay and clicks the button directly
+    if await page.locator('[data-automation-id="signInSubmitButton"]').count() > 0:
+        await page.locator('[data-automation-id="signInSubmitButton"]').click(force=True)
+    elif await page.locator('[data-automation-id="click_filter"]').count() > 0:
+        await page.locator('[data-automation-id="click_filter"]').click()
+    else:
+        await page.press(password_selector, 'Enter')
+
     await page.wait_for_load_state('load')
+    # Wait for redirect away from login page (needed for SPAs like Workday)
+    try:
+        await page.wait_for_url(lambda url: url != login_route, timeout=10000)
+    except Exception:
+        pass
+    print(f"[{app['company']}] post-login URL: {page.url}")
+
+    # Print any error messages shown on the page after login attempt
+    error_selectors = ['[data-automation-id*="error"]', '[role="alert"]', '.error', '#error']
+    for sel in error_selectors:
+        for el in await page.locator(sel).all():
+            try:
+                text = (await el.inner_text()).strip()
+                if text:
+                    print(f"[{app['company']}] login error: {text}")
+            except Exception:
+                continue
 
     # Always wait for networkidle to ensure JS-rendered content is fully loaded
     await page.goto(status_route, wait_until='networkidle')
@@ -126,10 +169,10 @@ async def scrape_status(app, browser):
     # so a "congratulations" page doesn't also match a generic "applied" mention
     STATUS_KEYWORDS = [
         ("Offer",              ["congratulations", "we are pleased", "pleased to inform", "offer of admission", "you have been accepted", "been admitted", "proud to offer"]),
-        ("Rejected",           ["unfortunately", "regret to inform", "not selected", "unable to offer", "not moving forward", "we will not be", "we are unable to", "cannot offer"]),
+        ("Rejected",           ["unfortunately", "regret to inform", "not selected", "unable to offer", "not moving forward", "we will not be", "we are unable to", "cannot offer", "no longer under consideration", "no longer being considered"]),
         ("Awaiting Decision",  ["awaiting decision", "decision will be", "decision has been made", "decision is now available", "your decision is available", "decision released", "decision pending", "decision has been released"]),
         ("Interview",          ["interview has been scheduled", "would like to schedule an interview", "invite you to interview", "phone screen scheduled", "we'd like to speak with you"]),
-        ("Under Review",       ["under review", "being reviewed", "ready for review", "currently reviewing", "in review", "being considered", "under consideration", "application is complete", "application is now complete"]),
+        ("Under Review",       ["under review", "being reviewed", "ready for review", "currently reviewing", "in review", "being considered", "under consideration", "application is complete", "application is now complete", "in process"]),
         ("Applied",            ["received your application", "application has been received", "thank you for submitting", "we have received your application"]),
     ]
 
@@ -144,6 +187,7 @@ async def scrape_status(app, browser):
     # Keyword match on full page text — ordered from most to least decisive
     matched_phrase = None
     page_text = soup.get_text(separator=' ', strip=True).lower()
+    print(f"--- {app['company']} ---\n{page_text}\n---")
     for mapped_status, keywords in STATUS_KEYWORDS:
         for kw in keywords:
             if kw in page_text:
@@ -214,8 +258,10 @@ async def main(apps):
     async with async_playwright() as p:
         # Launch one browser shared across all parallel scrapes to avoid
         # the overhead of spinning up a new browser per application
-        browser = await p.chromium.launch(headless=True)
-
+        browser = await p.chromium.launch(
+    headless=False,
+    args=['--disable-blink-features=AutomationControlled']
+)
         # Scrape all apps concurrently — return_exceptions means one failure
         # doesn't cancel the rest
         results = await asyncio.gather(*[scrape_status(app, browser) for app in apps], return_exceptions=True)
