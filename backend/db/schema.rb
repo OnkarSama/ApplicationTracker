@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_23_043441) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_08_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -122,16 +122,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_23_043441) do
     t.datetime "created_at", null: false
     t.text "message"
     t.string "notification_type"
-<<<<<<< HEAD
     t.boolean "read", default: false, null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["user_id", "read"], name: "index_notifications_on_user_id_and_read"
-=======
-    t.boolean "read"
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
->>>>>>> cb69e4fbcb3700420ede3fce4088db042220dc0d
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
@@ -142,6 +136,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_23_043441) do
     t.string "user_agent"
     t.bigint "user_id", null: false
     t.index ["user_id"], name: "index_sessions_on_user_id"
+  end
+
+  create_table "status_histories", force: :cascade do |t|
+    t.bigint "application_id", null: false
+    t.string "change_type", default: "manual", null: false
+    t.datetime "created_at", null: false
+    t.string "from_status", null: false
+    t.string "to_status", null: false
+    t.datetime "updated_at", null: false
+    t.index ["application_id", "created_at"], name: "index_status_histories_on_application_id_and_created_at"
+    t.index ["application_id"], name: "index_status_histories_on_application_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -180,5 +185,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_23_043441) do
   add_foreign_key "notes", "applications"
   add_foreign_key "notifications", "users"
   add_foreign_key "sessions", "users"
+  add_foreign_key "status_histories", "applications"
   add_foreign_key "work_experiences", "applicant_profiles"
 end

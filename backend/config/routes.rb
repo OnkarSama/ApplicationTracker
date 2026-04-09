@@ -8,6 +8,7 @@ Rails.application.routes.draw do
       resource :application_credential
       resources :notes, only: [:index, :create, :update, :destroy]
       resources :interviews, only: [:index, :create, :destroy]
+      resources :status_histories, only: [:index]
     end
 
     resources :notifications, only: [:index, :update]

@@ -7,6 +7,7 @@ import { Button, Input, Select, SelectItem } from "@heroui/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import apiRouter from "@/api/router";
+import type { StatusHistory } from "@/api/application";
 
 interface PageProps {
     params: Promise<{ id: string }>;
@@ -82,8 +83,17 @@ export default function EditApplicationPage({ params }: PageProps) {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["getApplications"] });
             queryClient.invalidateQueries({ queryKey: ["application", applicationId] });
+            queryClient.invalidateQueries({ queryKey: ["statusHistories", applicationId] });
             router.push(`/dashboard?${searchParams.toString()}`);
         },
+    });
+
+    /* ── Status History ── */
+    const { data: statusHistories = [] } = useQuery<StatusHistory[]>({
+        queryKey: ["statusHistories", applicationId],
+        queryFn:  () => apiRouter.applications.getStatusHistories(applicationId),
+        enabled:  !!applicationId,
+        refetchOnMount: "always",
     });
 
     /* ── Delete ── */
@@ -298,6 +308,41 @@ export default function EditApplicationPage({ params }: PageProps) {
                     </div>
 
                 </form>
+
+                {/* ── Status History ── */}
+                {statusHistories.length > 0 && (
+                    <div className="mt-8">
+                        <div className="inline-flex items-center gap-1.5 font-mono text-[0.6rem] tracking-[0.2em] uppercase text-primary/55 border border-primary/12 bg-primary/[0.04] px-3 py-1 rounded-full mb-4">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_theme(colors.indigo.500)] inline-block" />
+                            Status History
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            {statusHistories.map((entry) => (
+                                <div
+                                    key={entry.id}
+                                    className="flex items-center justify-between px-4 py-3 rounded-xl bg-card border border-border/30 text-sm"
+                                >
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="text-muted/70 font-mono text-xs">{entry.from_status}</span>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted/40 shrink-0"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                        <span className="text-foreground font-semibold">{entry.to_status}</span>
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono uppercase tracking-wider border ${
+                                            entry.change_type === "automatic"
+                                                ? "bg-success/10 text-success border-success/20"
+                                                : "bg-primary/10 text-primary border-primary/20"
+                                        }`}>
+                                            {entry.change_type}
+                                        </span>
+                                    </div>
+                                    <span className="text-muted/50 text-xs shrink-0 ml-4">
+                                        {new Date(entry.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
             </div>
         </div>
     );

@@ -25,6 +25,14 @@ class AutomaticStatusUpdateService
 
             if notify
                 parsedData = JSON.parse(response.body)
+                Current.status_change_source = "automatic"
+                if parsedData["applications"].present?
+                  parsedData["applications"].each do |updated|
+                    app = user.applications.find_by(id: updated["id"])
+                    app&.update(status: updated["status"]) if updated["status"].present?
+                  end
+                end
+                Current.status_change_source = nil
                 return parsedData["Updated"]
             end
         end

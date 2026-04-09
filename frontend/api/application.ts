@@ -21,6 +21,14 @@ export type Application = {
     created_at: string
     updated_at: string
 }
+
+export type StatusHistory = {
+    id: number
+    from_status: string
+    to_status: string
+    change_type: "manual" | "automatic"
+    created_at: string
+}
 const endpoints = {
 
     getApplications: async (q?: string) => {
@@ -57,6 +65,10 @@ const endpoints = {
         return await api(`/applications/sync`, {
             method : 'post'
         })
+    },
+
+    getStatusHistories: async (id: number): Promise<StatusHistory[]> => {
+        return await api(`/applications/${id}/status_histories`)
     },
 
 }

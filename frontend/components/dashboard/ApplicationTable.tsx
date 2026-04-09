@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import {
     Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
     Chip, Pagination, SortDescriptor,
@@ -48,6 +48,25 @@ export default function ApplicationTable({ applications = [] }: Props) {
     const queryClient = useQueryClient();
 
     const [quickEdit, setQuickEdit] = useState<Application | null>(null);
+    const [flashedIds, setFlashedIds] = useState<Set<number>>(new Set());
+    const flashTimers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+
+    const flashRow = useCallback((id: number) => {
+        // Clear any existing timer for this id
+        const existing = flashTimers.current.get(id);
+        if (existing) clearTimeout(existing);
+
+        setFlashedIds(prev => new Set(prev).add(id));
+        const timer = setTimeout(() => {
+            setFlashedIds(prev => {
+                const next = new Set(prev);
+                next.delete(id);
+                return next;
+            });
+            flashTimers.current.delete(id);
+        }, 1800);
+        flashTimers.current.set(id, timer);
+    }, []);
 
     const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
     const rowsPerPage = 10;
@@ -62,8 +81,9 @@ export default function ApplicationTable({ applications = [] }: Props) {
             apiRouter.applications.updateApplication(id, {
                 application: { status } as any,
             }),
-        onSuccess: () => {
+        onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ["getApplications"] });
+            flashRow(variables.id);
         },
     });
 
@@ -215,7 +235,7 @@ export default function ApplicationTable({ applications = [] }: Props) {
                         <TableRow
                             key={app.id}
                             onClick={() => goToApp(app.id)}
-                            className="cursor-pointer hover:bg-table_hover"
+                            className={`cursor-pointer hover:bg-table_hover ${flashedIds.has(app.id) ? "status-flash" : ""}`}
                         >
                             <TableCell className="text-table_text">
                                 {app.title}

@@ -23,10 +23,13 @@ export default function DashboardPage() {
     const [statusFilter,   setStatusFilter]   = useState("All");
     const [priorityFilter, setPriorityFilter] = useState<number | null>(null);
 
+    const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+
     const { data = [] as Application[], isLoading } = useQuery({
         queryKey: ["getApplications", q],
         queryFn:  () => apiRouter.applications.getApplications(q),
         refetchOnMount: "always",
+        refetchInterval: 30_000,
     });
 
     const filteredData = useMemo(() => {
@@ -39,24 +42,27 @@ export default function DashboardPage() {
     const syncMutation = useMutation({
         mutationFn: () => apiRouter.applications.syncApplications(),
         onSuccess: (response: any) => {
+            setLastSyncedAt(new Date());
             addToast({
                 title:       "Sync complete",
-                description: response.isUpdated ? "Statuses were updated!" : "No changes found.",
+                description: response.isUpdated
+                    ? "Statuses were updated!"
+                    : "Everything is up to date — no changes found.",
                 timeout:     3000,
                 shouldShowTimeoutProgress: true,
                 variant:     "solid",
-                color:       "success",
+                color:       response.isUpdated ? "success" : "default",
             });
             queryClient.invalidateQueries({ queryKey: ["getApplications"] });
         },
-        onError: (error: any) => {
+        onError: () => {
             addToast({
-                title:       "Sync failed",
-                description: Object.values(error?.response?.data?.errors ?? {}).flat().join(", ") || "Please try again.",
-                timeout:     4000,
+                title:       "Sync unavailable",
+                description: "Could not reach the sync service. Your data is still current.",
+                timeout:     5000,
                 shouldShowTimeoutProgress: true,
                 variant:     "solid",
-                color:       "danger",
+                color:       "warning",
             });
         },
     });
@@ -92,15 +98,22 @@ export default function DashboardPage() {
                                 Applications
                             </span>
                             {!isEmpty && (
-                                <Button
-                                    size="sm"
-                                    variant="bordered"
-                                    isLoading={syncMutation.isPending}
-                                    onPress={() => syncMutation.mutate()}
-                                    className="border-border/50 text-muted hover:text-foreground hover:border-border text-xs"
-                                >
-                                    Sync Statuses
-                                </Button>
+                                <div className="flex items-center gap-3">
+                                    {lastSyncedAt && (
+                                        <span className="text-muted/50 text-[11px]">
+                                            Synced {lastSyncedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                        </span>
+                                    )}
+                                    <Button
+                                        size="sm"
+                                        variant="bordered"
+                                        isLoading={syncMutation.isPending}
+                                        onPress={() => syncMutation.mutate()}
+                                        className="border-border/50 text-muted hover:text-foreground hover:border-border text-xs"
+                                    >
+                                        Sync Statuses
+                                    </Button>
+                                </div>
                             )}
                         </CardHeader>
                         <CardBody>

@@ -5,5 +5,14 @@
     100% { background-position: 200% 50%; }
 }
 
+@keyframes statusFlash {
+    0%   { background-color: rgba(99, 102, 241, 0.18); }
+    100% { background-color: transparent; }
+}
+
+.status-flash {
+    animation: statusFlash 1.6s ease-out forwards;
+}
+
 
 @config "../tailwind.config.js"
