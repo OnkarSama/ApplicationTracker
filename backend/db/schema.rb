@@ -70,6 +70,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_08_000001) do
     t.datetime "created_at", null: false
     t.string "password_digest"
     t.string "portal_link"
+    t.string "status_page_link"
     t.datetime "updated_at", null: false
     t.string "username"
     t.index ["application_id"], name: "index_application_credentials_on_application_id"
@@ -77,11 +78,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_08_000001) do
 
   create_table "applications", force: :cascade do |t|
     t.string "category"
+    t.string "company"
     t.datetime "created_at", null: false
-    t.integer "priority"
+    t.string "position"
+    t.string "priority", default: "Low", null: false
     t.decimal "salary", precision: 12, scale: 2
     t.string "status"
-    t.string "title"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["user_id"], name: "index_applications_on_user_id"
@@ -122,16 +124,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_08_000001) do
     t.datetime "created_at", null: false
     t.text "message"
     t.string "notification_type"
-    t.boolean "read", default: false, null: false
+    t.boolean "read"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.index ["user_id", "read"], name: "index_notifications_on_user_id_and_read"
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
   create_table "sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "ip_address"
+    t.datetime "last_activity_at"
     t.datetime "updated_at", null: false
     t.string "user_agent"
     t.bigint "user_id", null: false
