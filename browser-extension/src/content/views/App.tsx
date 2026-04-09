@@ -283,7 +283,18 @@ export default function FillOverlay() {
         })
     }, [])
 
-    // ── save status page: just save current URL as portal_link ──────────────
+    // ── save status page: save current URL as status_page_link ──────────────
+    const doSaveStatusPage = useCallback((app: Application) => {
+        setSaveState(s => ({ ...s, [app.id]: 'saving' }))
+        chrome.runtime.sendMessage({
+            type: 'SAVE_PORTAL',
+            appId: app.id,
+            credential: { status_page_link: currentUrl.current },
+        }, (res) => {
+            setSaveState(s => ({ ...s, [app.id]: res?.success ? 'saved' : 'error' }))
+        })
+    }, [])
+
     // ── save login: use form values if available, fall back to captured ───────
     const doSaveLogin = useCallback((app: Application) => {
         const pwInput   = getPasswordInput()
@@ -544,6 +555,8 @@ export default function FillOverlay() {
                         {(() => {
                             const pickerApps = pickerMode === 'fill'
                                 ? apps.filter(a => hostnameMatches(a) && !!a.credential?.username)
+                                : pickerMode === 'status_page'
+                                ? apps.filter(a => !a.credential?.status_page_link)
                                 : [
                                     ...apps.filter(hostnameMatches),
                                     ...apps.filter(a => !a.credential?.portal_link),
@@ -601,9 +614,9 @@ export default function FillOverlay() {
 
                                         {/* action button */}
                                         <div style={{ flexShrink: 0 }}>
-                                            {pickerMode === 'save' ? (
+                                            {(pickerMode === 'save' || pickerMode === 'status_page') ? (
                                                 <button
-                                                    onClick={() => doSaveLogin(app)}
+                                                    onClick={() => pickerMode === 'status_page' ? doSaveStatusPage(app) : doSaveLogin(app)}
                                                     disabled={status === 'saving' || status === 'saved'}
                                                     style={{
                                                         padding: '5px 10px',
