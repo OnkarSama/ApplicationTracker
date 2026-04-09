@@ -14,13 +14,14 @@ import ExportCSVButton from "@/components/dashboard/ExportCSVButton";
 
 import apiRouter from "@/api/router";
 import type { Application } from "@/api/application";
+import { useKeyboardShortcuts } from "@/components/UI/KeyboardShortcutsProvider";
 
 export default function DashboardPage() {
     const queryClient = useQueryClient();
     const searchParams = useSearchParams();
     const q = searchParams.get("q") ?? "";
 
-    const [createOpen,     setCreateOpen]     = useState(false);
+    const { openNewApp, setOpenNewApp } = useKeyboardShortcuts();
     const [statusFilter,   setStatusFilter]   = useState("All");
     const [priorityFilter, setPriorityFilter] = useState<number | null>(null);
 
@@ -85,7 +86,7 @@ export default function DashboardPage() {
                 <main className="max-w-7xl mx-auto p-6">
 
                     <ApplicationTableHeader
-                        onNewApplication={() => setCreateOpen(true)}
+                        onNewApplication={() => setOpenNewApp(true)}
                         stats={stats}
                         statusFilter={statusFilter}
                         onStatusChange={setStatusFilter}
@@ -139,8 +140,8 @@ export default function DashboardPage() {
             </div>
 
             <AddApplicationModal
-                isOpen={createOpen}
-                onClose={() => setCreateOpen(false)}
+                isOpen={openNewApp}
+                onClose={() => setOpenNewApp(false)}
             />
         </AuthGate>
     );

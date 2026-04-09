@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
     Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
     Chip, Pagination, SortDescriptor,
@@ -9,6 +9,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import apiRouter from "@/api/router";
+import { useKeyboardShortcuts } from "@/components/UI/KeyboardShortcutsProvider";
 
 import {Application} from "@/api/application";
 
@@ -86,6 +87,34 @@ export default function ApplicationTable({ applications = [] }: Props) {
             flashRow(variables.id);
         },
     });
+
+    const priorityMutation = useMutation({
+        mutationFn: ({ id, priority }: { id: number; priority: number }) =>
+            apiRouter.applications.updateApplication(id, {
+                application: { priority } as any,
+            }),
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["getApplications"] });
+            flashRow(variables.id);
+        },
+    });
+
+    // ── Keyboard shortcuts integration ──
+    const { setSelectedAppId, deleteHandlerRef } = useKeyboardShortcuts();
+
+    const deleteMutation = useMutation({
+        mutationFn: (id: number) => apiRouter.applications.deleteApplication(id),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["getApplications"] }),
+    });
+
+    useEffect(() => {
+        deleteHandlerRef.current = (id: number) => {
+            if (confirm("Delete this application? This cannot be undone.")) {
+                deleteMutation.mutate(id);
+            }
+        };
+        return () => { deleteHandlerRef.current = null; };
+    }, [deleteHandlerRef, deleteMutation]);
 
     const sortedApps = [...applications];
 
@@ -235,6 +264,8 @@ export default function ApplicationTable({ applications = [] }: Props) {
                         <TableRow
                             key={app.id}
                             onClick={() => goToApp(app.id)}
+                            onMouseEnter={() => setSelectedAppId(app.id)}
+                            onMouseLeave={() => setSelectedAppId(null)}
                             className={`cursor-pointer hover:bg-table_hover ${flashedIds.has(app.id) ? "status-flash" : ""}`}
                         >
                             <TableCell className="text-table_text">
@@ -266,10 +297,28 @@ export default function ApplicationTable({ applications = [] }: Props) {
                                 </Dropdown>
                             </TableCell>
 
-                            <TableCell>
-                                <Chip color={priorityMap[app.priority].color}>
-                                    {priorityMap[app.priority].label}
-                                </Chip>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                                <Dropdown>
+                                    <DropdownTrigger>
+                                        <button>
+                                            <Chip color={priorityMap[app.priority].color}>
+                                                {priorityMap[app.priority].label}
+                                            </Chip>
+                                        </button>
+                                    </DropdownTrigger>
+                                    <DropdownMenu
+                                        onAction={(key) =>
+                                            priorityMutation.mutate({
+                                                id: app.id,
+                                                priority: Number(key),
+                                            })
+                                        }
+                                    >
+                                        {Object.entries(priorityMap).map(([key, { label }]) => (
+                                            <DropdownItem key={key}>{label}</DropdownItem>
+                                        ))}
+                                    </DropdownMenu>
+                                </Dropdown>
                             </TableCell>
 
                             <TableCell>

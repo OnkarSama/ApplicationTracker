@@ -23,6 +23,7 @@ import apiRouter from "@/api/router";
 import {useRouter, useSearchParams} from "next/navigation";
 import { siteConfig } from "@/config/site";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useKeyboardShortcuts } from "@/components/UI/KeyboardShortcutsProvider";
 
 
 interface SearchIconProps extends React.SVGProps<SVGSVGElement> {
@@ -85,6 +86,8 @@ export const Navbar = () => {
 
     const searchParams = useSearchParams();
     const [search, setSearch] = React.useState(searchParams.get("q") ?? "");
+
+    const { searchInputRef } = useKeyboardShortcuts();
 
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -159,6 +162,7 @@ export const Navbar = () => {
             <NavbarContent className="hidden sm:flex basis-1/5 sm:basis-full" justify="end">
                 <NavbarItem className="hidden sm:flex gap-2">
                     <Input
+                        ref={searchInputRef}
                         classNames={{
                             base: "h-10 w-[200px]",
                             mainWrapper: "h-full",
