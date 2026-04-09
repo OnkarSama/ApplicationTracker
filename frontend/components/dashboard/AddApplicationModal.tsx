@@ -68,7 +68,7 @@ export function AddApplicationModal({ isOpen, onClose }: Props) {
         },
     });
 
-    const canSave = title.trim().length > 0;
+    const canSave = title.trim().length > 0 && category.length > 0;
 
     return (
         <Modal
@@ -106,7 +106,7 @@ export function AddApplicationModal({ isOpen, onClose }: Props) {
                     {/* Status + Category */}
                     <div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
                         <div className="flex flex-col gap-1.5">
-                            <label className="font-mono text-[0.6rem] tracking-[0.16em] uppercase text-muted/60">Status</label>
+                            <label className="font-mono text-[0.6rem] tracking-[0.16em] uppercase text-muted/60">Status <span className="text-danger">*</span></label>
                             <select
                                 value={status}
                                 onChange={e => setStatus(e.target.value)}
@@ -116,7 +116,7 @@ export function AddApplicationModal({ isOpen, onClose }: Props) {
                             </select>
                         </div>
                         <div className="flex flex-col gap-1.5">
-                            <label className="font-mono text-[0.6rem] tracking-[0.16em] uppercase text-muted/60">Category</label>
+                            <label className="font-mono text-[0.6rem] tracking-[0.16em] uppercase text-muted/60">Category <span className="text-danger">*</span></label>
                             <select
                                 value={category}
                                 onChange={e => setCategory(e.target.value)}
@@ -143,7 +143,7 @@ export function AddApplicationModal({ isOpen, onClose }: Props) {
 
                     {/* Priority */}
                     <div className="flex flex-col gap-1.5">
-                        <label className="font-mono text-[0.6rem] tracking-[0.16em] uppercase text-muted/60">Priority</label>
+                        <label className="font-mono text-[0.6rem] tracking-[0.16em] uppercase text-muted/60">Priority <span className="text-danger">*</span></label>
                         <div className="flex gap-2">
                             {PRIORITY_OPTIONS.map(({ key, label, color }) => (
                                 <button
