@@ -10,6 +10,7 @@ import ApplicationTable from "@/components/dashboard/ApplicationTable";
 import ApplicationTableHeader from "@/components/dashboard/ApplicationTableHeader";
 import { AddApplicationModal } from "@/components/dashboard/AddApplicationModal";
 import EmptyDashboard from "@/components/dashboard/ZeroState";
+import ExportCSVButton from "@/components/dashboard/ExportCSVButton";
 
 import apiRouter from "@/api/router";
 import type { Application } from "@/api/application";
@@ -104,6 +105,7 @@ export default function DashboardPage() {
                                             Synced {lastSyncedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                                         </span>
                                     )}
+                                    <ExportCSVButton applications={filteredData} />
                                     <Button
                                         size="sm"
                                         variant="bordered"

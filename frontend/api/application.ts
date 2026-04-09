@@ -13,7 +13,7 @@ export type ApplicationPayload = {
 export type Application = {
     id: number
     title: string
-    notes: { id: number; content: string; created_at: string }[]
+    notes?: { id: number; content: string; created_at: string }[]
     status: string
     priority: number
     category: string
