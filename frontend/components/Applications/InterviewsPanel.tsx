@@ -65,6 +65,7 @@ function sortInterviews(list: Interview[]): Interview[] {
     });
 }
 
+/* ── Icons ── */
 function TrashIcon() {
     return (
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -87,10 +88,23 @@ function CalendarIcon() {
     );
 }
 
+function ChevronDownIcon({ expanded }: { expanded: boolean }) {
+    return (
+        <svg
+            width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            style={{ transition: "transform 0.3s", transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}
+        >
+            <polyline points="6 9 12 15 18 9"/>
+        </svg>
+    );
+}
+
+/* ── Skeleton ── */
 function InterviewsSkeleton() {
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {[1, 2, 3].map(i => (
+        <div className="flex flex-col gap-4">
+            {[1, 2].map(i => (
                 <div key={i} className="bg-card border border-border rounded-2xl p-6 animate-pulse">
                     <div className="h-5 bg-foreground/[0.06] rounded w-1/2 mb-3" />
                     <div className="h-4 bg-foreground/[0.04] rounded w-3/4 mb-2" />
@@ -101,6 +115,7 @@ function InterviewsSkeleton() {
     );
 }
 
+/* ── Empty state ── */
 function EmptyState() {
     return (
         <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -113,9 +128,10 @@ function EmptyState() {
     );
 }
 
+/* ── Section divider ── */
 function SectionLabel({ label, count }: { label: string; count: number }) {
     return (
-        <div className="flex items-center gap-3 col-span-full mt-2 first:mt-0">
+        <div className="flex items-center gap-3">
             <span className="font-mono text-xs tracking-[0.16em] uppercase text-subheading font-semibold whitespace-nowrap">
                 {label}
             </span>
@@ -127,16 +143,23 @@ function SectionLabel({ label, count }: { label: string; count: number }) {
     );
 }
 
-function InterviewCard({ interview, onDelete, isDeleting, variant }: {
+/* ── Single interview card ── */
+function InterviewCard({ interview, onDelete, isDeleting, variant, index, total }: {
     interview: Interview;
     onDelete: () => void;
     isDeleting: boolean;
     variant: "thisweek" | "upcoming" | "past";
+    index?: number;
+    total?: number;
 }) {
+    const isPast = variant === "past";
+    const idx = index ?? 0;
+    const tot = total ?? 1;
+
     const cardCls = {
         thisweek: "border-primary/40 dark:bg-primary/[0.04]",
         upcoming: "border-border",
-        past:     "border-border opacity-75",
+        past:     "border-border",
     }[variant];
 
     const badgeCls = {
@@ -152,8 +175,27 @@ function InterviewCard({ interview, onDelete, isDeleting, variant }: {
     }[variant];
 
     return (
-        <div className={`group relative bg-white dark:bg-card border-2 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 flex flex-col gap-3 ${cardCls}`}>
-
+        <div
+            className={`group relative bg-white dark:bg-card border-2 rounded-2xl p-5 shadow-sm transition-all duration-200 flex flex-col gap-3 ${cardCls} ${!isPast ? "hover:shadow-md hover:-translate-y-0.5" : ""}`}
+            style={isPast ? {
+                marginTop: idx === 0 ? 0 : "-0.875rem",
+                zIndex: tot - idx,
+                transform: `scale(${1 - idx * 0.012})`,
+                transformOrigin: "top center",
+            } : undefined}
+            onMouseEnter={isPast ? e => {
+                const el = e.currentTarget as HTMLDivElement;
+                el.style.transform = "scale(1) translateY(-3px)";
+                el.style.zIndex = "999";
+                el.style.boxShadow = "0 8px 24px rgba(0,0,0,0.12)";
+            } : undefined}
+            onMouseLeave={isPast ? e => {
+                const el = e.currentTarget as HTMLDivElement;
+                el.style.transform = `scale(${1 - idx * 0.012})`;
+                el.style.zIndex = String(tot - idx);
+                el.style.boxShadow = "";
+            } : undefined}
+        >
             {/* Header */}
             <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 flex-wrap min-w-0">
@@ -193,12 +235,114 @@ function InterviewCard({ interview, onDelete, isDeleting, variant }: {
     );
 }
 
+/* ── Collapsible past interviews pile ── */
+function PastInterviewsPile({ interviews, onDelete, isDeleting }: {
+    interviews: Interview[];
+    onDelete: (id: number) => void;
+    isDeleting: boolean;
+}) {
+    const [expanded, setExpanded] = useState(false);
+
+    if (interviews.length === 0) return null;
+
+    return (
+        <div className="flex flex-col gap-3">
+            <SectionLabel label="Past Interviews" count={interviews.length} />
+
+            {!expanded ? (
+                /* ── Collapsed pile ── */
+                <div
+                    className="relative cursor-pointer"
+                    style={{ paddingBottom: `${Math.min(interviews.length - 1, 3) * 6}px` }}
+                    onClick={() => setExpanded(true)}
+                >
+                    {/* Ghost cards underneath — max 3 layers */}
+                    {interviews.slice(1, 4).map((_, i) => (
+                        <div
+                            key={i}
+                            className="absolute inset-x-0 bg-white dark:bg-card border-2 border-border rounded-2xl"
+                            style={{
+                                top: `${(i + 1) * 6}px`,
+                                zIndex: 3 - i,
+                                opacity: 1 - (i + 1) * 0.2,
+                                transform: `scale(${1 - (i + 1) * 0.02})`,
+                                transformOrigin: "top center",
+                                height: "80px",
+                            }}
+                        />
+                    ))}
+
+                    {/* Top card — preview of most recent past interview */}
+                    <div
+                        className="relative bg-white dark:bg-card border-2 border-border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 flex flex-col gap-2"
+                        style={{ zIndex: 10 }}
+                    >
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex flex-col gap-1.5 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-base font-bold text-foreground opacity-70">
+                                        {interviews[0].interview_type}
+                                    </span>
+                                    <span className="font-mono text-[0.65rem] tracking-[0.1em] uppercase px-2.5 py-0.5 rounded-full border font-semibold text-muted border-border bg-foreground/[0.04]">
+                                        Past
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-muted/70">
+                                    <CalendarIcon />
+                                    <span className="font-mono text-sm tracking-wide opacity-70">
+                                        {fmtScheduled(interviews[0].scheduled_at)}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <span className="font-mono text-xs text-primary/70 bg-primary/[0.07] border border-primary/20 rounded-full px-3 py-1 whitespace-nowrap">
+                                    {interviews.length} interview{interviews.length !== 1 ? "s" : ""}
+                                </span>
+                                <div className="flex items-center justify-center w-7 h-7 rounded-full bg-foreground/[0.05] border border-border text-muted">
+                                    <ChevronDownIcon expanded={false} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                /* ── Expanded stacked list ── */
+                <div className="flex flex-col gap-3">
+                    {/* Collapse button */}
+                    <button
+                        onClick={() => setExpanded(false)}
+                        className="flex items-center gap-2 self-end font-mono text-xs text-muted/70 hover:text-primary transition-colors px-3 py-1.5 rounded-lg border border-border/50 hover:border-primary/30 bg-foreground/[0.02] hover:bg-primary/[0.04]"
+                    >
+                        <ChevronDownIcon expanded={true} />
+                        Collapse
+                    </button>
+
+                    <div className="flex flex-col">
+                        {interviews.map((interview, index) => (
+                            <InterviewCard
+                                key={interview.id}
+                                interview={interview}
+                                onDelete={() => onDelete(interview.id)}
+                                isDeleting={isDeleting}
+                                variant="past"
+                                index={index}
+                                total={interviews.length}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+/* ── Main ── */
 export default function InterviewsPanel({ applicationId }: InterviewsPanelProps) {
     const queryClient = useQueryClient();
 
-    const [type, setType] = useState(INTERVIEW_TYPES[0]);
+    const [type, setType]           = useState(INTERVIEW_TYPES[0]);
     const [scheduledAt, setScheduledAt] = useState("");
-    const [notes, setNotes] = useState("");
+    const [notes, setNotes]         = useState("");
 
     const { data: interviews = [], isLoading, isError } = useQuery<Interview[]>({
         queryKey: ["interviews", applicationId],
@@ -246,7 +390,6 @@ export default function InterviewsPanel({ applicationId }: InterviewsPanelProps)
                 <p className="font-mono text-xs tracking-[0.18em] uppercase text-subheading mb-4">
                     Schedule Interview
                 </p>
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
                         <label className="text-sm font-semibold text-subheading tracking-wide uppercase">Type</label>
@@ -266,7 +409,6 @@ export default function InterviewsPanel({ applicationId }: InterviewsPanelProps)
                         />
                     </div>
                 </div>
-
                 <div className="flex flex-col gap-1.5 mt-4">
                     <label className="text-sm font-semibold text-subheading tracking-wide uppercase">
                         Notes <span className="text-muted/40 font-normal normal-case">(optional)</span>
@@ -279,7 +421,6 @@ export default function InterviewsPanel({ applicationId }: InterviewsPanelProps)
                         className={`${inputCls} resize-none`}
                     />
                 </div>
-
                 <div className="flex justify-end mt-4">
                     <button
                         onClick={() => createMutation.mutate()}
@@ -287,7 +428,7 @@ export default function InterviewsPanel({ applicationId }: InterviewsPanelProps)
                         className="flex items-center gap-2 font-semibold text-sm px-5 py-2.5 rounded-xl bg-primary text-white border border-primary hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                     >
                         {createMutation.isPending ? (
-                            <span className="w-4 h-4 rounded-full border-2 border-primary/30 border-t-primary animate-spin inline-block" />
+                            <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block" />
                         ) : <CalendarIcon />}
                         Add Interview
                     </button>
@@ -307,11 +448,10 @@ export default function InterviewsPanel({ applicationId }: InterviewsPanelProps)
 
             {!isLoading && !isError && interviews.length === 0 && <EmptyState />}
 
-            {/* Full-width single-column sections */}
             {sortedInterviews.length > 0 && (
                 <div className="flex flex-col gap-8 w-full">
 
-                    {/* This Week */}
+                    {/* This Week — full width cards */}
                     {thisWeekList.length > 0 && (
                         <div className="flex flex-col gap-3">
                             <SectionLabel label="This Week" count={thisWeekList.length} />
@@ -321,7 +461,7 @@ export default function InterviewsPanel({ applicationId }: InterviewsPanelProps)
                         </div>
                     )}
 
-                    {/* Upcoming */}
+                    {/* Upcoming — full width cards */}
                     {upcomingList.length > 0 && (
                         <div className="flex flex-col gap-3">
                             <SectionLabel label="Upcoming" count={upcomingList.length} />
@@ -331,41 +471,12 @@ export default function InterviewsPanel({ applicationId }: InterviewsPanelProps)
                         </div>
                     )}
 
-                    {/* Past - stacked cards */}
-                    {pastList.length > 0 && (
-                        <div className="flex flex-col gap-3">
-                            <SectionLabel label="Past Interviews" count={pastList.length} />
-                            <div className="flex flex-col">
-                                {pastList.map((i, index) => (
-                                    <div
-                                        key={i.id}
-                                        style={{
-                                            marginTop: index === 0 ? 0 : "-0.875rem",
-                                            zIndex: pastList.length - index,
-                                            transform: `scale(${1 - index * 0.012})`,
-                                            transformOrigin: "top center",
-                                            position: "relative" as const,
-                                            transition: "all 0.2s",
-                                        }}
-                                        onMouseEnter={e => {
-                                            const el = e.currentTarget as HTMLDivElement;
-                                            el.style.transform = "scale(1) translateY(-3px)";
-                                            el.style.zIndex = "999";
-                                            el.style.boxShadow = "0 8px 24px rgba(0,0,0,0.12)";
-                                        }}
-                                        onMouseLeave={e => {
-                                            const el = e.currentTarget as HTMLDivElement;
-                                            el.style.transform = `scale(${1 - index * 0.012})`;
-                                            el.style.zIndex = String(pastList.length - index);
-                                            el.style.boxShadow = "";
-                                        }}
-                                    >
-                                        <InterviewCard interview={i} onDelete={() => deleteMutation.mutate(i.id)} isDeleting={deleteMutation.isPending} variant="past" />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                    {/* Past — collapsible stacked pile */}
+                    <PastInterviewsPile
+                        interviews={pastList}
+                        onDelete={(id) => deleteMutation.mutate(id)}
+                        isDeleting={deleteMutation.isPending}
+                    />
 
                 </div>
             )}
