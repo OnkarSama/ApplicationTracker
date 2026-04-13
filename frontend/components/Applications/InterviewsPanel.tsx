@@ -116,7 +116,7 @@ function EmptyState() {
 function SectionLabel({ label, count }: { label: string; count: number }) {
     return (
         <div className="flex items-center gap-3 col-span-full mt-2 first:mt-0">
-            <span className="font-mono text-xs tracking-[0.16em] uppercase text-muted font-semibold whitespace-nowrap">
+            <span className="font-mono text-xs tracking-[0.16em] uppercase text-subheading font-semibold whitespace-nowrap">
                 {label}
             </span>
             <span className="font-mono text-xs text-muted/60 bg-foreground/[0.04] border border-border rounded-full px-2 py-0.5">
@@ -157,7 +157,7 @@ function InterviewCard({ interview, onDelete, isDeleting, variant }: {
             {/* Header */}
             <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 flex-wrap min-w-0">
-                    <span className="text-base font-bold text-heading">{interview.interview_type}</span>
+                    <span className="text-base font-bold text-foreground">{interview.interview_type}</span>
                     <span className={`font-mono text-[0.65rem] tracking-[0.1em] uppercase px-2.5 py-0.5 rounded-full border font-semibold shrink-0 ${badgeCls}`}>
                         {badgeLabel}
                     </span>
@@ -173,7 +173,7 @@ function InterviewCard({ interview, onDelete, isDeleting, variant }: {
             </div>
 
             {/* Date */}
-            <div className="flex items-center gap-2 text-muted">
+            <div className="flex items-center gap-2 text-subheading">
                 <CalendarIcon />
                 <span className="font-mono text-sm tracking-wide">
                     {fmtScheduled(interview.scheduled_at)}
@@ -182,11 +182,11 @@ function InterviewCard({ interview, onDelete, isDeleting, variant }: {
 
             {/* Notes */}
             {interview.notes && (
-                <p className="text-sm text-text leading-relaxed">{interview.notes}</p>
+                <p className="text-sm text-foreground leading-relaxed">{interview.notes}</p>
             )}
 
             {/* Added */}
-            <span className="font-mono text-xs text-muted/50 mt-auto pt-1">
+            <span className="font-mono text-xs text-muted mt-auto pt-1">
                 Added {fmt(interview.created_at)}
             </span>
         </div>
@@ -231,7 +231,7 @@ export default function InterviewsPanel({ applicationId }: InterviewsPanelProps)
         onSuccess: invalidate,
     });
 
-    const inputCls = "w-full bg-white dark:bg-foreground/[0.04] border-2 border-border rounded-xl px-4 py-2.5 text-base text-text placeholder:text-muted/50 focus:outline-none focus:border-primary transition-colors";
+    const inputCls = "w-full bg-white dark:bg-foreground/[0.04] border-2 border-border rounded-xl px-4 py-2.5 text-base text-foreground placeholder:text-muted/60 focus:outline-none focus:border-primary transition-colors";
 
     const sortedInterviews = sortInterviews(interviews);
     const thisWeekList = sortedInterviews.filter(i => isWithinWeek(i.scheduled_at));
@@ -243,19 +243,19 @@ export default function InterviewsPanel({ applicationId }: InterviewsPanelProps)
 
             {/* ── Schedule form ── */}
             <div className="bg-card border border-border rounded-2xl p-6 shadow-sm w-full">
-                <p className="font-mono text-xs tracking-[0.18em] uppercase text-muted mb-4">
+                <p className="font-mono text-xs tracking-[0.18em] uppercase text-subheading mb-4">
                     Schedule Interview
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
-                        <label className="text-sm font-semibold text-muted tracking-wide uppercase">Type</label>
-                        <select value={type} onChange={e => setType(e.target.value)} className={inputCls}>
+                        <label className="text-sm font-semibold text-subheading tracking-wide uppercase">Type</label>
+                        <select value={type} onChange={e => setType(e.target.value)} className={`${inputCls} text-foreground`}>
                             {INTERVIEW_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
                     </div>
                     <div className="flex flex-col gap-1.5">
-                        <label className="text-sm font-semibold text-muted tracking-wide uppercase">
+                        <label className="text-sm font-semibold text-subheading tracking-wide uppercase">
                             Date & Time <span className="text-danger">*</span>
                         </label>
                         <input
@@ -268,7 +268,7 @@ export default function InterviewsPanel({ applicationId }: InterviewsPanelProps)
                 </div>
 
                 <div className="flex flex-col gap-1.5 mt-4">
-                    <label className="text-sm font-semibold text-muted tracking-wide uppercase">
+                    <label className="text-sm font-semibold text-subheading tracking-wide uppercase">
                         Notes <span className="text-muted/40 font-normal normal-case">(optional)</span>
                     </label>
                     <textarea
@@ -284,7 +284,7 @@ export default function InterviewsPanel({ applicationId }: InterviewsPanelProps)
                     <button
                         onClick={() => createMutation.mutate()}
                         disabled={!scheduledAt || createMutation.isPending}
-                        className="flex items-center gap-2 font-semibold text-sm px-5 py-2.5 rounded-xl bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 hover:border-primary/60 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                        className="flex items-center gap-2 font-semibold text-sm px-5 py-2.5 rounded-xl bg-primary text-white border border-primary hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                     >
                         {createMutation.isPending ? (
                             <span className="w-4 h-4 rounded-full border-2 border-primary/30 border-t-primary animate-spin inline-block" />

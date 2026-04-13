@@ -43,14 +43,14 @@ export default async function NotesPage({ params }: NotesPageProps) {
 
                 {/* Header */}
                 <div className="mb-8 max-sm:mb-5">
-                    <div className="inline-flex items-center gap-1.5 font-mono text-[0.6rem] tracking-[0.2em] uppercase text-primary/55 border border-primary/12 bg-primary/[0.04] px-3 py-1 rounded-full mb-3">
+                    <div className="inline-flex items-center gap-1.5 font-mono text-[0.6rem] tracking-[0.2em] uppercase text-primary border border-primary/25 bg-primary/[0.07] px-3 py-1 rounded-full mb-3">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_theme(colors.indigo.500)] inline-block" />
                         Application Notes
                     </div>
                     <h1 className="font-sora font-extrabold text-[clamp(1.4rem,5vw,2.2rem)] tracking-tight text-heading leading-tight m-0">
                         Notes
                     </h1>
-                    <p className="text-sm text-muted/50 mt-1.5 max-sm:text-xs">
+                    <p className="text-sm text-foreground/70 mt-1.5 max-sm:text-xs">
                         Track follow-ups, interview prep, and anything else worth remembering.
                     </p>
                 </div>
