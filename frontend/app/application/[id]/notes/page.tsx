@@ -39,7 +39,7 @@ export default async function NotesPage({ params }: NotesPageProps) {
             </nav>
 
             {/* ── Body ── */}
-            <div className="max-w-3xl mx-auto px-8 pt-10 pb-16 max-sm:px-4 max-sm:pt-6 max-sm:pb-10">
+            <div className="max-w-6xl mx-auto px-8 pt-10 pb-16 max-sm:px-4 max-sm:pt-6 max-sm:pb-10">
 
                 {/* Header */}
                 <div className="mb-8 max-sm:mb-5">

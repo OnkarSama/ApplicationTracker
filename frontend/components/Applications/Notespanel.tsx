@@ -22,7 +22,6 @@ function isRecent(iso: string) {
     return Date.now() - new Date(iso).getTime() < RECENT_THRESHOLD_DAYS * 24 * 60 * 60 * 1000;
 }
 
-/* ── Icons ── */
 function EditIcon() {
     return (
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -43,7 +42,7 @@ function TrashIcon() {
     );
 }
 
-function ChevronDownIcon({ expanded }: { expanded: boolean }) {
+function ChevronIcon({ expanded }: { expanded: boolean }) {
     return (
         <svg
             width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -55,12 +54,11 @@ function ChevronDownIcon({ expanded }: { expanded: boolean }) {
     );
 }
 
-/* ── Skeleton ── */
 function NotesSkeleton() {
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 w-full">
             {[1, 2, 3].map(i => (
-                <div key={i} className="bg-card border border-border/30 rounded-2xl p-6 animate-pulse">
+                <div key={i} className="bg-card border border-border rounded-2xl p-6 animate-pulse w-full">
                     <div className="h-5 bg-foreground/[0.06] rounded w-3/4 mb-3" />
                     <div className="h-4 bg-foreground/[0.04] rounded w-1/3" />
                 </div>
@@ -69,10 +67,9 @@ function NotesSkeleton() {
     );
 }
 
-/* ── Empty state ── */
 function EmptyState() {
     return (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="flex flex-col items-center justify-center py-20 text-center w-full">
             <div className="w-16 h-16 rounded-full bg-primary/[0.07] border border-primary/20 flex items-center justify-center mb-5">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="text-primary/50">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -87,22 +84,7 @@ function EmptyState() {
     );
 }
 
-/* ── Section divider ── */
-function SectionLabel({ label, count }: { label: string; count: number }) {
-    return (
-        <div className="flex items-center gap-3">
-            <span className="font-mono text-xs tracking-[0.16em] uppercase text-subheading font-semibold whitespace-nowrap">
-                {label}
-            </span>
-            <span className="font-mono text-xs text-muted/60 bg-foreground/[0.04] border border-border rounded-full px-2 py-0.5">
-                {count}
-            </span>
-            <div className="flex-1 h-px bg-border" />
-        </div>
-    );
-}
-
-/* ── Single note card (used in both sections) ── */
+/* ── Note card ── */
 function NoteCard({
                       note, index, total, editingId, editText,
                       onStartEdit, onCancelEdit, onSubmitEdit, onDelete,
@@ -117,7 +99,7 @@ function NoteCard({
 }) {
     return (
         <div
-            className="group relative bg-white dark:bg-card border border-border rounded-2xl p-6 shadow-sm transition-all duration-200"
+            className="group relative bg-white dark:bg-card border border-border rounded-2xl p-6 shadow-sm transition-all duration-200 w-full"
             style={{
                 marginTop: index === 0 ? 0 : "-0.875rem",
                 zIndex: total - index,
@@ -202,118 +184,67 @@ function NoteCard({
     );
 }
 
-/* ── Collapsed older notes pile ── */
-function OlderNotesPile({
-                            notes, expanded, onToggle, editingId, editText,
-                            onStartEdit, onCancelEdit, onSubmitEdit, onDelete,
-                            setEditText, isUpdatePending, isDeletePending,
-                        }: {
-    notes: Note[]; expanded: boolean; onToggle: () => void;
-    editingId: number | null; editText: string;
-    onStartEdit: (n: Note) => void; onCancelEdit: () => void;
-    onSubmitEdit: (id: number) => void; onDelete: (id: number) => void;
-    setEditText: (v: string) => void;
-    isUpdatePending: boolean; isDeletePending: boolean;
-}) {
-    if (notes.length === 0) return null;
-
+/* ── Collapsed older pile top card ── */
+function OlderCollapsedPile({ notes, onToggle }: { notes: Note[]; onToggle: () => void }) {
     return (
-        <div className="flex flex-col gap-3">
-            <SectionLabel label="Older" count={notes.length} />
-
-            {!expanded ? (
-                /* ── Collapsed pile ── */
+        <div
+            className="relative cursor-pointer w-full"
+            style={{ paddingBottom: `${Math.min(notes.length - 1, 3) * 6}px` }}
+            onClick={onToggle}
+        >
+            {/* Ghost layers */}
+            {notes.slice(1, 4).map((_, i) => (
                 <div
-                    className="relative cursor-pointer"
-                    style={{ paddingBottom: `${Math.min(notes.length - 1, 3) * 6}px` }}
-                    onClick={onToggle}
-                >
-                    {/* Ghost cards underneath — max 3 visible layers */}
-                    {notes.slice(1, 4).map((_, i) => (
-                        <div
-                            key={i}
-                            className="absolute inset-x-0 bg-white dark:bg-card border border-border rounded-2xl"
-                            style={{
-                                top: `${(i + 1) * 6}px`,
-                                zIndex: 3 - i,
-                                opacity: 1 - (i + 1) * 0.2,
-                                transform: `scale(${1 - (i + 1) * 0.02})`,
-                                transformOrigin: "top center",
-                                height: "80px",
-                            }}
-                        />
-                    ))}
+                    key={i}
+                    className="absolute inset-x-0 bg-white dark:bg-card border border-border rounded-2xl"
+                    style={{
+                        top: `${(i + 1) * 6}px`,
+                        zIndex: 3 - i,
+                        opacity: 1 - (i + 1) * 0.2,
+                        transform: `scale(${1 - (i + 1) * 0.02})`,
+                        transformOrigin: "top center",
+                        height: "72px",
+                    }}
+                />
+            ))}
 
-                    {/* Top card — shows preview of newest older note */}
-                    <div
-                        className="relative bg-white dark:bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
-                        style={{ zIndex: 10 }}
-                    >
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="flex flex-col gap-1.5 min-w-0">
-                                <p className="text-base text-text font-medium truncate opacity-60">
-                                    {notes[0].content}
-                                </p>
-                                <span className="font-mono text-xs text-muted tracking-wide">
-                                    {fmt(notes[0].created_at)}
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                                <span className="font-mono text-xs text-primary/70 bg-primary/[0.07] border border-primary/20 rounded-full px-3 py-1 whitespace-nowrap">
-                                    {notes.length} note{notes.length !== 1 ? "s" : ""}
-                                </span>
-                                <div className="flex items-center justify-center w-7 h-7 rounded-full bg-foreground/[0.05] border border-border text-muted">
-                                    <ChevronDownIcon expanded={false} />
-                                </div>
-                            </div>
+            {/* Top card */}
+            <div
+                className="relative bg-white dark:bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 w-full"
+                style={{ zIndex: 10 }}
+            >
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex flex-col gap-1.5 min-w-0">
+                        <p className="text-base text-text font-medium truncate opacity-60">
+                            {notes[0].content}
+                        </p>
+                        <span className="font-mono text-xs text-muted tracking-wide">
+                            {fmt(notes[0].created_at)}
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <span className="font-mono text-xs text-primary/70 bg-primary/[0.07] border border-primary/20 rounded-full px-3 py-1 whitespace-nowrap">
+                            {notes.length} note{notes.length !== 1 ? "s" : ""}
+                        </span>
+                        <div className="flex items-center justify-center w-7 h-7 rounded-full bg-foreground/[0.05] border border-border text-muted">
+                            <ChevronIcon expanded={false} />
                         </div>
                     </div>
                 </div>
-            ) : (
-                /* ── Expanded list ── */
-                <div className="flex flex-col gap-3">
-                    {/* Collapse button */}
-                    <button
-                        onClick={onToggle}
-                        className="flex items-center gap-2 self-end font-mono text-xs text-muted/70 hover:text-primary transition-colors px-3 py-1.5 rounded-lg border border-border/50 hover:border-primary/30 bg-foreground/[0.02] hover:bg-primary/[0.04]"
-                    >
-                        <ChevronDownIcon expanded={true} />
-                        Collapse
-                    </button>
-
-                    <div className="flex flex-col">
-                        {notes.map((note, index) => (
-                            <NoteCard
-                                key={note.id}
-                                note={note}
-                                index={index}
-                                total={notes.length}
-                                editingId={editingId}
-                                editText={editText}
-                                onStartEdit={onStartEdit}
-                                onCancelEdit={onCancelEdit}
-                                onSubmitEdit={onSubmitEdit}
-                                onDelete={onDelete}
-                                setEditText={setEditText}
-                                isUpdatePending={isUpdatePending}
-                                isDeletePending={isDeletePending}
-                            />
-                        ))}
-                    </div>
-                </div>
-            )}
+            </div>
         </div>
     );
 }
 
-/* ── Main ── */
 export default function NotesPanel({ applicationId }: NotesPanelProps) {
     const queryClient = useQueryClient();
 
-    const [newText, setNewText]       = useState("");
-    const [editingId, setEditingId]   = useState<number | null>(null);
-    const [editText, setEditText]     = useState("");
-    const [olderExpanded, setOlderExpanded] = useState(false);
+    const [newText, setNewText]             = useState("");
+    const [editingId, setEditingId]         = useState<number | null>(null);
+    const [editText, setEditText]           = useState("");
+    const [recentExpanded, setRecentExpanded] = useState(true);
+    const [olderExpanded, setOlderExpanded]   = useState(false);
+    const [searchQuery, setSearchQuery]       = useState("");
 
     const { data: notes = [], isLoading, isError } = useQuery<Note[]>({
         queryKey: ["notes", applicationId],
@@ -345,28 +276,33 @@ export default function NotesPanel({ applicationId }: NotesPanelProps) {
         if (!editText.trim()) return;
         updateMutation.mutate({ id, content: editText.trim() });
     };
-    const deleteNote = (id: number) => deleteMutation.mutate(id);
 
-    /* Sort newest first then split */
     const sortedNotes = [...notes].sort(
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
-    const recentNotes = sortedNotes.filter(n => isRecent(n.created_at));
-    const olderNotes  = sortedNotes.filter(n => !isRecent(n.created_at));
 
-    const noteCardProps = {
+    const filteredNotes = searchQuery.trim()
+        ? sortedNotes.filter(n =>
+            n.content.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        : sortedNotes;
+
+    const recentNotes = filteredNotes.filter(n => isRecent(n.created_at));
+    const olderNotes  = filteredNotes.filter(n => !isRecent(n.created_at));
+
+    const cardProps = {
         editingId, editText, setEditText,
         onStartEdit: startEdit, onCancelEdit: cancelEdit,
-        onSubmitEdit: submitEdit, onDelete: deleteNote,
+        onSubmitEdit: submitEdit, onDelete: (id: number) => deleteMutation.mutate(id),
         isUpdatePending: updateMutation.isPending,
         isDeletePending: deleteMutation.isPending,
     };
 
     return (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 w-full">
 
             {/* ── Add note ── */}
-            <div className="bg-card border border-border rounded-2xl p-6 shadow-sm ring-1 ring-border/20">
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-sm ring-1 ring-border/20 w-full">
                 <p className="font-mono text-xs tracking-[0.18em] uppercase text-muted mb-3">New Note</p>
                 <textarea
                     value={newText}
@@ -397,44 +333,131 @@ export default function NotesPanel({ applicationId }: NotesPanelProps) {
                 </div>
             </div>
 
-            {/* ── States ── */}
+            {/* ── Search bar ── */}
+            {notes.length > 0 && (
+                <div className="relative w-full">
+                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-muted">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                    </div>
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        placeholder="Search notes…"
+                        className="w-full bg-white dark:bg-background border-2 border-border rounded-xl pl-10 pr-10 py-3 text-base text-text placeholder:text-muted/50 focus:outline-none focus:border-primary transition-colors"
+                    />
+                    {searchQuery && (
+                        <button
+                            onClick={() => setSearchQuery("")}
+                            className="absolute inset-y-0 right-4 flex items-center text-muted hover:text-foreground transition-colors"
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {/* ── Search empty state ── */}
+            {searchQuery && filteredNotes.length === 0 && !isLoading && (
+                <div className="flex flex-col items-center justify-center py-12 text-center w-full">
+                    <div className="w-12 h-12 rounded-full bg-foreground/[0.05] border border-border flex items-center justify-center mb-4">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-muted">
+                            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                    </div>
+                    <p className="text-heading font-semibold text-sm">No notes match</p>
+                    <p className="text-muted text-xs mt-1">Try a different search term.</p>
+                </div>
+            )}
+
             {isLoading && <NotesSkeleton />}
             {isError && (
-                <div className="flex items-center gap-3 px-5 py-4 rounded-xl text-sm bg-danger/[0.07] border border-danger/25 text-danger">
+                <div className="flex items-center gap-3 px-5 py-4 rounded-xl text-sm bg-danger/[0.07] border border-danger/25 text-danger w-full">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                         <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
                     </svg>
                     Failed to load notes. Please refresh.
                 </div>
             )}
-            {!isLoading && !isError && notes.length === 0 && <EmptyState />}
+            {!isLoading && !isError && notes.length === 0 && !searchQuery && <EmptyState />}
 
-            {/* ── Recent notes — stacked cards ── */}
-            {recentNotes.length > 0 && (
-                <div className="flex flex-col gap-3">
-                    <SectionLabel label="Recent" count={recentNotes.length} />
-                    <div className="relative flex flex-col" style={{ paddingBottom: "0.75rem" }}>
-                        {recentNotes.map((note, index) => (
-                            <NoteCard
-                                key={note.id}
-                                note={note}
-                                index={index}
-                                total={recentNotes.length}
-                                {...noteCardProps}
-                            />
-                        ))}
-                    </div>
+            {/* ── TWO COLUMN LAYOUT: Recent LEFT, Older RIGHT ── */}
+            {(recentNotes.length > 0 || olderNotes.length > 0) && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full items-start">
+
+                    {/* ── LEFT: Recent ── */}
+                    {recentNotes.length > 0 && (
+                        <div className="flex flex-col gap-3 w-full">
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => setRecentExpanded(v => !v)}
+                                    className="flex items-center gap-2 font-mono text-xs tracking-[0.16em] uppercase text-subheading font-semibold hover:text-primary transition-colors shrink-0"
+                                >
+                                    <ChevronIcon expanded={recentExpanded} />
+                                    Recent
+                                </button>
+                                <span className="font-mono text-xs text-muted/60 bg-foreground/[0.04] border border-border rounded-full px-2 py-0.5 shrink-0">
+                                    {recentNotes.length}
+                                </span>
+                                <div className="flex-1 h-px bg-border" />
+                            </div>
+
+                            {recentExpanded && (
+                                <div className="relative flex flex-col w-full" style={{ paddingBottom: "0.75rem" }}>
+                                    {recentNotes.map((note, index) => (
+                                        <NoteCard
+                                            key={note.id}
+                                            note={note}
+                                            index={index}
+                                            total={recentNotes.length}
+                                            {...cardProps}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* ── RIGHT: Older ── */}
+                    {olderNotes.length > 0 && (
+                        <div className="flex flex-col gap-3 w-full">
+                            <div className="flex items-center gap-3">
+                                <div className="flex-1 h-px bg-border" />
+                                <span className="font-mono text-xs text-muted/60 bg-foreground/[0.04] border border-border rounded-full px-2 py-0.5 shrink-0">
+                                    {olderNotes.length}
+                                </span>
+                                <button
+                                    onClick={() => setOlderExpanded(v => !v)}
+                                    className="flex items-center gap-2 font-mono text-xs tracking-[0.16em] uppercase text-subheading font-semibold hover:text-primary transition-colors shrink-0"
+                                >
+                                    Older
+                                    <ChevronIcon expanded={olderExpanded} />
+                                </button>
+                            </div>
+
+                            {!olderExpanded ? (
+                                <OlderCollapsedPile notes={olderNotes} onToggle={() => setOlderExpanded(true)} />
+                            ) : (
+                                <div className="flex flex-col w-full">
+                                    {olderNotes.map((note, index) => (
+                                        <NoteCard
+                                            key={note.id}
+                                            note={note}
+                                            index={index}
+                                            total={olderNotes.length}
+                                            {...cardProps}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                 </div>
-            )}
-
-            {/* ── Older notes — collapsible pile ── */}
-            {olderNotes.length > 0 && (
-                <OlderNotesPile
-                    notes={olderNotes}
-                    expanded={olderExpanded}
-                    onToggle={() => setOlderExpanded(v => !v)}
-                    {...noteCardProps}
-                />
             )}
         </div>
     );
