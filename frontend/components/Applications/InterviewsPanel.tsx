@@ -11,35 +11,21 @@ interface InterviewsPanelProps {
 }
 
 const INTERVIEW_TYPES = [
-    "Phone Screen",
-    "Technical",
-    "Behavioral",
-    "On-site",
-    "Final Round",
-    "Other",
+    "Phone Screen", "Technical", "Behavioral", "On-site", "Final Round", "Other",
 ];
 
 function fmt(iso: string) {
-    return new Date(iso).toLocaleString(undefined, {
-        dateStyle: "medium",
-        timeStyle: "short",
-    });
+    return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
 
 function fmtScheduled(iso: string) {
     return new Date(iso).toLocaleString(undefined, {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
+        weekday: "short", month: "short", day: "numeric",
+        year: "numeric", hour: "numeric", minute: "2-digit",
     });
 }
 
-function isUpcoming(iso: string) {
-    return new Date(iso) > new Date();
-}
+function isUpcoming(iso: string) { return new Date(iso) > new Date(); }
 
 function isWithinWeek(iso: string) {
     const t = new Date(iso).getTime();
@@ -88,13 +74,11 @@ function CalendarIcon() {
     );
 }
 
-function ChevronDownIcon({ expanded }: { expanded: boolean }) {
+function ChevronIcon({ expanded }: { expanded: boolean }) {
     return (
-        <svg
-            width="14" height="14" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-            style={{ transition: "transform 0.3s", transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}
-        >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+             style={{ transition: "transform 0.3s", transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}>
             <polyline points="6 9 12 15 18 9"/>
         </svg>
     );
@@ -103,9 +87,9 @@ function ChevronDownIcon({ expanded }: { expanded: boolean }) {
 /* ── Skeleton ── */
 function InterviewsSkeleton() {
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 w-full">
             {[1, 2].map(i => (
-                <div key={i} className="bg-card border border-border rounded-2xl p-6 animate-pulse">
+                <div key={i} className="bg-card border border-border rounded-2xl p-6 animate-pulse w-full">
                     <div className="h-5 bg-foreground/[0.06] rounded w-1/2 mb-3" />
                     <div className="h-4 bg-foreground/[0.04] rounded w-3/4 mb-2" />
                     <div className="h-3 bg-foreground/[0.04] rounded w-1/3" />
@@ -118,27 +102,12 @@ function InterviewsSkeleton() {
 /* ── Empty state ── */
 function EmptyState() {
     return (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="flex flex-col items-center justify-center py-20 text-center w-full">
             <div className="w-16 h-16 rounded-full bg-primary/[0.07] border border-primary/20 flex items-center justify-center mb-5">
                 <CalendarIcon />
             </div>
             <p className="text-heading font-bold text-base">No interviews scheduled</p>
             <p className="text-muted text-sm mt-1.5">Add your first interview above.</p>
-        </div>
-    );
-}
-
-/* ── Section divider ── */
-function SectionLabel({ label, count }: { label: string; count: number }) {
-    return (
-        <div className="flex items-center gap-3">
-            <span className="font-mono text-xs tracking-[0.16em] uppercase text-subheading font-semibold whitespace-nowrap">
-                {label}
-            </span>
-            <span className="font-mono text-xs text-muted/60 bg-foreground/[0.04] border border-border rounded-full px-2 py-0.5">
-                {count}
-            </span>
-            <div className="flex-1 h-px bg-border" />
         </div>
     );
 }
@@ -168,15 +137,11 @@ function InterviewCard({ interview, onDelete, isDeleting, variant, index, total 
         past:     "text-muted border-border bg-foreground/[0.04]",
     }[variant];
 
-    const badgeLabel = {
-        thisweek: "This Week",
-        upcoming: "Upcoming",
-        past:     "Past",
-    }[variant];
+    const badgeLabel = { thisweek: "This Week", upcoming: "Upcoming", past: "Past" }[variant];
 
     return (
         <div
-            className={`group relative bg-white dark:bg-card border-2 rounded-2xl p-5 shadow-sm transition-all duration-200 flex flex-col gap-3 ${cardCls} ${!isPast ? "hover:shadow-md hover:-translate-y-0.5" : ""}`}
+            className={`group relative bg-white dark:bg-card border-2 rounded-2xl p-5 shadow-sm transition-all duration-200 flex flex-col gap-3 w-full ${cardCls} ${!isPast ? "hover:shadow-md hover:-translate-y-0.5" : ""}`}
             style={isPast ? {
                 marginTop: idx === 0 ? 0 : "-0.875rem",
                 zIndex: tot - idx,
@@ -196,7 +161,6 @@ function InterviewCard({ interview, onDelete, isDeleting, variant, index, total 
                 el.style.boxShadow = "";
             } : undefined}
         >
-            {/* Header */}
             <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 flex-wrap min-w-0">
                     <span className="text-base font-bold text-foreground">{interview.interview_type}</span>
@@ -213,125 +177,14 @@ function InterviewCard({ interview, onDelete, isDeleting, variant, index, total 
                     <TrashIcon />
                 </button>
             </div>
-
-            {/* Date */}
             <div className="flex items-center gap-2 text-subheading">
                 <CalendarIcon />
-                <span className="font-mono text-sm tracking-wide">
-                    {fmtScheduled(interview.scheduled_at)}
-                </span>
+                <span className="font-mono text-sm tracking-wide">{fmtScheduled(interview.scheduled_at)}</span>
             </div>
-
-            {/* Notes */}
             {interview.notes && (
                 <p className="text-sm text-foreground leading-relaxed">{interview.notes}</p>
             )}
-
-            {/* Added */}
-            <span className="font-mono text-xs text-muted mt-auto pt-1">
-                Added {fmt(interview.created_at)}
-            </span>
-        </div>
-    );
-}
-
-/* ── Collapsible past interviews pile ── */
-function PastInterviewsPile({ interviews, onDelete, isDeleting }: {
-    interviews: Interview[];
-    onDelete: (id: number) => void;
-    isDeleting: boolean;
-}) {
-    const [expanded, setExpanded] = useState(false);
-
-    if (interviews.length === 0) return null;
-
-    return (
-        <div className="flex flex-col gap-3">
-            <SectionLabel label="Past Interviews" count={interviews.length} />
-
-            {!expanded ? (
-                /* ── Collapsed pile ── */
-                <div
-                    className="relative cursor-pointer"
-                    style={{ paddingBottom: `${Math.min(interviews.length - 1, 3) * 6}px` }}
-                    onClick={() => setExpanded(true)}
-                >
-                    {/* Ghost cards underneath — max 3 layers */}
-                    {interviews.slice(1, 4).map((_, i) => (
-                        <div
-                            key={i}
-                            className="absolute inset-x-0 bg-white dark:bg-card border-2 border-border rounded-2xl"
-                            style={{
-                                top: `${(i + 1) * 6}px`,
-                                zIndex: 3 - i,
-                                opacity: 1 - (i + 1) * 0.2,
-                                transform: `scale(${1 - (i + 1) * 0.02})`,
-                                transformOrigin: "top center",
-                                height: "80px",
-                            }}
-                        />
-                    ))}
-
-                    {/* Top card — preview of most recent past interview */}
-                    <div
-                        className="relative bg-white dark:bg-card border-2 border-border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 flex flex-col gap-2"
-                        style={{ zIndex: 10 }}
-                    >
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="flex flex-col gap-1.5 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-base font-bold text-foreground opacity-70">
-                                        {interviews[0].interview_type}
-                                    </span>
-                                    <span className="font-mono text-[0.65rem] tracking-[0.1em] uppercase px-2.5 py-0.5 rounded-full border font-semibold text-muted border-border bg-foreground/[0.04]">
-                                        Past
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-2 text-muted/70">
-                                    <CalendarIcon />
-                                    <span className="font-mono text-sm tracking-wide opacity-70">
-                                        {fmtScheduled(interviews[0].scheduled_at)}
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                                <span className="font-mono text-xs text-primary/70 bg-primary/[0.07] border border-primary/20 rounded-full px-3 py-1 whitespace-nowrap">
-                                    {interviews.length} interview{interviews.length !== 1 ? "s" : ""}
-                                </span>
-                                <div className="flex items-center justify-center w-7 h-7 rounded-full bg-foreground/[0.05] border border-border text-muted">
-                                    <ChevronDownIcon expanded={false} />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            ) : (
-                /* ── Expanded stacked list ── */
-                <div className="flex flex-col gap-3">
-                    {/* Collapse button */}
-                    <button
-                        onClick={() => setExpanded(false)}
-                        className="flex items-center gap-2 self-end font-mono text-xs text-muted/70 hover:text-primary transition-colors px-3 py-1.5 rounded-lg border border-border/50 hover:border-primary/30 bg-foreground/[0.02] hover:bg-primary/[0.04]"
-                    >
-                        <ChevronDownIcon expanded={true} />
-                        Collapse
-                    </button>
-
-                    <div className="flex flex-col">
-                        {interviews.map((interview, index) => (
-                            <InterviewCard
-                                key={interview.id}
-                                interview={interview}
-                                onDelete={() => onDelete(interview.id)}
-                                isDeleting={isDeleting}
-                                variant="past"
-                                index={index}
-                                total={interviews.length}
-                            />
-                        ))}
-                    </div>
-                </div>
-            )}
+            <span className="font-mono text-xs text-muted mt-auto pt-1">Added {fmt(interview.created_at)}</span>
         </div>
     );
 }
@@ -340,9 +193,12 @@ function PastInterviewsPile({ interviews, onDelete, isDeleting }: {
 export default function InterviewsPanel({ applicationId }: InterviewsPanelProps) {
     const queryClient = useQueryClient();
 
-    const [type, setType]           = useState(INTERVIEW_TYPES[0]);
+    const [type, setType]               = useState(INTERVIEW_TYPES[0]);
     const [scheduledAt, setScheduledAt] = useState("");
-    const [notes, setNotes]         = useState("");
+    const [notes, setNotes]             = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [upcomingExpanded, setUpcomingExpanded] = useState(true);
+    const [pastExpanded, setPastExpanded]         = useState(false);
 
     const { data: interviews = [], isLoading, isError } = useQuery<Interview[]>({
         queryKey: ["interviews", applicationId],
@@ -378,9 +234,21 @@ export default function InterviewsPanel({ applicationId }: InterviewsPanelProps)
     const inputCls = "w-full bg-white dark:bg-foreground/[0.04] border-2 border-border rounded-xl px-4 py-2.5 text-base text-foreground placeholder:text-muted/60 focus:outline-none focus:border-primary transition-colors";
 
     const sortedInterviews = sortInterviews(interviews);
-    const thisWeekList = sortedInterviews.filter(i => isWithinWeek(i.scheduled_at));
-    const upcomingList = sortedInterviews.filter(i => isUpcoming(i.scheduled_at) && !isWithinWeek(i.scheduled_at));
-    const pastList     = sortedInterviews.filter(i => !isUpcoming(i.scheduled_at));
+
+    /* Search filters on interview_type and notes */
+    const filteredInterviews = searchQuery.trim()
+        ? sortedInterviews.filter(i =>
+            i.interview_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (i.notes ?? "").toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        : sortedInterviews;
+
+    const thisWeekList = filteredInterviews.filter(i => isWithinWeek(i.scheduled_at));
+    const upcomingList = filteredInterviews.filter(i => isUpcoming(i.scheduled_at) && !isWithinWeek(i.scheduled_at));
+    const pastList     = filteredInterviews.filter(i => !isUpcoming(i.scheduled_at));
+
+    const upcomingCombined = [...thisWeekList, ...upcomingList]; // left column
+    const hasAny = filteredInterviews.length > 0;
 
     return (
         <div className="flex flex-col gap-6 w-full">
@@ -435,10 +303,38 @@ export default function InterviewsPanel({ applicationId }: InterviewsPanelProps)
                 </div>
             </div>
 
+            {/* ── Search bar ── */}
+            {interviews.length > 0 && (
+                <div className="relative w-full">
+                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-muted">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                    </div>
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        placeholder="Search interviews by type or notes…"
+                        className="w-full bg-white dark:bg-background border-2 border-border rounded-xl pl-10 pr-10 py-3 text-base text-text placeholder:text-muted/50 focus:outline-none focus:border-primary transition-colors"
+                    />
+                    {searchQuery && (
+                        <button
+                            onClick={() => setSearchQuery("")}
+                            className="absolute inset-y-0 right-4 flex items-center text-muted hover:text-foreground transition-colors"
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    )}
+                </div>
+            )}
+
             {isLoading && <InterviewsSkeleton />}
 
             {isError && (
-                <div className="flex items-center gap-3 px-5 py-4 rounded-xl text-sm bg-danger/[0.07] border border-danger/25 text-danger">
+                <div className="flex items-center gap-3 px-5 py-4 rounded-xl text-sm bg-danger/[0.07] border border-danger/25 text-danger w-full">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                         <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
                     </svg>
@@ -446,38 +342,105 @@ export default function InterviewsPanel({ applicationId }: InterviewsPanelProps)
                 </div>
             )}
 
-            {!isLoading && !isError && interviews.length === 0 && <EmptyState />}
+            {!isLoading && !isError && interviews.length === 0 && !searchQuery && <EmptyState />}
 
-            {sortedInterviews.length > 0 && (
-                <div className="flex flex-col gap-8 w-full">
+            {/* Search no results */}
+            {searchQuery && !isLoading && filteredInterviews.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-12 text-center w-full">
+                    <div className="w-12 h-12 rounded-full bg-foreground/[0.05] border border-border flex items-center justify-center mb-4">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-muted">
+                            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                    </div>
+                    <p className="text-heading font-semibold text-sm">No interviews match</p>
+                    <p className="text-muted text-xs mt-1">Try a different search term.</p>
+                </div>
+            )}
 
-                    {/* This Week — full width cards */}
-                    {thisWeekList.length > 0 && (
-                        <div className="flex flex-col gap-3">
-                            <SectionLabel label="This Week" count={thisWeekList.length} />
-                            {thisWeekList.map(i => (
-                                <InterviewCard key={i.id} interview={i} onDelete={() => deleteMutation.mutate(i.id)} isDeleting={deleteMutation.isPending} variant="thisweek" />
-                            ))}
+            {/* ── TWO COLUMN LAYOUT: Upcoming LEFT, Past RIGHT ── */}
+            {hasAny && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full items-start">
+
+                    {/* ── LEFT: This Week + Upcoming — chevron on left ── */}
+                    {upcomingCombined.length > 0 && (
+                        <div className="flex flex-col gap-3 w-full">
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => setUpcomingExpanded(v => !v)}
+                                    className="flex items-center gap-2 font-mono text-xs tracking-[0.16em] uppercase text-subheading font-semibold hover:text-primary transition-colors shrink-0"
+                                >
+                                    <ChevronIcon expanded={upcomingExpanded} />
+                                    Upcoming
+                                </button>
+                                <span className="font-mono text-xs text-muted/60 bg-foreground/[0.04] border border-border rounded-full px-2 py-0.5 shrink-0">
+                                    {upcomingCombined.length}
+                                </span>
+                                <div className="flex-1 h-px bg-border" />
+                            </div>
+
+                            {upcomingExpanded && (
+                                <div className="flex flex-col gap-3 w-full">
+                                    {/* This week first */}
+                                    {thisWeekList.map(i => (
+                                        <InterviewCard
+                                            key={i.id}
+                                            interview={i}
+                                            onDelete={() => deleteMutation.mutate(i.id)}
+                                            isDeleting={deleteMutation.isPending}
+                                            variant="thisweek"
+                                        />
+                                    ))}
+                                    {/* Then upcoming beyond this week */}
+                                    {upcomingList.map(i => (
+                                        <InterviewCard
+                                            key={i.id}
+                                            interview={i}
+                                            onDelete={() => deleteMutation.mutate(i.id)}
+                                            isDeleting={deleteMutation.isPending}
+                                            variant="upcoming"
+                                        />
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
 
-                    {/* Upcoming — full width cards */}
-                    {upcomingList.length > 0 && (
-                        <div className="flex flex-col gap-3">
-                            <SectionLabel label="Upcoming" count={upcomingList.length} />
-                            {upcomingList.map(i => (
-                                <InterviewCard key={i.id} interview={i} onDelete={() => deleteMutation.mutate(i.id)} isDeleting={deleteMutation.isPending} variant="upcoming" />
-                            ))}
+                    {/* ── RIGHT: Past — chevron on right, same collapse as Upcoming ── */}
+                    {pastList.length > 0 && (
+                        <div className="flex flex-col gap-3 w-full">
+                            {/* Header — chevron on right */}
+                            <div className="flex items-center gap-3">
+                                <div className="flex-1 h-px bg-border" />
+                                <span className="font-mono text-xs text-muted/60 bg-foreground/[0.04] border border-border rounded-full px-2 py-0.5 shrink-0">
+                                    {pastList.length}
+                                </span>
+                                <button
+                                    onClick={() => setPastExpanded(v => !v)}
+                                    className="flex items-center gap-2 font-mono text-xs tracking-[0.16em] uppercase text-subheading font-semibold hover:text-primary transition-colors shrink-0"
+                                >
+                                    Past
+                                    <ChevronIcon expanded={pastExpanded} />
+                                </button>
+                            </div>
+
+                            {/* Collapsed = nothing shown (same as Upcoming) */}
+                            {pastExpanded && (
+                                <div className="flex flex-col w-full">
+                                    {pastList.map((interview, index) => (
+                                        <InterviewCard
+                                            key={interview.id}
+                                            interview={interview}
+                                            onDelete={() => deleteMutation.mutate(interview.id)}
+                                            isDeleting={deleteMutation.isPending}
+                                            variant="past"
+                                            index={index}
+                                            total={pastList.length}
+                                        />
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
-
-                    {/* Past — collapsible stacked pile */}
-                    <PastInterviewsPile
-                        interviews={pastList}
-                        onDelete={(id) => deleteMutation.mutate(id)}
-                        isDeleting={deleteMutation.isPending}
-                    />
-
                 </div>
             )}
         </div>
