@@ -32,7 +32,7 @@ export default function DashboardPage() {
 
     const filteredData = useMemo(() => {
         let result = data;
-        if (statusFilter !== "All")  result = result.filter(a => a.status === statusFilter);
+        if (statusFilter !== "All")  result = result.filter(a  => a.status === statusFilter);
         if (priorityFilter !== null) result = result.filter(a => a.priority === priorityFilter);
         return result;
     }, [data, statusFilter, priorityFilter]);
