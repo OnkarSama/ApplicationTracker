@@ -1,3 +1,6 @@
+json.first_name Current.user.first_name
+json.last_name  Current.user.last_name
+
 json.extract! @profile, :id, :preferred_name, :contact_email, :phone_number,
               :linkedin_url, :portfolio_url, :bio, :date_of_birth, :nationality,
               :pronouns, :address_line_1, :address_line_2, :city, :state,

@@ -3,7 +3,7 @@ class Api::ApplicantProfilesController < ApplicationController
     before_action :set_profile
 
     def show
-        @profile
+        render json: { error: 'Profile not found' }, status: :not_found unless @profile
     end
 
     def update

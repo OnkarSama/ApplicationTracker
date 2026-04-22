@@ -7,11 +7,13 @@ export type IconSvgProps = React.SVGProps<SVGSVGElement> & {
 };
 
 export type ApplicationStatus =
+    | "Wishlist"
     | "Applied"
+    | "Under Review"
+    | "Awaiting Decision"
     | "Interview"
     | "Offer"
-    | "Rejected"
-    | "Wishlist";
+    | "Rejected";
 
 export type Filter = "open" | "in-progress" | "closed" | "all";
 
@@ -19,10 +21,11 @@ export type Application = {
 
     application: {
         id: number
-        title: string,
+        company: string,
+        position?: string,
         notes: string,
         status: string,
-        priority: number
+        priority: string
 
     };
 }

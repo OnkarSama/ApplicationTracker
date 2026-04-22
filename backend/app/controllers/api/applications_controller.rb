@@ -33,8 +33,8 @@ class Api::ApplicationsController < ApplicationController
     end
 
     def sync
-        @isUpdated = AutomaticStatusUpdateService.requestUpdate(Current.user,true)
-        render json: {isUpdated: @isUpdated}
+        AutomaticStatusUpdateJob.perform_later(Current.user)
+        render json: { isUpdated: true }, status: :accepted
     end
 
     def update
@@ -64,7 +64,7 @@ class Api::ApplicationsController < ApplicationController
     private
 
     def application_params
-        params.require(:application).permit(:title, :notes, :status, :priority, :category, :salary)
+        params.require(:application).permit(:company, :salary, :position, :notes, :status, :priority, :category)
     end
 
     def set_bearer_token

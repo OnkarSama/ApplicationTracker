@@ -3,6 +3,165 @@ import type { Application } from '@/api/application.ts'
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
+const PENDING_LOGIN_KEY = '_crx_pending_login'
+
+// Selectors for common job application form fields (ordered: most-specific → broadest)
+const FIELD_SELECTORS = {
+    firstName:  [
+        'input[autocomplete="given-name"]',
+        'input[id="first_name"]',
+        'input[name="first_name"]',
+        'input[name="firstName"]',
+        'input[id="firstName"]',
+        'input[name*="[first_name]"]',
+        'input[name*="first" i]:not([name*="password" i]):not([name*="last" i])',
+        'input[id*="first" i]:not([id*="last" i])',
+        'input[placeholder*="first name" i]',
+    ],
+    lastName:   [
+        'input[autocomplete="family-name"]',
+        'input[id="last_name"]',
+        'input[name="last_name"]',
+        'input[name="lastName"]',
+        'input[id="lastName"]',
+        'input[name*="[last_name]"]',
+        'input[name*="last" i]:not([name*="password" i]):not([name*="class" i])',
+        'input[id*="last" i]:not([id*="class" i])',
+        'input[placeholder*="last name" i]',
+    ],
+    email:      [
+        'input[autocomplete="email"]',
+        'input[type="email"]',
+        'input[id="email"]',
+        'input[name="email"]',
+        'input[name*="[email]"]',
+        'input[name*="email" i]',
+        'input[id*="email" i]',
+    ],
+    phone:      [
+        'input[autocomplete="tel"]',
+        'input[type="tel"]',
+        'input[id="phone"]',
+        'input[name="phone"]',
+        'input[name*="[phone]"]',
+        'input[name*="phone" i]',
+        'input[id*="phone" i]',
+        'input[placeholder*="phone" i]',
+    ],
+    linkedin:   [
+        'input[name*="linkedin" i]',
+        'input[id*="linkedin" i]',
+        'input[placeholder*="linkedin" i]',
+    ],
+    github:     [
+        'input[name*="github" i]',
+        'input[id*="github" i]',
+        'input[placeholder*="github" i]',
+    ],
+    portfolio:  [
+        'input[name*="portfolio" i]',
+        'input[name*="personal_url" i]',
+        'input[name*="website" i]:not([name*="company" i])',
+        'input[id*="website" i]:not([id*="company" i])',
+        'input[placeholder*="portfolio" i]',
+        'input[placeholder*="personal website" i]',
+    ],
+    address:    [
+        'input[autocomplete="street-address"]',
+        'input[name="address"]',
+        'input[id="address"]',
+        'input[name*="address_line_1" i]',
+        'input[name*="address1" i]',
+        'input[id*="address1" i]',
+        'input[name*="street" i]',
+        'input[placeholder*="street address" i]',
+    ],
+    city:       [
+        'input[autocomplete="address-level2"]',
+        'input[name="city"]',
+        'input[id="city"]',
+        'input[name*="[city]"]',
+        'input[name*="city" i]',
+        'input[id*="city" i]',
+    ],
+    state:      [
+        'input[autocomplete="address-level1"]',
+        'input[name="state"]',
+        'input[id="state"]',
+        'input[name*="[state]"]',
+        'input[name*="state" i]:not([type="hidden"])',
+        'input[id*="state" i]:not([type="hidden"])',
+    ],
+    zip:        [
+        'input[autocomplete="postal-code"]',
+        'input[name="zip"]',
+        'input[id="zip"]',
+        'input[name*="zip_code" i]',
+        'input[name*="postal" i]',
+        'input[name*="zip" i]',
+        'input[id*="zip" i]',
+    ],
+    country:    [
+        'input[autocomplete="country-name"]',
+        'input[name="country"]',
+        'input[id="country"]',
+        'input[name*="country" i]',
+        'input[id*="country" i]',
+    ],
+    // Combined full-name field used by Ashby and similar ATS platforms
+    fullName:   [
+        'input[autocomplete="name"]',
+        'input[id="_systemfield_name"]',
+        'input[name="_systemfield_name"]',
+        'input[name="name"]:not([name*="company" i])',
+        'input[id="name"]:not([id*="company" i])',
+        'input[placeholder*="full name" i]',
+        'input[aria-label*="full name" i]',
+    ],
+}
+
+// Native setter bypasses React's synthetic event system so onChange fires correctly
+const nativeInputSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+
+function fillField(selectors: string[], value: string | undefined) {
+    if (!value) return
+    for (const selector of selectors) {
+        const el = document.querySelector<HTMLInputElement>(selector)
+        if (!el || el.type === 'hidden' || el.disabled || el.readOnly) continue
+        if (nativeInputSetter) {
+            nativeInputSetter.call(el, value)
+        } else {
+            el.value = value
+        }
+        el.dispatchEvent(new Event('input',  { bubbles: true }))
+        el.dispatchEvent(new Event('change', { bubbles: true }))
+        el.dispatchEvent(new Event('blur',   { bubbles: true }))
+        return  // stop at first match
+    }
+}
+
+function queryAny(selectorList: string[]): Element | null {
+    for (const s of selectorList) {
+        const el = document.querySelector(s)
+        if (el) return el
+    }
+    return null
+}
+
+function detectAppForm(): boolean {
+    const hasName = !!(
+        queryAny(FIELD_SELECTORS.firstName) ||
+        queryAny(FIELD_SELECTORS.lastName)  ||
+        queryAny(FIELD_SELECTORS.fullName)
+    )
+    const hasContact = !!(
+        queryAny(FIELD_SELECTORS.email) ||
+        queryAny(FIELD_SELECTORS.phone) ||
+        queryAny(FIELD_SELECTORS.city)
+    )
+    return hasName && hasContact
+}
+
 function getPasswordInput(): HTMLInputElement | null {
     return document.querySelector('input[type="password"]')
 }
@@ -63,19 +222,21 @@ const pillBase: React.CSSProperties = {
 
 // ── component ─────────────────────────────────────────────────────────────────
 
-type PickerMode = 'fill' | 'save' | 'status'
+type PickerMode = 'fill' | 'save' | 'status_page'
 type SaveStatus = 'saving' | 'saved' | 'error'
-
-const POST_LOGIN_FLAG = 'apptracker_post_login'
+type ProfileFillStatus = 'idle' | 'filling' | 'done' | 'error'
 
 export default function FillOverlay() {
-    const [apps, setApps]             = useState<Application[]>([])
+    const [apps, setApps]                 = useState<Application[]>([])
     const [formDetected, setFormDetected] = useState(false)
-    const [autoFilled, setAutoFilled] = useState(false)
-    const [showPicker, setShowPicker] = useState(false)
-    const [pickerMode, setPickerMode] = useState<PickerMode>('fill')
-    const [saveState, setSaveState]   = useState<Record<number, SaveStatus>>({})
-    const [showStatusPrompt, setShowStatusPrompt] = useState(false)
+    const [appFormDetected, setAppFormDetected] = useState(false)
+    const [autoFilled, setAutoFilled]     = useState(false)
+    const [showPicker, setShowPicker]     = useState(false)
+    const [pickerMode, setPickerMode]     = useState<PickerMode>('fill')
+    const [saveState, setSaveState]       = useState<Record<number, SaveStatus>>({})
+    const [profileFillStatus, setProfileFillStatus] = useState<ProfileFillStatus>('idle')
+    // Credentials captured at form-submit time, carried to post-login page
+    const [capturedLogin, setCapturedLogin] = useState<{ username: string; password: string } | null>(null)
     const currentUrl = useRef(window.location.href)
 
     // ── fill: write saved credentials into the form ──────────────────────────
@@ -87,44 +248,59 @@ export default function FillOverlay() {
         setShowPicker(false)
     }, [])
 
-    // ── save portal URL only (no credential capture) ─────────────────────────
-    const doSaveUrl = useCallback((app: Application) => {
-        setSaveState(s => ({ ...s, [app.id]: 'saving' }))
-        const credential = {
-            portal_link:     currentUrl.current,
-            username:        app.credential?.username        ?? '',
-            password_digest: app.credential?.password_digest ?? '',
-        }
-        chrome.runtime.sendMessage({ type: 'SAVE_PORTAL', appId: app.id, credential }, (res) => {
-            setSaveState(s => ({ ...s, [app.id]: res?.success ? 'saved' : 'error' }))
+    // ── fill profile: write saved profile data into the application form ─────
+    const doFillProfile = useCallback(() => {
+        setProfileFillStatus('filling')
+        chrome.runtime.sendMessage({ type: 'FETCH_PROFILE' }, (res) => {
+            const profile = res?.profile?.applicant_profile ?? res?.profile
+            if (!profile) { setProfileFillStatus('error'); return }
+
+            const firstName = profile.first_name ?? profile.preferred_name?.split(' ')[0] ?? ''
+            const lastName  = profile.last_name  ?? profile.preferred_name?.split(' ').slice(1).join(' ') ?? ''
+
+            const hasFirst = !!queryAny(FIELD_SELECTORS.firstName)
+            const hasLast  = !!queryAny(FIELD_SELECTORS.lastName)
+
+            if (hasFirst || hasLast) {
+                fillField(FIELD_SELECTORS.firstName, firstName)
+                fillField(FIELD_SELECTORS.lastName,  lastName)
+            } else {
+                // Ashby / combined-name ATS
+                fillField(FIELD_SELECTORS.fullName, `${firstName} ${lastName}`.trim())
+            }
+            fillField(FIELD_SELECTORS.email,      profile.contact_email)
+            fillField(FIELD_SELECTORS.phone,      profile.phone_number)
+            fillField(FIELD_SELECTORS.linkedin,   profile.linkedin_url)
+            fillField(FIELD_SELECTORS.github,     profile.github_url)
+            fillField(FIELD_SELECTORS.portfolio,  profile.portfolio_url)
+            fillField(FIELD_SELECTORS.address,    profile.address_line_1)
+            fillField(FIELD_SELECTORS.city,       profile.city)
+            fillField(FIELD_SELECTORS.state,      profile.state)
+            fillField(FIELD_SELECTORS.zip,        profile.zip_code)
+            fillField(FIELD_SELECTORS.country,    profile.country)
+
+            setProfileFillStatus('done')
         })
     }, [])
 
+    // ── save status page: save current URL as status_page_link ──────────────
     const doSaveStatusPage = useCallback((app: Application) => {
         setSaveState(s => ({ ...s, [app.id]: 'saving' }))
-        const credential = {
-            portal_link:      app.credential?.portal_link     ?? '',
-            status_page_link: currentUrl.current,
-            username:         app.credential?.username        ?? '',
-            password_digest:  app.credential?.password_digest ?? '',
-        }
-        chrome.runtime.sendMessage({ type: 'SAVE_PORTAL', appId: app.id, credential }, (res) => {
-            if (res?.success) sessionStorage.removeItem(POST_LOGIN_FLAG)
+        chrome.runtime.sendMessage({
+            type: 'SAVE_PORTAL',
+            appId: app.id,
+            credential: { status_page_link: currentUrl.current },
+        }, (res) => {
             setSaveState(s => ({ ...s, [app.id]: res?.success ? 'saved' : 'error' }))
         })
     }, [])
 
-    const dismissStatusPrompt = useCallback(() => {
-        sessionStorage.removeItem(POST_LOGIN_FLAG)
-        setShowStatusPrompt(false)
-    }, [])
-
-    // ── save login: capture what the user typed + current URL ────────────────
+    // ── save login: use form values if available, fall back to captured ───────
     const doSaveLogin = useCallback((app: Application) => {
-        const pwInput    = getPasswordInput()
-        const userInput  = pwInput ? getUsernameInput(pwInput) : null
-        const username   = userInput?.value?.trim() ?? ''
-        const password   = pwInput?.value ?? ''
+        const pwInput   = getPasswordInput()
+        const userInput = pwInput ? getUsernameInput(pwInput) : null
+        const username  = userInput?.value?.trim() || capturedLogin?.username || ''
+        const password  = pwInput?.value           || capturedLogin?.password || ''
 
         setSaveState(s => ({ ...s, [app.id]: 'saving' }))
         const credential = {
@@ -135,38 +311,66 @@ export default function FillOverlay() {
         chrome.runtime.sendMessage({ type: 'SAVE_PORTAL', appId: app.id, credential }, (res) => {
             setSaveState(s => ({ ...s, [app.id]: res?.success ? 'saved' : 'error' }))
         })
-    }, [])
+    }, [capturedLogin])
 
-    // ── form detection + autofill ─────────────────────────────────────────────
+    // ── form detection, autofill, submit capture ──────────────────────────────
     useEffect(() => {
         let observer: MutationObserver | null = null
         let didFill = false
+
+        // Check sessionStorage for credentials captured on the previous page's login form
+        try {
+            const stored = sessionStorage.getItem(PENDING_LOGIN_KEY)
+            if (stored) {
+                const { domain, username, password } = JSON.parse(stored)
+                if (domain === window.location.hostname) {
+                    setCapturedLogin({ username, password })
+                    setFormDetected(true)
+                    setPickerMode('status_page')
+                    setShowPicker(true)
+                }
+                sessionStorage.removeItem(PENDING_LOGIN_KEY)
+            }
+        } catch {}
+
+        // Detect application form fields (name + contact = job app form)
+        const appFormObserver = new MutationObserver(() => {
+            if (detectAppForm()) {
+                setAppFormDetected(true)
+                appFormObserver.disconnect()
+            }
+        })
+        if (detectAppForm()) {
+            setAppFormDetected(true)
+        } else {
+            appFormObserver.observe(document.body, { childList: true, subtree: true })
+        }
 
         async function init() {
             const response = await chrome.runtime.sendMessage({ type: 'FETCH_APPS' })
             const fetchedApps: Application[] = response?.apps ?? []
             setApps(fetchedApps)
 
-            // ── post-login redirect detection ────────────────────────────────
-            const postLoginFlag = sessionStorage.getItem(POST_LOGIN_FLAG)
-            if (postLoginFlag === '1') {
-                const pwInput = getPasswordInput()
-                if (!pwInput) {
-                    // No login form — we're on a post-login page.
-                    // Keep the flag so it persists across further navigations (e.g. /apply → /apply/status)
-                    // until the user explicitly saves or dismisses.
-                    setShowStatusPrompt(true)
-                    return
-                }
-                // Still on a login-like page (e.g. 2FA step) — keep the flag so the
-                // next redirect will still trigger the check, and re-attach listeners
-                // so submitting this step also marks the next navigation.
-                attachLoginListeners(pwInput)
-            }
-
             function tryAutoFill(): 'filled' | 'no-match' | 'no-form' {
                 const pwInput = getPasswordInput()
                 if (!pwInput) return 'no-form'
+
+                // Attach submit listener to capture credentials before redirect
+                const formEl = pwInput.closest('form')
+                if (formEl && !formEl.dataset.crxListening) {
+                    formEl.dataset.crxListening = '1'
+                    formEl.addEventListener('submit', () => {
+                        const pw   = getPasswordInput()
+                        const user = pw ? getUsernameInput(pw) : null
+                        try {
+                            sessionStorage.setItem(PENDING_LOGIN_KEY, JSON.stringify({
+                                domain:   window.location.hostname,
+                                username: user?.value?.trim() ?? '',
+                                password: pw?.value ?? '',
+                            }))
+                        } catch {}
+                    })
+                }
 
                 const matched = fetchedApps.find(hostnameMatches)
                 if (matched) {
@@ -182,79 +386,26 @@ export default function FillOverlay() {
             }
 
             const result = tryAutoFill()
-            // Marks the flag + handles SPA navigation where there's no full page reload
-            function markLoginAndWatch() {
-                sessionStorage.setItem(POST_LOGIN_FLAG, '1')
+            if (result === 'filled') return
 
-                // For SPAs: if the URL changes without a reload, check if the login form is gone
-                let lastHref = window.location.href
-                const navInterval = setInterval(() => {
-                    if (window.location.href !== lastHref) {
-                        lastHref = window.location.href
-                        currentUrl.current = window.location.href
-                        // Give the SPA time to render the new page
-                        setTimeout(() => {
-                            if (!getPasswordInput()) {
-                                clearInterval(navInterval)
-                                sessionStorage.removeItem(POST_LOGIN_FLAG)
-                                setShowStatusPrompt(true)
-                            }
-                        }, 600)
-                    }
-                }, 400)
-
-                // Clean up after 30s to avoid leaking intervals
-                setTimeout(() => clearInterval(navInterval), 30_000)
-            }
-
-            function attachLoginListeners(pwInput: HTMLInputElement) {
-                // Native form submit
-                document.addEventListener('submit', markLoginAndWatch, true)
-
-                // JS-driven submit: click on submit button inside the same form
-                const form = pwInput.closest('form')
-                const submitBtn = form
-                    ? form.querySelector<HTMLElement>('[type="submit"], button:not([type="button"])')
-                    : pwInput.parentElement?.querySelector<HTMLElement>('[type="submit"], button:not([type="button"])')
-                if (submitBtn) {
-                    submitBtn.addEventListener('click', markLoginAndWatch, { once: true, capture: true })
-                }
-            }
-
-            if (result === 'filled') {
-                // Set flag so the next page (after login redirect) triggers the status page prompt
-                attachLoginListeners(getPasswordInput()!)
-                return
-            }
-
-            // Watch for dynamically rendered forms (SPAs)
             observer = new MutationObserver(() => {
                 if (didFill) { observer?.disconnect(); return }
                 const r = tryAutoFill()
-                if (r === 'filled') {
-                    observer?.disconnect()
-                    attachLoginListeners(getPasswordInput()!)
-                }
+                if (r === 'filled') observer?.disconnect()
             })
             observer.observe(document.body, { childList: true, subtree: true })
-
-            // If form is present (no match yet), still listen for submit to catch the redirect
-            const handleFormSubmit = () => {
-                if (fetchedApps.some(hostnameMatches)) {
-                    markLoginAndWatch()
-                }
-            }
-            document.addEventListener('submit', handleFormSubmit, true)
         }
 
         init()
-        return () => observer?.disconnect()
+        return () => {
+            observer?.disconnect()
+            appFormObserver.disconnect()
+        }
     }, [])
 
-    if (!formDetected && !showStatusPrompt) return null
+    if (!formDetected && !appFormDetected) return null
 
     const openPicker = (mode: PickerMode) => {
-        // reset save states when opening fresh
         setSaveState({})
         setPickerMode(mode)
         setShowPicker(true)
@@ -266,53 +417,42 @@ export default function FillOverlay() {
                 // ── pill buttons ─────────────────────────────────────────────
                 <div style={{ display: 'flex', gap: '8px', flexDirection: 'column', alignItems: 'flex-end' }}>
 
-                    {/* Status page prompt — shown after post-login redirect */}
-                    {showStatusPrompt && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <button
-                                onClick={() => openPicker('status')}
-                                style={{
-                                    ...pillBase,
-                                    background: 'linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)',
-                                    color: '#fff',
-                                    boxShadow: '0 4px 18px rgba(14,165,233,0.5)',
-                                }}
-                                onMouseEnter={e => {
+                    {/* Autofill profile — shown when application form fields detected */}
+                    {appFormDetected && (
+                        <button
+                            onClick={doFillProfile}
+                            disabled={profileFillStatus === 'filling' || profileFillStatus === 'done'}
+                            style={{
+                                ...pillBase,
+                                background: profileFillStatus === 'done'
+                                    ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                                    : profileFillStatus === 'error'
+                                    ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+                                    : 'linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)',
+                                color: '#fff',
+                                boxShadow: '0 4px 18px rgba(99,102,241,0.5)',
+                                opacity: profileFillStatus === 'filling' ? 0.7 : 1,
+                                cursor: profileFillStatus === 'filling' || profileFillStatus === 'done' ? 'default' : 'pointer',
+                            }}
+                            onMouseEnter={e => {
+                                if (profileFillStatus === 'idle') {
                                     e.currentTarget.style.transform = 'translateY(-2px)'
-                                    e.currentTarget.style.boxShadow = '0 6px 24px rgba(14,165,233,0.65)'
-                                }}
-                                onMouseLeave={e => {
-                                    e.currentTarget.style.transform = 'translateY(0)'
-                                    e.currentTarget.style.boxShadow = '0 4px 18px rgba(14,165,233,0.5)'
-                                }}
-                            >
-                                📊 Save as status page?
-                            </button>
-                            <button
-                                onClick={dismissStatusPrompt}
-                                title="Dismiss"
-                                style={{
-                                    background: 'rgba(0,0,0,0.25)',
-                                    border: 'none',
-                                    borderRadius: '50%',
-                                    color: '#fff',
-                                    cursor: 'pointer',
-                                    fontSize: '14px',
-                                    lineHeight: '1',
-                                    width: '20px',
-                                    height: '20px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    flexShrink: 0,
-                                }}
-                            >
-                                ×
-                            </button>
-                        </div>
+                                    e.currentTarget.style.boxShadow = '0 6px 24px rgba(99,102,241,0.6)'
+                                }
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.transform = 'translateY(0)'
+                                e.currentTarget.style.boxShadow = '0 4px 18px rgba(99,102,241,0.5)'
+                            }}
+                        >
+                            {profileFillStatus === 'filling' ? '⏳ Filling…'
+                             : profileFillStatus === 'done'    ? '✓ Profile filled'
+                             : profileFillStatus === 'error'   ? '✗ Error'
+                             : '✨ Autofill profile'}
+                        </button>
                     )}
 
-                    {/* Save login — only visible when login form is on page */}
+                    {/* Save login — only shown when login form is on page */}
                     {formDetected && (
                         <button
                             onClick={() => openPicker('save')}
@@ -335,8 +475,8 @@ export default function FillOverlay() {
                         </button>
                     )}
 
-                    {/* Fill — only shown when not yet autofilled */}
-                    {!autoFilled && formDetected && (
+                    {/* Fill credentials — only shown when not yet autofilled */}
+                    {formDetected && !autoFilled && (
                         <button
                             onClick={() => openPicker('fill')}
                             style={{
@@ -377,10 +517,10 @@ export default function FillOverlay() {
                         alignItems: 'center',
                         padding: '11px 14px',
                         borderBottom: '1px solid #f3f4f6',
-                        background: pickerMode === 'save' ? '#f5f3ff' : pickerMode === 'status' ? '#f0f9ff' : '#fff',
+                        background: pickerMode === 'save' ? '#f5f3ff' : '#fff',
                     }}>
                         <span style={{ fontWeight: 700, color: '#111827' }}>
-                            {pickerMode === 'save' ? '💾 Save login to…' : pickerMode === 'status' ? '📊 Save status page to…' : '🔑 Fill credentials from…'}
+                            {pickerMode === 'save' ? '💾 Save login to…' : pickerMode === 'status_page' ? '📍 Save status page for…' : '🔑 Fill credentials from…'}
                         </span>
                         <button
                             onClick={() => setShowPicker(false)}
@@ -394,7 +534,7 @@ export default function FillOverlay() {
                     </div>
 
                     {/* mode hint */}
-                    {pickerMode === 'save' && (
+                    {(pickerMode === 'save' || pickerMode === 'status_page') && (
                         <div style={{
                             padding: '8px 14px',
                             background: '#faf5ff',
@@ -402,29 +542,35 @@ export default function FillOverlay() {
                             color: '#7c3aed',
                             fontSize: '11px',
                         }}>
-                            Saves what you've typed in the form + this page URL
-                        </div>
-                    )}
-                    {pickerMode === 'status' && (
-                        <div style={{
-                            padding: '8px 14px',
-                            background: '#f0f9ff',
-                            borderBottom: '1px solid #f3f4f6',
-                            color: '#0369a1',
-                            fontSize: '11px',
-                        }}>
-                            Saves this page as the application status page
+                            {pickerMode === 'status_page'
+                                ? `Saves ${window.location.hostname} as the status page URL`
+                                : capturedLogin
+                                    ? 'Saving credentials from your recent login'
+                                    : 'Saves what you\'ve typed in the form + this page URL'}
                         </div>
                     )}
 
                     {/* app list */}
                     <div style={{ maxHeight: '260px', overflowY: 'auto' }}>
-                        {apps.length === 0 ? (
-                            <div style={{ padding: '18px', textAlign: 'center', color: '#6b7280' }}>
-                                No applications found
-                            </div>
-                        ) : (
-                            apps.map(app => {
+                        {(() => {
+                            const pickerApps = pickerMode === 'fill'
+                                ? apps.filter(a => hostnameMatches(a) && !!a.credential?.username)
+                                : pickerMode === 'status_page'
+                                ? apps.filter(a => !a.credential?.status_page_link)
+                                : [
+                                    ...apps.filter(hostnameMatches),
+                                    ...apps.filter(a => !a.credential?.portal_link),
+                                  ]
+
+                            if (pickerApps.length === 0) return (
+                                <div style={{ padding: '18px', textAlign: 'center', color: '#6b7280', fontSize: '12px' }}>
+                                    {pickerMode === 'fill'
+                                        ? 'No saved credentials for this site'
+                                        : 'No matching applications for this domain'}
+                                </div>
+                            )
+
+                            return pickerApps.map(app => {
                                 const status = saveState[app.id]
                                 const hasCredentials = !!app.credential?.username
 
@@ -446,11 +592,19 @@ export default function FillOverlay() {
                                                 fontWeight: 600, color: '#111827', fontSize: '13px',
                                                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                                             }}>
-                                                {app.title}
+                                                {app.company}
                                             </div>
+                                            {app.position && (
+                                                <div style={{
+                                                    color: '#6b7280', fontSize: '11px', marginTop: '1px',
+                                                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                                }}>
+                                                    {app.position}
+                                                </div>
+                                            )}
                                             {hasCredentials && (
                                                 <div style={{
-                                                    color: '#6b7280', fontSize: '11px', marginTop: '2px',
+                                                    color: '#9ca3af', fontSize: '10px', marginTop: '1px',
                                                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                                                 }}>
                                                     {app.credential.username}
@@ -460,10 +614,9 @@ export default function FillOverlay() {
 
                                         {/* action button */}
                                         <div style={{ flexShrink: 0 }}>
-                                            {pickerMode === 'save' ? (
-                                                // Save login button
+                                            {(pickerMode === 'save' || pickerMode === 'status_page') ? (
                                                 <button
-                                                    onClick={() => doSaveLogin(app)}
+                                                    onClick={() => pickerMode === 'status_page' ? doSaveStatusPage(app) : doSaveLogin(app)}
                                                     disabled={status === 'saving' || status === 'saved'}
                                                     style={{
                                                         padding: '5px 10px',
@@ -481,29 +634,7 @@ export default function FillOverlay() {
                                                 >
                                                     {status === 'saving' ? '...' : status === 'saved' ? '✓ Saved' : status === 'error' ? '✗ Error' : 'Save here'}
                                                 </button>
-                                            ) : pickerMode === 'status' ? (
-                                                // Save status page button
-                                                <button
-                                                    onClick={() => doSaveStatusPage(app)}
-                                                    disabled={status === 'saving' || status === 'saved'}
-                                                    style={{
-                                                        padding: '5px 10px',
-                                                        borderRadius: '6px',
-                                                        border: '1px solid',
-                                                        borderColor: status === 'saved' ? '#10b981' : status === 'error' ? '#ef4444' : '#0ea5e9',
-                                                        background: status === 'saved' ? '#ecfdf5' : status === 'error' ? '#fef2f2' : status === 'saving' ? '#f0f9ff' : '#0ea5e9',
-                                                        color: status === 'saved' ? '#059669' : status === 'error' ? '#dc2626' : '#fff',
-                                                        fontSize: '11px',
-                                                        fontWeight: 600,
-                                                        cursor: status === 'saving' || status === 'saved' ? 'default' : 'pointer',
-                                                        whiteSpace: 'nowrap',
-                                                        transition: 'all 0.15s',
-                                                    }}
-                                                >
-                                                    {status === 'saving' ? '...' : status === 'saved' ? '✓ Saved' : status === 'error' ? '✗ Error' : 'Save'}
-                                                </button>
                                             ) : (
-                                                // Fill button — only for apps with credentials
                                                 hasCredentials ? (
                                                     <button
                                                         onClick={() => doFill(app)}
@@ -529,27 +660,25 @@ export default function FillOverlay() {
                                     </div>
                                 )
                             })
-                        )}
+                        })()}
                     </div>
 
-                    {/* footer: switch mode (not shown in status mode) */}
-                    {pickerMode !== 'status' && (
-                        <div style={{
-                            padding: '9px 14px',
-                            borderTop: '1px solid #f3f4f6',
-                            textAlign: 'center',
-                        }}>
-                            <button
-                                onClick={() => { setSaveState({}); setPickerMode(m => m === 'save' ? 'fill' : 'save') }}
-                                style={{
-                                    background: 'none', border: 'none', cursor: 'pointer',
-                                    color: '#6366f1', fontSize: '11px', fontWeight: 600,
-                                }}
-                            >
-                                {pickerMode === 'save' ? 'Switch to Fill mode' : 'Switch to Save mode'}
-                            </button>
-                        </div>
-                    )}
+                    {/* footer: switch mode */}
+                    <div style={{
+                        padding: '9px 14px',
+                        borderTop: '1px solid #f3f4f6',
+                        textAlign: 'center',
+                    }}>
+                        <button
+                            onClick={() => { setSaveState({}); setPickerMode(m => m === 'save' ? 'fill' : 'save') }}
+                            style={{
+                                background: 'none', border: 'none', cursor: 'pointer',
+                                color: '#6366f1', fontSize: '11px', fontWeight: 600,
+                            }}
+                        >
+                            {pickerMode === 'save' ? 'Switch to Fill mode' : 'Switch to Save mode'}
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

@@ -6,10 +6,12 @@ import { Select, SelectItem, addToast } from "@heroui/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import apiRouter from "@/api/router";
+import { getPriorityOptions } from "@/utils/priority";
 type EditFormState = {
-    title: string;
+    company: string;
+    position: string;
     status: string;
-    priority: number;
+    priority: string;
     category: string;
     notes: string;
 };
@@ -155,10 +157,10 @@ export default function EditApplicationPage({ params }: PageProps) {
     const [deleting,       setDeleting]       = useState(false);
 
     const [formState, setFormState] = useState<EditFormState>({
-        title: "", notes: "", status: "Applied", priority: 0, category: "",
+        company: "", position: "", notes: "", status: "Applied", priority: "Low", category: "",
     });
 
-    const { title, notes, status, priority, category } = formState;
+    const { company, position, notes, status, priority, category } = formState;
 
     /* ── Fetch ── */
     const { data: appData, isLoading, refetch } = useQuery({
@@ -170,10 +172,11 @@ export default function EditApplicationPage({ params }: PageProps) {
     useEffect(() => {
         if (!application) return;
         setFormState({
-            title:    application.title    || "",
+            company:  application.company  || "",
+            position: application.position || "",
             notes:    "",
             status:   application.status   || "Applied",
-            priority: application.priority ?? 0,
+            priority: application.priority || "Low",
             category: application.category || "",
         });
     }, [application]);
@@ -182,7 +185,7 @@ export default function EditApplicationPage({ params }: PageProps) {
     const updateMutation = useMutation({
         mutationFn: async (payload: EditFormState) =>
             apiRouter.applications.updateApplication(applicationId, {
-                application: { title: payload.title, status: payload.status, priority: payload.priority, category: payload.category },
+                application: { company: payload.company, position: payload.position, status: payload.status, priority: payload.priority, category: payload.category },
             }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["getApplications"] });
@@ -250,10 +253,11 @@ export default function EditApplicationPage({ params }: PageProps) {
     const handleReset = () => {
         if (!application) return;
         setFormState({
-            title:    application.title    || "",
+            company:  application.company  || "",
+            position: application.position || "",
             notes:    "",
             status:   application.status   || "Applied",
-            priority: application.priority ?? 0,
+            priority: application.priority || "Low",
             category: application.category || "",
         });
     };
@@ -287,7 +291,7 @@ export default function EditApplicationPage({ params }: PageProps) {
         <PageShell>
             {showDeleteModal && (
                 <DeleteModal
-                    title={application.title || "this application"}
+                    title={application.company || "this application"}
                     onConfirm={handleDeleteConfirm}
                     onCancel={() => setShowDeleteModal(false)}
                     loading={deleting}
@@ -303,7 +307,7 @@ export default function EditApplicationPage({ params }: PageProps) {
                         Edit Application
                     </h1>
                     <p className="text-table_subheading text-sm mt-1 truncate max-w-xs">
-                        {application.title}
+                        {application.company}
                     </p>
                 </div>
 
@@ -324,12 +328,20 @@ export default function EditApplicationPage({ params }: PageProps) {
                 <form onSubmit={handleSubmit}>
                     <FormSection>
 
-                        <FieldGroup label="Title *">
+                        <FieldGroup label="Company *">
                             <StyledInput
                                 required
-                                value={title}
-                                onChange={(e) => setFormState((p) => ({ ...p, title: e.target.value }))}
-                                placeholder="e.g. Google SWE Intern"
+                                value={company}
+                                onChange={(e) => setFormState((p) => ({ ...p, company: e.target.value }))}
+                                placeholder="e.g. Google"
+                            />
+                        </FieldGroup>
+
+                        <FieldGroup label="Position">
+                            <StyledInput
+                                value={position}
+                                onChange={(e) => setFormState((p) => ({ ...p, position: e.target.value }))}
+                                placeholder="e.g. SWE Intern"
                             />
                         </FieldGroup>
 
@@ -345,6 +357,8 @@ export default function EditApplicationPage({ params }: PageProps) {
                                 >
                                     <SelectItem key="Wishlist">Wishlist</SelectItem>
                                     <SelectItem key="Applied">Applied</SelectItem>
+                                    <SelectItem key="Under Review">Under Review</SelectItem>
+                                    <SelectItem key="Awaiting Decision">Awaiting Decision</SelectItem>
                                     <SelectItem key="Interview">Interview</SelectItem>
                                     <SelectItem key="Offer">Offer</SelectItem>
                                     <SelectItem key="Rejected">Rejected</SelectItem>
@@ -373,11 +387,7 @@ export default function EditApplicationPage({ params }: PageProps) {
                         {/* Priority — segmented control instead of dropdown */}
                         <FieldGroup label="Priority">
                             <div className="flex gap-2">
-                                {[
-                                    { key: 0, label: "Normal",    color: "text-table_subheading" },
-                                    { key: 1, label: "Important", color: "text-warning"          },
-                                    { key: 2, label: "Urgent",    color: "text-danger"           },
-                                ].map(({ key, label, color }) => (
+                                {getPriorityOptions(category).map(({ key, label, color }) => (
                                     <button
                                         key={key}
                                         type="button"

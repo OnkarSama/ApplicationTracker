@@ -1,7 +1,8 @@
 json.applications do
     json.array! @applications do |app|
       json.id app.id
-      json.title app.title
+      json.company app.company
+      json.position app.position
       json.status app.status
       json.category app.category
       json.credential do

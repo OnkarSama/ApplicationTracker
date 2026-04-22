@@ -1,7 +1,8 @@
 class Application < ApplicationRecord
-  validates :title, presence: true, length: { maximum: 255 }
+  validates :company, presence: true, length: { maximum: 255 }
+  validates :position, length: { maximum: 255 }, allow_nil: true
   validates :status, presence: true, length: { maximum: 255 }
-  validates :priority, presence: true
+  validates :priority, presence: true, inclusion: { in: %w[Low Medium High] }
   validates :category, presence: true, length: { maximum: 255 }
   has_many :notes, dependent: :destroy
   has_many :interviews, dependent: :destroy
@@ -13,12 +14,12 @@ class Application < ApplicationRecord
   before_update :log_status_change, if: :status_changed?
 
   def self.ransackable_attributes(auth_object = nil)
-    ["title", "status", "priority", "category", "salary"]
+    ["company", "position", "status", "priority", "category", "salary"]
   end
 
-  def self.ransackable_associations(auth_object = nil)
-    []
-  end
+def self.ransackable_associations(auth_object = nil)
+  []
+end
 
   private
 

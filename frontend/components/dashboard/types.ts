@@ -1,9 +1,11 @@
 export type ApplicationStatus =
+  | "Wishlist"
   | "Applied"
+  | "Under Review"
+  | "Awaiting Decision"
   | "Interview"
   | "Offer"
-  | "Rejected"
-  | "Wishlist";
+  | "Rejected";
 
 export type ApplicationPriority = "High" | "Medium" | "Low";
 

@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { addToast, Button, Card, CardBody, CardHeader } from "@heroui/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useStatusSync } from "@/hooks/useStatusSync";
 
 import { AuthGate } from "@/components/auth/AuthGate";
 import ApplicationTable from "@/components/dashboard/ApplicationTable";
@@ -23,9 +24,11 @@ export default function DashboardPage() {
 
     const { openNewApp, setOpenNewApp } = useKeyboardShortcuts();
     const [statusFilter,   setStatusFilter]   = useState("All");
-    const [priorityFilter, setPriorityFilter] = useState<number | null>(null);
 
     const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+
+    const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
+    const [isSyncing,      setIsSyncing]      = useState(false);
 
     const { data = [] as Application[], isLoading } = useQuery({
         queryKey: ["getApplications", q],
@@ -36,10 +39,14 @@ export default function DashboardPage() {
 
     const filteredData = useMemo(() => {
         let result = data;
-        if (statusFilter !== "All")  result = result.filter(a => a.status === statusFilter);
+        if (statusFilter !== "All")  result = result.filter(a  => a.status === statusFilter);
         if (priorityFilter !== null) result = result.filter(a => a.priority === priorityFilter);
         return result;
     }, [data, statusFilter, priorityFilter]);
+
+    // Subscribe to ActionCable — toast + refetch fire only when scraping is fully done
+    const handleSyncDone = useCallback(() => setIsSyncing(false), []);
+    useStatusSync(handleSyncDone);
 
     const syncMutation = useMutation({
         mutationFn: () => apiRouter.applications.syncApplications(),
@@ -77,13 +84,13 @@ export default function DashboardPage() {
     }), [data]);
 
     // True zero-state: user has no applications at all (not a search/filter miss)
-    const isEmpty        = !isLoading && data.length === 0 && !q && statusFilter === "All" && priorityFilter === null;
+    const isEmpty = !isLoading && data.length === 0 && !q && statusFilter === "All" && priorityFilter === null;
     const hasNoResults   = !isLoading && !isEmpty && filteredData.length === 0;
 
     return (
         <AuthGate>
             <div className="min-h-svh bg-background">
-                <main className="max-w-7xl mx-auto p-6">
+                <main className="w-[93%] mx-auto p-6">
 
                     <ApplicationTableHeader
                         onNewApplication={() => setOpenNewApp(true)}

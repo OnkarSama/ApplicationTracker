@@ -10,43 +10,46 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import apiRouter from "@/api/router";
 import { useKeyboardShortcuts } from "@/components/UI/KeyboardShortcutsProvider";
+import { getPriorityOptions, getPriorityLabel } from "@/utils/priority";
 
-import {Application} from "@/api/application";
+import { Application } from "@/api/application";
 
 interface Props {
     applications?: Application[];
 }
 
-const STATUSES = ["Applied", "Interview", "Offer", "Rejected", "Wishlist"] as const;
+const STATUSES   = ["Wishlist", "Applied", "Under Review", "Awaiting Decision", "Interview", "Offer", "Rejected"] as const;
 const CATEGORIES = ["Internship", "Full-time", "Graduate School", "Fellowship", "Research", "Other"] as const;
 
 const statusColorMap: Record<string, any> = {
-    Applied: "primary",
-    Interview: "warning",
-    Offer: "success",
-    Rejected: "danger",
-    Wishlist: "secondary",
+    Wishlist:            "secondary",
+    Applied:             "primary",
+    "Under Review":      "warning",
+    "Awaiting Decision": "warning",
+    Interview:           "warning",
+    Offer:               "success",
+    Rejected:            "danger",
 };
 
 const categoryColorMap: Record<string, any> = {
-    "Internship": "secondary",
-    "Full-time": "primary",
+    "Internship":      "secondary",
+    "Full-time":       "primary",
     "Graduate School": "success",
-    "Fellowship": "warning",
-    "Research": "danger",
-    "Other": "default",
+    "Fellowship":      "warning",
+    "Research":        "danger",
+    "Other":           "default",
 };
 
-const priorityMap: Record<number, { label: string; color: any }> = {
-    0: { label: "Normal", color: "default" },
-    1: { label: "Important", color: "warning" },
-    2: { label: "Urgent", color: "danger" },
+const priorityColorMap: Record<string, any> = {
+    Low:    "default",
+    Medium: "warning",
+    High:   "danger",
 };
 
 export default function ApplicationTable({ applications = [] }: Props) {
-    const router = useRouter();
+    const router       = useRouter();
     const searchParams = useSearchParams();
-    const queryClient = useQueryClient();
+    const queryClient  = useQueryClient();
 
     const [quickEdit, setQuickEdit] = useState<Application | null>(null);
     const [flashedIds, setFlashedIds] = useState<Set<number>>(new Set());
@@ -68,12 +71,11 @@ export default function ApplicationTable({ applications = [] }: Props) {
         }, 1800);
         flashTimers.current.set(id, timer);
     }, []);
-
     const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
     const rowsPerPage = 10;
 
     const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
-        column: "created_at",
+        column:    "created_at",
         direction: "descending",
     });
 
@@ -89,7 +91,7 @@ export default function ApplicationTable({ applications = [] }: Props) {
     });
 
     const priorityMutation = useMutation({
-        mutationFn: ({ id, priority }: { id: number; priority: number }) =>
+        mutationFn: ({ id, priority }: { id: number; priority: string }) =>
             apiRouter.applications.updateApplication(id, {
                 application: { priority } as any,
             }),
@@ -122,7 +124,6 @@ export default function ApplicationTable({ applications = [] }: Props) {
         (page - 1) * rowsPerPage,
         page * rowsPerPage
     );
-
     const pages = Math.max(1, Math.ceil(sortedApps.length / rowsPerPage));
 
     const goToApp = (id: number) => {
@@ -131,7 +132,7 @@ export default function ApplicationTable({ applications = [] }: Props) {
 
     return (
         <>
-            {/* QUICK EDIT */}
+            {/* QUICK EDIT PANEL */}
             {quickEdit && (
                 <>
                     <div
@@ -139,102 +140,109 @@ export default function ApplicationTable({ applications = [] }: Props) {
                         onClick={() => setQuickEdit(null)}
                     />
                     <div className="fixed right-0 top-0 h-full w-full max-w-sm bg-card border-l border-border z-50 p-6 flex flex-col gap-4">
-                        <h2 className="text-lg font-bold text-foreground">
-                            {quickEdit.title}
-                        </h2>
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <h2 className="text-lg font-bold text-foreground">{quickEdit.company}</h2>
+                                {quickEdit.position && (
+                                    <p className="text-sm text-muted mt-0.5">{quickEdit.position}</p>
+                                )}
+                            </div>
+                            <a
+                                href={`/application/${quickEdit.id}?${searchParams.toString()}`}
+                                onClick={e => e.stopPropagation()}
+                                className="text-xs text-primary hover:underline mt-1 shrink-0"
+                            >
+                                Full Edit →
+                            </a>
+                        </div>
 
                         {/* STATUS */}
-                        <div className="flex flex-wrap gap-2">
-                            {STATUSES.map((s) => (
-                                <button
-                                    key={s}
-                                    onClick={() =>
-                                        setQuickEdit((p) => p && { ...p, status: s })
-                                    }
-                                    className={`px-3 py-1 rounded-lg text-xs border transition
-                                    ${
-                                        quickEdit.status === s
-                                            ? "bg-primary/20 text-primary border-primary"
-                                            : "border-border text-muted"
-                                    }`}
-                                >
-                                    {s}
-                                </button>
-                            ))}
+                        <div className="flex flex-col gap-1.5">
+                            <span className="text-[10px] font-bold text-muted/60 tracking-widest uppercase">Status</span>
+                            <div className="flex flex-wrap gap-2">
+                                {STATUSES.map((s) => (
+                                    <button
+                                        key={s}
+                                        onClick={() => setQuickEdit((p) => p && { ...p, status: s })}
+                                        className={`px-3 py-1 rounded-lg text-xs border transition ${
+                                            quickEdit.status === s
+                                                ? "bg-primary/20 text-primary border-primary"
+                                                : "border-border text-muted"
+                                        }`}
+                                    >
+                                        {s}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
                         {/* PRIORITY */}
-                        <div className="flex gap-2">
-                            {[0, 1, 2].map((p) => (
-                                <button
-                                    key={p}
-                                    onClick={() =>
-                                        setQuickEdit((prev) =>
-                                            prev ? { ...prev, priority: p } : prev
-                                        )
-                                    }
-                                    className={`flex-1 py-2 rounded-lg text-xs border
-                                    ${
-                                        quickEdit.priority === p
-                                            ? "bg-primary/20 border-primary text-primary"
-                                            : "border-border text-muted"
-                                    }`}
-                                >
-                                    {priorityMap[p].label}
-                                </button>
-                            ))}
+                        <div className="flex flex-col gap-1.5">
+                            <span className="text-[10px] font-bold text-muted/60 tracking-widest uppercase">Priority</span>
+                            <div className="flex gap-2">
+                                {getPriorityOptions(quickEdit.category).map(({ key, label }) => (
+                                    <button
+                                        key={key}
+                                        onClick={() => setQuickEdit((prev) => prev ? { ...prev, priority: key } : prev)}
+                                        className={`flex-1 py-2 rounded-lg text-xs border transition ${
+                                            quickEdit.priority === key
+                                                ? "bg-primary/20 border-primary text-primary"
+                                                : "border-border text-muted"
+                                        }`}
+                                    >
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
                         {/* SALARY */}
-                        <input
-                            type="number"
-                            min="0"
-                            value={quickEdit.salary ?? ""}
-                            onChange={e =>
-                                setQuickEdit(prev =>
-                                    prev ? { ...prev, salary: e.target.value ? Number(e.target.value) : null } : prev
-                                )
-                            }
-                            placeholder="Salary (e.g. 85000)"
-                            className="w-full rounded-lg border border-border bg-foreground/[0.04] px-3 py-2 text-sm text-foreground placeholder:text-muted/40 focus:outline-none focus:border-primary/50 transition-colors"
-                        />
+                        <div className="flex flex-col gap-1.5">
+                            <span className="text-[10px] font-bold text-muted/60 tracking-widest uppercase">Salary</span>
+                            <input
+                                type="number"
+                                min="0"
+                                value={quickEdit.salary ?? ""}
+                                onChange={e =>
+                                    setQuickEdit(prev =>
+                                        prev ? { ...prev, salary: e.target.value ? Number(e.target.value) : null } : prev
+                                    )
+                                }
+                                placeholder="e.g. 85000"
+                                className="w-full rounded-lg border border-border bg-foreground/[0.04] px-3 py-2 text-sm text-foreground placeholder:text-muted/40 focus:outline-none focus:border-primary/50 transition-colors"
+                            />
+                        </div>
 
                         {/* CATEGORY */}
-                        <div className="flex flex-wrap gap-2">
-                            {CATEGORIES.map((c) => (
-                                <button
-                                    key={c}
-                                    onClick={() =>
-                                        setQuickEdit((prev) =>
-                                            prev ? { ...prev, category: c } : prev
-                                        )
-                                    }
-                                    className={`px-3 py-1 rounded-lg text-xs border transition
-                                    ${
-                                        quickEdit.category === c
-                                            ? "bg-primary/20 text-primary border-primary"
-                                            : "border-border text-muted"
-                                    }`}
-                                >
-                                    {c}
-                                </button>
-                            ))}
+                        <div className="flex flex-col gap-1.5">
+                            <span className="text-[10px] font-bold text-muted/60 tracking-widest uppercase">Category</span>
+                            <div className="flex flex-wrap gap-2">
+                                {CATEGORIES.map((c) => (
+                                    <button
+                                        key={c}
+                                        onClick={() => setQuickEdit((prev) => prev ? { ...prev, category: c } : prev)}
+                                        className={`px-3 py-1 rounded-lg text-xs border transition ${
+                                            quickEdit.category === c
+                                                ? "bg-primary/20 text-primary border-primary"
+                                                : "border-border text-muted"
+                                        }`}
+                                    >
+                                        {c}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
                         <button
                             onClick={() => {
                                 apiRouter.applications
-                                    .updateApplication(quickEdit.id, {
-                                        application: quickEdit,
-                                    })
+                                    .updateApplication(quickEdit.id, { application: quickEdit })
                                     .then(() => {
-                                        queryClient.invalidateQueries({
-                                            queryKey: ["getApplications"],
-                                        });
+                                        queryClient.invalidateQueries({ queryKey: ["getApplications"] });
                                         setQuickEdit(null);
                                     });
                             }}
-                            className="bg-primary text-white py-2 rounded-lg"
+                            className="mt-auto bg-primary text-white py-2 rounded-lg text-sm font-semibold"
                         >
                             Save
                         </button>
@@ -248,47 +256,38 @@ export default function ApplicationTable({ applications = [] }: Props) {
                 className="bg-table_bg border border-table_border rounded-xl"
             >
                 <TableHeader>
-                    <TableColumn>Title</TableColumn>
+                    <TableColumn>Company</TableColumn>
+                    <TableColumn>Position</TableColumn>
                     <TableColumn>Status</TableColumn>
                     <TableColumn>Priority</TableColumn>
                     <TableColumn>Category</TableColumn>
                     <TableColumn>Salary</TableColumn>
                     <TableColumn>Notes</TableColumn>
                     <TableColumn>Last Updated</TableColumn>
-                    <TableColumn>{""}</TableColumn>
-                    <TableColumn>{""}</TableColumn>
                 </TableHeader>
 
                 <TableBody items={displayedApps}>
                     {(app) => (
                         <TableRow
                             key={app.id}
-                            onClick={() => goToApp(app.id)}
+                            onClick={() => setQuickEdit(app)}
                             onMouseEnter={() => setSelectedAppId(app.id)}
                             onMouseLeave={() => setSelectedAppId(null)}
                             className={`cursor-pointer hover:bg-table_hover ${flashedIds.has(app.id) ? "status-flash" : ""}`}
                         >
-                            <TableCell className="text-table_text">
-                                {app.title}
-                            </TableCell>
+                            <TableCell className="text-table_text">{app.company}</TableCell>
+                            <TableCell className="text-table_text">{app.position ?? "—"}</TableCell>
 
+                            {/* STATUS — inline dropdown, stops row click */}
                             <TableCell onClick={(e) => e.stopPropagation()}>
                                 <Dropdown>
                                     <DropdownTrigger>
                                         <button>
-                                            <Chip color={statusColorMap[app.status]}>
-                                                {app.status}
-                                            </Chip>
+                                            <Chip color={statusColorMap[app.status]}>{app.status}</Chip>
                                         </button>
                                     </DropdownTrigger>
-
                                     <DropdownMenu
-                                        onAction={(key) =>
-                                            statusMutation.mutate({
-                                                id: app.id,
-                                                status: key as string,
-                                            })
-                                        }
+                                        onAction={(key) => statusMutation.mutate({ id: app.id, status: key as string })}
                                     >
                                         {STATUSES.map((s) => (
                                             <DropdownItem key={s}>{s}</DropdownItem>
@@ -297,24 +296,20 @@ export default function ApplicationTable({ applications = [] }: Props) {
                                 </Dropdown>
                             </TableCell>
 
+                            {/* PRIORITY — inline dropdown, stops row click */}
                             <TableCell onClick={(e) => e.stopPropagation()}>
                                 <Dropdown>
                                     <DropdownTrigger>
                                         <button>
-                                            <Chip color={priorityMap[app.priority].color}>
-                                                {priorityMap[app.priority].label}
+                                            <Chip color={priorityColorMap[app.priority] ?? "default"}>
+                                                {getPriorityLabel(app.priority, app.category)}
                                             </Chip>
                                         </button>
                                     </DropdownTrigger>
                                     <DropdownMenu
-                                        onAction={(key) =>
-                                            priorityMutation.mutate({
-                                                id: app.id,
-                                                priority: Number(key),
-                                            })
-                                        }
+                                        onAction={(key) => priorityMutation.mutate({ id: app.id, priority: key as string })}
                                     >
-                                        {Object.entries(priorityMap).map(([key, { label }]) => (
+                                        {getPriorityOptions(app.category).map(({ key, label }) => (
                                             <DropdownItem key={key}>{label}</DropdownItem>
                                         ))}
                                     </DropdownMenu>
@@ -329,32 +324,19 @@ export default function ApplicationTable({ applications = [] }: Props) {
                                 {app.salary != null ? `$${Number(app.salary).toLocaleString()}` : "—"}
                             </TableCell>
 
-                            <TableCell className="text-table_text max-w-50">
-                                <span className="line-clamp-2 text-sm" title={app.notes?.at(-1)?.content ?? undefined}>
-                                    {app.notes?.at(-1)?.content ?? "—"}
-                                </span>
+                            {/* NOTES — navigates to notes view, stops row click */}
+                            <TableCell
+                                className="text-table_text cursor-pointer hover:text-primary max-w-[160px] truncate"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    router.push(`/application/${app.id}/notes`);
+                                }}
+                            >
+                                {app.notes?.at(-1)?.content ?? "—"}
                             </TableCell>
 
                             <TableCell className="text-table_text">
                                 {new Date(app.updated_at).toLocaleDateString()}
-                            </TableCell>
-
-                            <TableCell onClick={(e) => e.stopPropagation()}>
-                                <Button
-                                    onPress={() => setQuickEdit(app)}
-                                    className="text-xs text-muted hover:text-primary"
-                                >
-                                    Edit
-                                </Button>
-                            </TableCell>
-
-                            <TableCell className="text-table_text">
-                                <Button
-                                    onPress={() => router.push(`/application/${app.id}/notes`)}
-                                    className="text-xs text-muted hover:text-primary"
-                                    >
-                                    Notes
-                                </Button>
                             </TableCell>
                         </TableRow>
                     )}

@@ -1,8 +1,8 @@
 json.application do
   json.extract! @application,
                 :id,
-                :title,
-                :notes,
+                :company,
+                :position,
                 :status,
                 :priority,
                 :category,
