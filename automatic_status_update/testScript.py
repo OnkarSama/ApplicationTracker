@@ -99,10 +99,21 @@ async def scrape_status(app, browser):
         return app['id'], app['status']
 
     # Open a new tab in the shared browser for this app
-    page = await browser.new_page(
-        user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+    context = await browser.new_context(
+        user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        viewport={'width': 1920, 'height': 1080},
+        locale='en-US',
+        timezone_id='America/New_York',
+        java_script_enabled=True,
+        ignore_https_errors=True,
     )
-    await page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+    await context.add_init_script("""
+        Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+        Object.defineProperty(navigator, 'plugins', {get: () => [1, 2, 3]});
+        Object.defineProperty(navigator, 'languages', {get: () => ['en-US', 'en']});
+        window.chrome = { runtime: {} };
+    """)
+    page = await context.new_page()
 
     # Navigate to the portal login page — only need the form to render, not full JS
     await page.goto(login_route)
@@ -155,11 +166,16 @@ async def scrape_status(app, browser):
                 continue
 
     # Always wait for networkidle to ensure JS-rendered content is fully loaded
-    await page.goto(status_route, wait_until='networkidle')
+    try:
+        await page.goto(status_route, wait_until='domcontentloaded', timeout=20000)
+    except Exception:
+        pass
+    await page.wait_for_timeout(3000)
+    print(f"[{app['company']}] status page URL: {page.url}")
 
     # Parse the fully rendered HTML with BeautifulSoup
     soup = BeautifulSoup(await page.content(), 'html.parser')
-    await page.close()
+    await context.close()
 
     # Remove script and style tags so they don't pollute the text search
     for tag in soup(["script", "style"]):
@@ -169,7 +185,7 @@ async def scrape_status(app, browser):
     # so a "congratulations" page doesn't also match a generic "applied" mention
     STATUS_KEYWORDS = [
         ("Offer",              ["congratulations", "we are pleased", "pleased to inform", "offer of admission", "you have been accepted", "been admitted", "proud to offer"]),
-        ("Rejected",           ["unfortunately", "regret to inform", "not selected", "unable to offer", "not moving forward", "we will not be", "we are unable to", "cannot offer", "no longer under consideration", "no longer being considered"]),
+        ("Rejected",           ["unfortunately", "regret to inform", "not selected", "unable to offer", "not moving forward", "we will not be", "we are unable to", "cannot offer", "no longer under consideration", "no longer being considered", "process completed"]),
         ("Awaiting Decision",  ["awaiting decision", "decision will be", "decision has been made", "decision is now available", "your decision is available", "decision released", "decision pending", "decision has been released"]),
         ("Interview",          ["interview has been scheduled", "would like to schedule an interview", "invite you to interview", "phone screen scheduled", "we'd like to speak with you"]),
         ("Under Review",       ["under review", "being reviewed", "ready for review", "currently reviewing", "in review", "being considered", "under consideration", "application is complete", "application is now complete", "in process"]),
@@ -259,9 +275,17 @@ async def main(apps):
         # Launch one browser shared across all parallel scrapes to avoid
         # the overhead of spinning up a new browser per application
         browser = await p.chromium.launch(
-    headless=False,
-    args=['--disable-blink-features=AutomationControlled']
-)
+            headless=True,
+            args=[
+                '--disable-blink-features=AutomationControlled',
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-infobars',
+                '--window-size=1920,1080',
+                '--start-maximized',
+            ]
+        )
         # Scrape all apps concurrently — return_exceptions means one failure
         # doesn't cancel the rest
         results = await asyncio.gather(*[scrape_status(app, browser) for app in apps], return_exceptions=True)
