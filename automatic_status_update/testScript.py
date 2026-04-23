@@ -294,6 +294,7 @@ async def main(apps):
 
     # Build a lookup map so we can match scraped results back to their app objects
     apps_by_id = {app['id']: app for app in apps}
+    updated_apps = []
     for result in results:
         if isinstance(result, Exception):
             print(f'Scrape error: {result}')
@@ -301,9 +302,11 @@ async def main(apps):
         app_id, new_status = result
         if is_status_change(new_status, apps_by_id[app_id]['status']):
             update_status(new_status, app_id, headers)
+            updated_apps.append({"id": app_id, "company" : apps_by_id[app_id]["company"], "position": apps_by_id[app_id]["position"], "old status": apps_by_id[app_id]['status'], "new status": new_status})
             is_updated = True
 
-    return is_updated
+    print(updated_apps)
+    return is_updated , updated_apps
 
 
 @fastapi.post("/automaticStatusUpdate")
@@ -326,7 +329,7 @@ async def update_statuses(request: Request, authorization: str = Header(None)):
     API_KEY = os.getenv("API_KEY")
     if authorization.split(" ")[1] == API_KEY:
         body = await request.json()
-        is_updated = await main(body)
-        return {"Updated": is_updated}
+        is_updated, updated_apps = await main(body)
+        return {"Updated": is_updated, "applications": updated_apps}
     else:
         return {"Auth": "Not Authenticated"}
