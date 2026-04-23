@@ -25,7 +25,7 @@ class AutomaticStatusUpdateService
 
             if notify
                 parsedData = JSON.parse(response.body)
-                return parsedData["Updated"]
+                return parsedData["Updated"], parsedData["applications"] || []
             end
         end
     end

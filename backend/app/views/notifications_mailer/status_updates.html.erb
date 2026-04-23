@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h2>Application Status Updates</h2>
+    <p><%= @updated_apps.size %> application<%= @updated_apps.size == 1 ? '' : 's' %> changed since your last sync.</p>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="background:#f9fafb;text-align:left;">
+          <th style="padding:10px 14px;font-size:12px;color:#6b7280;text-transform:uppercase;">Company</th>
+          <th style="padding:10px 14px;font-size:12px;color:#6b7280;text-transform:uppercase;">Position</th>
+          <th style="padding:10px 14px;font-size:12px;color:#6b7280;text-transform:uppercase;">Previous</th>
+          <th style="padding:10px 14px;font-size:12px;color:#6b7280;text-transform:uppercase;">New Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @updated_apps.each do |app| %>
+          <tr>
+            <td style="padding:10px 14px;border-bottom:1px solid #e5e7eb;"><%= app['company'] %></td>
+            <td style="padding:10px 14px;border-bottom:1px solid #e5e7eb;"><%= app['position'] %></td>
+            <td style="padding:10px 14px;border-bottom:1px solid #e5e7eb;color:#6b7280;"><%= app['old status'] %></td>
+            <td style="padding:10px 14px;border-bottom:1px solid #e5e7eb;font-weight:600;color:#2563eb;"><%= app['new status'] %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </body>
+</html>
