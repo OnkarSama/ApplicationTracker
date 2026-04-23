@@ -7,7 +7,7 @@ import {siteConfig} from "@/config/site";
 
 import HideableNavbar from "@/components/ui/HideableNavbar";
 import {ThemeSwitcher} from "@/components/ui/ThemeSwitcher";
-import {KeyboardShortcutsProvider} from "@/components/UI/KeyboardShortcutsProvider";
+import {KeyboardShortcutsProvider} from "@/components/ui/KeyboardShortcutsProvider";
 import IdleHandler from "@/components/auth/IdleHandler";
 
 export const metadata: Metadata = {

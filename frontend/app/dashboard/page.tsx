@@ -15,7 +15,7 @@ import ExportCSVButton from "@/components/dashboard/ExportCSVButton";
 
 import apiRouter from "@/api/router";
 import type { Application } from "@/api/application";
-import { useKeyboardShortcuts } from "@/components/UI/KeyboardShortcutsProvider";
+import { useKeyboardShortcuts } from "@/components/ui/KeyboardShortcutsProvider";
 
 export default function DashboardPage() {
     const queryClient = useQueryClient();

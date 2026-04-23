@@ -23,7 +23,7 @@ import apiRouter from "@/api/router";
 import {useRouter, useSearchParams} from "next/navigation";
 import { siteConfig } from "@/config/site";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useKeyboardShortcuts } from "@/components/UI/KeyboardShortcutsProvider";
+import { useKeyboardShortcuts } from "@/components/ui/KeyboardShortcutsProvider";
 
 
 interface SearchIconProps extends React.SVGProps<SVGSVGElement> {
@@ -122,7 +122,7 @@ export const Navbar = () => {
         <HeroUINavbar
             isMenuOpen={isMenuOpen}
             onMenuOpenChange={setIsMenuOpen}
-            maxWidth="xl"
+            maxWidth="full"
             position="static"
             shouldHideOnScroll
         >

@@ -9,7 +9,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import apiRouter from "@/api/router";
-import { useKeyboardShortcuts } from "@/components/UI/KeyboardShortcutsProvider";
+import { useKeyboardShortcuts } from "@/components/ui/KeyboardShortcutsProvider";
 import { getPriorityOptions, getPriorityLabel } from "@/utils/priority";
 
 import { Application } from "@/api/application";
