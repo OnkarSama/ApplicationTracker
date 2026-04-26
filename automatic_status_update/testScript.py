@@ -269,6 +269,8 @@ async def main(apps):
         'Content-Type': 'application/json'
     }
 
+
+
     is_updated = False
 
     async with async_playwright() as p:
