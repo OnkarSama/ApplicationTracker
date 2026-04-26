@@ -213,6 +213,7 @@ function getUsernameInput(passwordInput: HTMLInputElement): HTMLInputElement | n
         document.querySelector<HTMLInputElement>('input[name*="user"]') ??
         document.querySelector<HTMLInputElement>('input[id*="email"]') ??
         document.querySelector<HTMLInputElement>('input[id*="user"]') ??
+        document.querySelector<HTMLInputElement>('input[data-automation-id="email"]') ??
         (passwordInput.previousElementSibling instanceof HTMLInputElement
             ? passwordInput.previousElementSibling
             : null)
@@ -294,6 +295,8 @@ export default function FillOverlay() {
     const [capturedLogin, setCapturedLogin] = useState<{ username: string; password: string } | null>(null)
     const [appSaveForm, setAppSaveForm]   = useState({ company: '', position: '', status: 'Applied', saveStatus: 'idle' as 'idle' | 'saving' | 'saved' | 'error' })
     const currentUrl = useRef(window.location.href)
+    const fillableApps = apps.filter(a => hostnameMatches(a) && !!a.credential?.username)
+    console.log(fillableApps)
 
     // ── fill: write saved credentials into the form ──────────────────────────
     const doFill = useCallback((app: Application) => {
@@ -495,6 +498,7 @@ export default function FillOverlay() {
         }
     }, [])
 
+
     if (!formDetected && !appFormDetected) return null
 
     const openPicker = (mode: PickerMode) => {
@@ -554,6 +558,7 @@ export default function FillOverlay() {
                                 color: '#fff',
                                 boxShadow: '0 4px 18px rgba(99,102,241,0.5)',
                             }}
+
                             onMouseEnter={e => {
                                 e.currentTarget.style.transform = 'translateY(-2px)'
                                 e.currentTarget.style.boxShadow = '0 6px 24px rgba(99,102,241,0.6)'
@@ -565,10 +570,12 @@ export default function FillOverlay() {
                         >
                             💾 Save login
                         </button>
-                    )}
+
+                    ) }
+
 
                     {/* Fill credentials — only shown when not yet autofilled */}
-                    {formDetected && !autoFilled && (
+                    {formDetected && !autoFilled && fillableApps.length !== 0 &&(
                         <button
                             onClick={() => openPicker('fill')}
                             style={{
