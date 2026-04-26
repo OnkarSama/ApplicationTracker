@@ -304,10 +304,7 @@ export default function FillOverlay() {
     const [appSaveForm, setAppSaveForm]   = useState({ company: '', position: '', status: 'Applied', saveStatus: 'idle' as 'idle' | 'saving' | 'saved' | 'error' })
     const currentUrl = useRef(window.location.href)
     const fillableApps = apps.filter(a => hostnameMatches(a) && !!a.credential?.username)
-    const savableApps = apps.filter(a => guessCompany().toLowerCase() === a.company.toLowerCase())
     const savableStatusApps = apps.filter(a => hostnameMatches(a) && !a.credential?.status_page_link )
-
-    console.log('mounted at:', currentUrl.current)
 
     // ── fill: write saved credentials into the form ──────────────────────────
     const doFill = useCallback((app: Application) => {
@@ -418,7 +415,6 @@ export default function FillOverlay() {
                 if (domain === window.location.hostname) {
                     if (!getPasswordInput()){
                         setCapturedLogin({ username, password })
-                        console.log('setting formDetected true inside form detection')
                         setPickerMode('status_page')
                         setShowPicker(true)
                         setPendingStatusPageSave(true)
@@ -466,6 +462,11 @@ export default function FillOverlay() {
             const fetchedApps: Application[] = response?.apps ?? []
             setApps(fetchedApps)
 
+            const savableStatusApps = fetchedApps.filter(a => hostnameMatches(a) && !a.credential?.status_page_link)
+            console.log('savableStatusApps:', savableStatusApps, fetchedApps.map(a => ({ company: a.company, status_page_link: a.credential?.status_page_link, hostnameMatches: hostnameMatches(a) })))
+            if (savableStatusApps.length === 0) setPendingStatusPageSave(false)
+
+
             function tryAutoFill(): 'filled' | 'no-match' | 'no-form' {
                 const pwInput = getPasswordInput()
                 if (!pwInput) return 'no-form'
@@ -492,12 +493,10 @@ export default function FillOverlay() {
                     fillInputs(getUsernameInput(pwInput), pwInput, matched)
                     didFill = true
                     setAutoFilled(true)
-                    console.log('setting formDetected true in init')
                     setFormDetected(true)
                     return 'filled'
                 }
 
-                console.log('setting formDetected true else of init not matched')
                 setFormDetected(true)
                 return 'no-match'
             }
@@ -528,8 +527,6 @@ export default function FillOverlay() {
         setPickerMode(mode)
         setShowPicker(true)
     }
-    console.log('formDetected:', formDetected, 'passwordInput:', getPasswordInput())
-
 
     return (
         <div style={{ position: 'relative', fontFamily: 'system-ui, -apple-system, sans-serif' }}>

@@ -4,6 +4,7 @@ export type ApplicationCredential = {
     portal_link: string
     username: string
     password_digest: string
+    status_page_link: string
 }
 
 const endpoints = {
