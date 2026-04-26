@@ -7,6 +7,7 @@ json.applications do
       json.category app.category
       json.credential do
         json.portal_link app.application_credential&.portal_link
+        json.status_page_link app.application_credential&.status_page_link
         json.username app.application_credential&.username
         json.password_digest app.application_credential&.password_digest
       end
