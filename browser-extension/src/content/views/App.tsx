@@ -296,7 +296,7 @@ export default function FillOverlay() {
     const [appSaveForm, setAppSaveForm]   = useState({ company: '', position: '', status: 'Applied', saveStatus: 'idle' as 'idle' | 'saving' | 'saved' | 'error' })
     const currentUrl = useRef(window.location.href)
     const fillableApps = apps.filter(a => hostnameMatches(a) && !!a.credential?.username)
-    console.log(fillableApps)
+    const savableApps = apps.filter(a => guessCompany().toLowerCase() === a.company.toLowerCase())
 
     // ── fill: write saved credentials into the form ──────────────────────────
     const doFill = useCallback((app: Application) => {
@@ -506,6 +506,7 @@ export default function FillOverlay() {
         setPickerMode(mode)
         setShowPicker(true)
     }
+    console.log(formDetected,savableApps, savableApps.length)
 
     return (
         <div style={{ position: 'relative', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
@@ -549,7 +550,7 @@ export default function FillOverlay() {
                     )}
 
                     {/* Save login — only shown when login form is on page */}
-                    {formDetected && (
+                    {formDetected  && savableApps.length > 0 &&(
                         <button
                             onClick={() => openPicker('save')}
                             style={{
@@ -704,16 +705,14 @@ export default function FillOverlay() {
                                 ? apps.filter(a => hostnameMatches(a) && !!a.credential?.username)
                                 : pickerMode === 'status_page'
                                 ? apps.filter(a => !a.credential?.status_page_link)
-                                : [
-                                    ...apps.filter(hostnameMatches),
-                                    ...apps.filter(a => !a.credential?.portal_link),
-                                  ]
+                                : apps.filter(a => guessCompany().toLowerCase() === a.company.toLowerCase())
+
 
                             if (pickerApps.length === 0) return (
                                 <div style={{ padding: '18px', textAlign: 'center', color: '#6b7280', fontSize: '12px' }}>
                                     {pickerMode === 'fill'
                                         ? 'No saved credentials for this site'
-                                        : 'No matching applications for this domain'}
+                                        : 'No matching empty credentials for this site'}
                                 </div>
                             )
 
