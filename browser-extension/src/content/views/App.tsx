@@ -203,7 +203,14 @@ function detectAppForm(): boolean {
 }
 
 function getPasswordInput(): HTMLInputElement | null {
-    return document.querySelector('input[type="password"]')
+
+    const el = document.querySelector<HTMLInputElement>('input[type="password"]')
+
+    if (!el || el.type === 'hidden' || el.disabled || el.readOnly) {
+        return null
+    }
+
+    return el
 }
 
 function getUsernameInput(passwordInput: HTMLInputElement): HTMLInputElement | null {
@@ -289,6 +296,7 @@ export default function FillOverlay() {
     const [appFormDetected, setAppFormDetected] = useState(false)
     const [autoFilled, setAutoFilled]     = useState(false)
     const [showPicker, setShowPicker]     = useState(false)
+    const [pendingStatusPageSave, setPendingStatusPageSave] = useState<boolean>(false)
     const [pickerMode, setPickerMode]     = useState<PickerMode>('fill')
     const [saveState, setSaveState]       = useState<Record<number, SaveStatus>>({})
     const [profileFillStatus, setProfileFillStatus] = useState<ProfileFillStatus>('idle')
@@ -297,6 +305,9 @@ export default function FillOverlay() {
     const currentUrl = useRef(window.location.href)
     const fillableApps = apps.filter(a => hostnameMatches(a) && !!a.credential?.username)
     const savableApps = apps.filter(a => guessCompany().toLowerCase() === a.company.toLowerCase())
+    const savableStatusApps = apps.filter(a => hostnameMatches(a) && !a.credential?.status_page_link )
+
+    console.log('mounted at:', currentUrl.current)
 
     // ── fill: write saved credentials into the form ──────────────────────────
     const doFill = useCallback((app: Application) => {
@@ -353,6 +364,10 @@ export default function FillOverlay() {
             credential: { status_page_link: currentUrl.current },
         }, (res) => {
             setSaveState(s => ({ ...s, [app.id]: res?.success ? 'saved' : 'error' }))
+            if(res?.success) {
+                sessionStorage.removeItem(PENDING_LOGIN_KEY)
+                setPendingStatusPageSave(false)
+            }
         })
     }, [])
 
@@ -367,7 +382,7 @@ export default function FillOverlay() {
                 status:   appSaveForm.status,
             },
         }, (res) => {
-            setAppSaveForm(f => ({ ...f, saveStatus: res?.success ? 'saved' : 'error' }))
+            setAppSaveForm(f => ({ ...f, saveStatus: res?.success ? 'saved'  : 'error' }))
         })
     }, [appSaveForm.company, appSaveForm.position, appSaveForm.status])
 
@@ -389,6 +404,7 @@ export default function FillOverlay() {
         })
     }, [capturedLogin])
 
+
     // ── form detection, autofill, submit capture ──────────────────────────────
     useEffect(() => {
         let observer: MutationObserver | null = null
@@ -400,12 +416,16 @@ export default function FillOverlay() {
             if (stored) {
                 const { domain, username, password } = JSON.parse(stored)
                 if (domain === window.location.hostname) {
-                    setCapturedLogin({ username, password })
-                    setFormDetected(true)
-                    setPickerMode('status_page')
-                    setShowPicker(true)
+                    if (!getPasswordInput()){
+                        setCapturedLogin({ username, password })
+                        console.log('setting formDetected true inside form detection')
+                        setPickerMode('status_page')
+                        setShowPicker(true)
+                        setPendingStatusPageSave(true)
+
+                    }
                 }
-                sessionStorage.removeItem(PENDING_LOGIN_KEY)
+
             }
         } catch {}
 
@@ -472,10 +492,12 @@ export default function FillOverlay() {
                     fillInputs(getUsernameInput(pwInput), pwInput, matched)
                     didFill = true
                     setAutoFilled(true)
+                    console.log('setting formDetected true in init')
                     setFormDetected(true)
                     return 'filled'
                 }
 
+                console.log('setting formDetected true else of init not matched')
                 setFormDetected(true)
                 return 'no-match'
             }
@@ -499,14 +521,15 @@ export default function FillOverlay() {
     }, [])
 
 
-    if (!formDetected && !appFormDetected) return null
+    if (!formDetected && !appFormDetected && !pendingStatusPageSave) return null
 
     const openPicker = (mode: PickerMode) => {
         setSaveState({})
         setPickerMode(mode)
         setShowPicker(true)
     }
-    console.log(formDetected,savableApps, savableApps.length)
+    console.log('formDetected:', formDetected, 'passwordInput:', getPasswordInput())
+
 
     return (
         <div style={{ position: 'relative', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
@@ -570,6 +593,30 @@ export default function FillOverlay() {
                             }}
                         >
                             💾 Save login
+                        </button>
+
+                    ) }
+
+                    {!formDetected  && savableStatusApps.length > 0 &&(
+                        <button
+                            onClick={() => openPicker('status_page')}
+                            style={{
+                                ...pillBase,
+                                background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)',
+                                color: '#fff',
+                                boxShadow: '0 4px 18px rgba(99,102,241,0.5)',
+                            }}
+
+                            onMouseEnter={e => {
+                                e.currentTarget.style.transform = 'translateY(-2px)'
+                                e.currentTarget.style.boxShadow = '0 6px 24px rgba(99,102,241,0.6)'
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.transform = 'translateY(0)'
+                                e.currentTarget.style.boxShadow = '0 4px 18px rgba(99,102,241,0.5)'
+                            }}
+                        >
+                            💾 Save Staus Page
                         </button>
 
                     ) }
@@ -702,10 +749,10 @@ export default function FillOverlay() {
                     <div style={{ maxHeight: '260px', overflowY: 'auto', display: pickerMode === 'save_application' ? 'none' : undefined }}>
                         {(() => {
                             const pickerApps = pickerMode === 'fill'
-                                ? apps.filter(a => hostnameMatches(a) && !!a.credential?.username)
+                                ? fillableApps
                                 : pickerMode === 'status_page'
-                                ? apps.filter(a => !a.credential?.status_page_link)
-                                : apps.filter(a => guessCompany().toLowerCase() === a.company.toLowerCase())
+                                ? savableStatusApps
+                                : savableApps
 
 
                             if (pickerApps.length === 0) return (
@@ -808,25 +855,6 @@ export default function FillOverlay() {
                             })
                         })()}
                     </div>
-
-                    {/* footer: switch mode */}
-                    {pickerMode !== 'save_application' && (
-                        <div style={{
-                            padding: '9px 14px',
-                            borderTop: '1px solid #f3f4f6',
-                            textAlign: 'center',
-                        }}>
-                            <button
-                                onClick={() => { setSaveState({}); setPickerMode(m => m === 'save' ? 'fill' : 'save') }}
-                                style={{
-                                    background: 'none', border: 'none', cursor: 'pointer',
-                                    color: '#6366f1', fontSize: '11px', fontWeight: 600,
-                                }}
-                            >
-                                {pickerMode === 'save' ? 'Switch to Fill mode' : 'Switch to Save mode'}
-                            </button>
-                        </div>
-                    )}
                 </div>
             )}
         </div>
