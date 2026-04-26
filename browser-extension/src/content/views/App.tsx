@@ -14,6 +14,8 @@ const FIELD_SELECTORS = {
         'input[name="firstName"]',
         'input[id="firstName"]',
         'input[name*="[first_name]"]',
+        'input[aria-label="First Name" i]',
+        'input[aria-label*="first name" i]',
         'input[name*="first" i]:not([name*="password" i]):not([name*="last" i])',
         'input[id*="first" i]:not([id*="last" i])',
         'input[placeholder*="first name" i]',
@@ -25,6 +27,9 @@ const FIELD_SELECTORS = {
         'input[name="lastName"]',
         'input[id="lastName"]',
         'input[name*="[last_name]"]',
+        'input[aria-label="Last Name" i]',
+        'input[aria-label*="last name" i]',
+        'input[aria-label*="surname" i]',
         'input[name*="last" i]:not([name*="password" i]):not([name*="class" i])',
         'input[id*="last" i]:not([id*="class" i])',
         'input[placeholder*="last name" i]',
@@ -34,6 +39,8 @@ const FIELD_SELECTORS = {
         'input[type="email"]',
         'input[id="email"]',
         'input[name="email"]',
+        'input[aria-label="Email" i]',
+        'input[aria-label*="email address" i]',
         'input[name*="[email]"]',
         'input[name*="email" i]',
         'input[id*="email" i]',
@@ -43,22 +50,33 @@ const FIELD_SELECTORS = {
         'input[type="tel"]',
         'input[id="phone"]',
         'input[name="phone"]',
+        'input[aria-label="Phone" i]',
+        'input[aria-label*="phone number" i]',
+        'input[aria-label*="mobile" i]',
         'input[name*="[phone]"]',
         'input[name*="phone" i]',
         'input[id*="phone" i]',
         'input[placeholder*="phone" i]',
     ],
     linkedin:   [
+        'input[aria-label="LinkedIn Profile" i]',
+        'input[aria-label*="linkedin" i]',
         'input[name*="linkedin" i]',
         'input[id*="linkedin" i]',
         'input[placeholder*="linkedin" i]',
     ],
     github:     [
+        'input[aria-label="GitHub" i]',
+        'input[aria-label*="github" i]',
         'input[name*="github" i]',
         'input[id*="github" i]',
         'input[placeholder*="github" i]',
     ],
     portfolio:  [
+        'input[aria-label="Website" i]',
+        'input[aria-label*="portfolio" i]',
+        'input[aria-label*="personal website" i]',
+        'input[aria-label*="personal site" i]',
         'input[name*="portfolio" i]',
         'input[name*="personal_url" i]',
         'input[name*="website" i]:not([name*="company" i])',
@@ -66,8 +84,10 @@ const FIELD_SELECTORS = {
         'input[placeholder*="portfolio" i]',
         'input[placeholder*="personal website" i]',
     ],
-    address:    [
+    addressLine1:    [
         'input[autocomplete="street-address"]',
+        'input[aria-label*="street address" i]',
+        'input[aria-label*="address line 1" i]',
         'input[name="address"]',
         'input[id="address"]',
         'input[name*="address_line_1" i]',
@@ -75,9 +95,18 @@ const FIELD_SELECTORS = {
         'input[id*="address1" i]',
         'input[name*="street" i]',
         'input[placeholder*="street address" i]',
+        'input[id="address--addressLine1"]'
+    ],
+    addressLine2:    [
+        'input[aria-label*="address line 2" i]',
+        'input[name*="address_line_2" i]',
+        'input[name*="address2" i]',
+        'input[id*="address2" i]',
+        'input[id="address--addressLine2"]'
     ],
     city:       [
         'input[autocomplete="address-level2"]',
+        'input[aria-label="City" i]',
         'input[name="city"]',
         'input[id="city"]',
         'input[name*="[city]"]',
@@ -86,6 +115,8 @@ const FIELD_SELECTORS = {
     ],
     state:      [
         'input[autocomplete="address-level1"]',
+        'input[aria-label="State" i]',
+        'input[aria-label*="province" i]',
         'input[name="state"]',
         'input[id="state"]',
         'input[name*="[state]"]',
@@ -94,6 +125,8 @@ const FIELD_SELECTORS = {
     ],
     zip:        [
         'input[autocomplete="postal-code"]',
+        'input[aria-label*="zip" i]',
+        'input[aria-label*="postal" i]',
         'input[name="zip"]',
         'input[id="zip"]',
         'input[name*="zip_code" i]',
@@ -103,6 +136,7 @@ const FIELD_SELECTORS = {
     ],
     country:    [
         'input[autocomplete="country-name"]',
+        'input[aria-label="Country" i]',
         'input[name="country"]',
         'input[id="country"]',
         'input[name*="country" i]',
@@ -113,11 +147,17 @@ const FIELD_SELECTORS = {
         'input[autocomplete="name"]',
         'input[id="_systemfield_name"]',
         'input[name="_systemfield_name"]',
+        'input[aria-label="Full Name" i]',
+        'input[aria-label="Name" i]',
         'input[name="name"]:not([name*="company" i])',
         'input[id="name"]:not([id*="company" i])',
         'input[placeholder*="full name" i]',
         'input[aria-label*="full name" i]',
     ],
+    preferredName: [
+        'input[aria-label="Preferred Name"]',
+
+    ]
 }
 
 // Native setter bypasses React's synthetic event system so onChange fires correctly
@@ -222,9 +262,25 @@ const pillBase: React.CSSProperties = {
 
 // ── component ─────────────────────────────────────────────────────────────────
 
-type PickerMode = 'fill' | 'save' | 'status_page'
+type PickerMode = 'fill' | 'save' | 'status_page' | 'save_application'
 type SaveStatus = 'saving' | 'saved' | 'error'
 type ProfileFillStatus = 'idle' | 'filling' | 'done' | 'error'
+
+function guessCompany(): string {
+    const hostname = window.location.hostname
+    const stripped = hostname.replace(/^(www|careers|jobs|apply|talent|recruiting|work|hire)\./i, '')
+    const name = stripped.split('.')[0]
+    return name.charAt(0).toUpperCase() + name.slice(1)
+}
+
+function guessPosition(): string {
+    const h1 = document.querySelector('h1')?.textContent?.trim()
+    if (h1 && h1.length < 100) return h1
+    const title = document.title
+    const atMatch = title.match(/^(.+?)\s+(?:at|@|-|–|\|)\s+/i)
+    if (atMatch) return atMatch[1].trim()
+    return ''
+}
 
 export default function FillOverlay() {
     const [apps, setApps]                 = useState<Application[]>([])
@@ -235,8 +291,8 @@ export default function FillOverlay() {
     const [pickerMode, setPickerMode]     = useState<PickerMode>('fill')
     const [saveState, setSaveState]       = useState<Record<number, SaveStatus>>({})
     const [profileFillStatus, setProfileFillStatus] = useState<ProfileFillStatus>('idle')
-    // Credentials captured at form-submit time, carried to post-login page
     const [capturedLogin, setCapturedLogin] = useState<{ username: string; password: string } | null>(null)
+    const [appSaveForm, setAppSaveForm]   = useState({ company: '', position: '', status: 'Applied', saveStatus: 'idle' as 'idle' | 'saving' | 'saved' | 'error' })
     const currentUrl = useRef(window.location.href)
 
     // ── fill: write saved credentials into the form ──────────────────────────
@@ -273,11 +329,13 @@ export default function FillOverlay() {
             fillField(FIELD_SELECTORS.linkedin,   profile.linkedin_url)
             fillField(FIELD_SELECTORS.github,     profile.github_url)
             fillField(FIELD_SELECTORS.portfolio,  profile.portfolio_url)
-            fillField(FIELD_SELECTORS.address,    profile.address_line_1)
+            fillField(FIELD_SELECTORS.addressLine1,    profile.address_line_1)
+            fillField(FIELD_SELECTORS.addressLine2,    profile.address_line_2)
             fillField(FIELD_SELECTORS.city,       profile.city)
             fillField(FIELD_SELECTORS.state,      profile.state)
             fillField(FIELD_SELECTORS.zip,        profile.zip_code)
             fillField(FIELD_SELECTORS.country,    profile.country)
+            fillField(FIELD_SELECTORS.preferredName,     profile.preferred_name)
 
             setProfileFillStatus('done')
         })
@@ -294,6 +352,21 @@ export default function FillOverlay() {
             setSaveState(s => ({ ...s, [app.id]: res?.success ? 'saved' : 'error' }))
         })
     }, [])
+
+    // ── save application: create a new application in the tracker ────────────
+    const doSaveApplication = useCallback(() => {
+        setAppSaveForm(f => ({ ...f, saveStatus: 'saving' }))
+        chrome.runtime.sendMessage({
+            type: 'CREATE_APPLICATION',
+            payload: {
+                company:  appSaveForm.company,
+                position: appSaveForm.position,
+                status:   appSaveForm.status,
+            },
+        }, (res) => {
+            setAppSaveForm(f => ({ ...f, saveStatus: res?.success ? 'saved' : 'error' }))
+        })
+    }, [appSaveForm.company, appSaveForm.position, appSaveForm.status])
 
     // ── save login: use form values if available, fall back to captured ───────
     const doSaveLogin = useCallback((app: Application) => {
@@ -337,13 +410,32 @@ export default function FillOverlay() {
         const appFormObserver = new MutationObserver(() => {
             if (detectAppForm()) {
                 setAppFormDetected(true)
+                attachAppFormSubmitListeners()
                 appFormObserver.disconnect()
             }
         })
         if (detectAppForm()) {
             setAppFormDetected(true)
+            attachAppFormSubmitListeners()
         } else {
             appFormObserver.observe(document.body, { childList: true, subtree: true })
+        }
+
+        function attachAppFormSubmitListeners() {
+            document.querySelectorAll('form').forEach(form => {
+                if (form.dataset.crxAppListening) return
+                form.dataset.crxAppListening = '1'
+                form.addEventListener('submit', () => {
+                    setAppSaveForm({
+                        company: guessCompany(),
+                        position: guessPosition(),
+                        status: 'Applied',
+                        saveStatus: 'idle',
+                    })
+                    setPickerMode('save_application')
+                    setShowPicker(true)
+                })
+            })
         }
 
         async function init() {
@@ -520,7 +612,7 @@ export default function FillOverlay() {
                         background: pickerMode === 'save' ? '#f5f3ff' : '#fff',
                     }}>
                         <span style={{ fontWeight: 700, color: '#111827' }}>
-                            {pickerMode === 'save' ? '💾 Save login to…' : pickerMode === 'status_page' ? '📍 Save status page for…' : '🔑 Fill credentials from…'}
+                            {pickerMode === 'save' ? '💾 Save login to…' : pickerMode === 'status_page' ? '📍 Save status page for…' : pickerMode === 'save_application' ? '📋 Save application' : '🔑 Fill credentials from…'}
                         </span>
                         <button
                             onClick={() => setShowPicker(false)}
@@ -550,8 +642,56 @@ export default function FillOverlay() {
                         </div>
                     )}
 
+                    {/* save application form */}
+                    {pickerMode === 'save_application' && (
+                        <div style={{ padding: '14px' }}>
+                            {(['company', 'position'] as const).map(field => (
+                                <div key={field} style={{ marginBottom: '10px' }}>
+                                    <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', marginBottom: '4px' }}>
+                                        {field === 'company' ? 'Company *' : 'Position'}
+                                    </label>
+                                    <input
+                                        value={appSaveForm[field]}
+                                        onChange={e => setAppSaveForm(f => ({ ...f, [field]: e.target.value }))}
+                                        placeholder={field === 'company' ? 'e.g. Google' : 'e.g. Software Engineer'}
+                                        style={{
+                                            width: '100%', boxSizing: 'border-box',
+                                            padding: '7px 10px', borderRadius: '8px',
+                                            border: '1px solid #e5e7eb', fontSize: '13px',
+                                            outline: 'none', color: '#111827',
+                                        }}
+                                    />
+                                </div>
+                            ))}
+                            <div style={{ marginBottom: '12px' }}>
+                                <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', marginBottom: '4px' }}>Status</label>
+                                <select
+                                    value={appSaveForm.status}
+                                    onChange={e => setAppSaveForm(f => ({ ...f, status: e.target.value }))}
+                                    style={{ width: '100%', padding: '7px 10px', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '13px', color: '#111827', background: '#fff' }}
+                                >
+                                    {['Applied', 'Under Review', 'Interview', 'Awaiting Decision', 'Offer', 'Rejected'].map(s => (
+                                        <option key={s} value={s}>{s}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <button
+                                onClick={doSaveApplication}
+                                disabled={!appSaveForm.company.trim() || appSaveForm.saveStatus === 'saving' || appSaveForm.saveStatus === 'saved'}
+                                style={{
+                                    width: '100%', padding: '9px', borderRadius: '8px', border: 'none',
+                                    background: appSaveForm.saveStatus === 'saved' ? '#10b981' : appSaveForm.saveStatus === 'error' ? '#ef4444' : 'linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)',
+                                    color: '#fff', fontSize: '13px', fontWeight: 600, cursor: appSaveForm.saveStatus === 'saving' || appSaveForm.saveStatus === 'saved' ? 'default' : 'pointer',
+                                    opacity: !appSaveForm.company.trim() || appSaveForm.saveStatus === 'saving' ? 0.6 : 1,
+                                }}
+                            >
+                                {appSaveForm.saveStatus === 'saving' ? 'Saving…' : appSaveForm.saveStatus === 'saved' ? '✓ Saved!' : appSaveForm.saveStatus === 'error' ? '✗ Error — retry' : 'Save to tracker'}
+                            </button>
+                        </div>
+                    )}
+
                     {/* app list */}
-                    <div style={{ maxHeight: '260px', overflowY: 'auto' }}>
+                    <div style={{ maxHeight: '260px', overflowY: 'auto', display: pickerMode === 'save_application' ? 'none' : undefined }}>
                         {(() => {
                             const pickerApps = pickerMode === 'fill'
                                 ? apps.filter(a => hostnameMatches(a) && !!a.credential?.username)
@@ -664,21 +804,23 @@ export default function FillOverlay() {
                     </div>
 
                     {/* footer: switch mode */}
-                    <div style={{
-                        padding: '9px 14px',
-                        borderTop: '1px solid #f3f4f6',
-                        textAlign: 'center',
-                    }}>
-                        <button
-                            onClick={() => { setSaveState({}); setPickerMode(m => m === 'save' ? 'fill' : 'save') }}
-                            style={{
-                                background: 'none', border: 'none', cursor: 'pointer',
-                                color: '#6366f1', fontSize: '11px', fontWeight: 600,
-                            }}
-                        >
-                            {pickerMode === 'save' ? 'Switch to Fill mode' : 'Switch to Save mode'}
-                        </button>
-                    </div>
+                    {pickerMode !== 'save_application' && (
+                        <div style={{
+                            padding: '9px 14px',
+                            borderTop: '1px solid #f3f4f6',
+                            textAlign: 'center',
+                        }}>
+                            <button
+                                onClick={() => { setSaveState({}); setPickerMode(m => m === 'save' ? 'fill' : 'save') }}
+                                style={{
+                                    background: 'none', border: 'none', cursor: 'pointer',
+                                    color: '#6366f1', fontSize: '11px', fontWeight: 600,
+                                }}
+                            >
+                                {pickerMode === 'save' ? 'Switch to Fill mode' : 'Switch to Save mode'}
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

@@ -28,11 +28,13 @@ export default function AppListView({
     toggleTheme,
     onAppClick,
     onLogout,
+    onAddApplication,
 }: {
     theme: Theme
     toggleTheme: () => void
     onAppClick: (app: Application) => void
     onLogout: () => void
+    onAddApplication: () => void
 }) {
     const [selectedCompany, setSelectedCompany] = useState<string | null>(null)
     const [search, setSearch] = useState('')
@@ -146,6 +148,9 @@ export default function AppListView({
                         </div>
                     </div>
                     <div className="flex items-center gap-1">
+                        <button onClick={onAddApplication} className="w-8 h-8 rounded-full flex items-center justify-center text-heroui-muted hover:text-heroui-text hover:bg-heroui-card transition-all">
+                            <Icon icon="solar:add-circle-linear" width={17} />
+                        </button>
                         <button onClick={toggleTheme} className="w-8 h-8 rounded-full flex items-center justify-center text-heroui-muted hover:text-heroui-text hover:bg-heroui-card transition-all">
                             <Icon icon={theme === 'dark' ? 'solar:sun-bold' : 'solar:moon-bold'} width={15} />
                         </button>

@@ -67,5 +67,24 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         })
     }
 
+    if (message.type === 'CREATE_APPLICATION') {
+        chrome.storage.local.get('jwtToken', async ({ jwtToken }) => {
+            if (!jwtToken) { sendResponse({ success: false }); return }
+            try {
+                const response = await fetch(`${baseUrl}/applications`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${jwtToken}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ application: message.payload }),
+                })
+                sendResponse({ success: response.ok })
+            } catch {
+                sendResponse({ success: false })
+            }
+        })
+    }
+
     return true
 });

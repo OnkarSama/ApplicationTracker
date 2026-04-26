@@ -1,13 +1,14 @@
 import LoginView from '@/components/LoginView'
 import AppListView from '@/components/AppListView'
 import AppDetailView from "@/components/AppDetailView";
+import AddApplicationView from "@/components/AddApplicationView";
 import './index.css'
 import { useState, useEffect } from "react";
 import type { Application } from "@/api/application.ts";
 
 export type Theme = 'dark' | 'light'
 
-type View = 'login' | 'appList' | 'appDetail'
+type View = 'login' | 'appList' | 'appDetail' | 'addApplication'
 
 export default function App() {
     const [currentView, setCurrentView] = useState<View | null>(null)
@@ -66,10 +67,12 @@ export default function App() {
             case 'login':
                 return <LoginView theme={theme} toggleTheme={toggleTheme} onLoginSuccess={() => navigate('appList')} />
             case 'appList':
-                return <AppListView theme={theme} toggleTheme={toggleTheme} onAppClick={(app) => navigate('appDetail', app)} onLogout={handleLogout} />
+                return <AppListView theme={theme} toggleTheme={toggleTheme} onAppClick={(app) => navigate('appDetail', app)} onLogout={handleLogout} onAddApplication={() => navigate('addApplication')} />
             case 'appDetail':
                 if (!selectedApp) { navigate('appList'); return null }
                 return <AppDetailView theme={theme} toggleTheme={toggleTheme} app={selectedApp} onBack={() => navigate('appList')} />
+            case 'addApplication':
+                return <AddApplicationView theme={theme} toggleTheme={toggleTheme} onBack={() => navigate('appList')} onSuccess={() => navigate('appList')} />
             default:
                 return null
         }
