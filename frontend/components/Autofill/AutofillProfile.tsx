@@ -91,50 +91,43 @@ function blankEdu(): Education {
 }
 
 /* ─────────────────────────────────────────────
-   HEROUI INPUT classNames
-   — All reference tailwind theme tokens so both
-     light and dark mode work correctly
+   HEROUI INPUT classNames — tailwind tokens only
 ───────────────────────────────────────────── */
-type Accent = "cyan" | "violet" | "amber" | "emerald" | "red";
+type Accent = "primary" | "secondary" | "success" | "warning" | "danger";
 
-const iCN = (accent: Accent = "cyan") => {
-    const ring: Record<Accent, string> = {
-        cyan:    "data-[focus=true]:border-cyan-500",
-        violet:  "data-[focus=true]:border-violet-500",
-        amber:   "data-[focus=true]:border-amber-400",
-        emerald: "data-[focus=true]:border-emerald-500",
-        red:     "data-[focus=true]:border-red-500",
-    };
-    const hover: Record<Accent, string> = {
-        cyan:    "hover:border-cyan-500/50",
-        violet:  "hover:border-violet-500/50",
-        amber:   "hover:border-amber-400/50",
-        emerald: "hover:border-emerald-500/50",
-        red:     "hover:border-red-500/50",
-    };
-    return {
-        /* bg-background gives white in light, dark in dark */
-        inputWrapper: `border-border bg-background ${hover[accent]} ${ring[accent]}`,
-        input:        "text-foreground placeholder:text-muted/60 text-sm",
-        label:        "text-subheading text-xs font-medium",
-        errorMessage: "text-danger text-xs",
-        description:  "text-muted text-xs mt-0.5",
-    };
-};
+/*
+  Maps semantic accent names to HeroUI/tailwind config tokens:
+    primary   = #6366F1  (indigo)
+    secondary = #9F7AEA  (violet)
+    success   = #10B981  (emerald)
+    warning   = #FBBF24  (amber)
+    danger    = #EF4444  (red)
+*/
+const iCN = (accent: Accent = "primary") => ({
+    inputWrapper: [
+        "border-border bg-background",
+        `hover:border-${accent}/50`,
+        `data-[focus=true]:border-${accent}`,
+    ].join(" "),
+    input:        "text-foreground placeholder:text-muted/60 text-sm",
+    label:        "text-subheading text-xs font-medium",
+    errorMessage: "text-danger text-xs",
+    description:  "text-muted text-xs mt-0.5",
+});
 
-const taCN = (accent: "cyan" | "violet" = "cyan") => ({
-    inputWrapper: `border-border bg-background ${
-        accent === "cyan"
-            ? "hover:border-cyan-500/50 data-[focus=true]:border-cyan-500"
-            : "hover:border-violet-500/50 data-[focus=true]:border-violet-500"
-    }`,
+const taCN = (accent: Accent = "primary") => ({
+    inputWrapper: [
+        "border-border bg-background",
+        `hover:border-${accent}/50`,
+        `data-[focus=true]:border-${accent}`,
+    ].join(" "),
     input:        "text-foreground placeholder:text-muted/60 text-sm",
     label:        "text-subheading text-xs font-medium",
     errorMessage: "text-danger text-xs",
 });
 
 /* ─────────────────────────────────────────────
-   FEEDBACK BANNER
+   FEEDBACK BANNER — tailwind tokens
 ───────────────────────────────────────────── */
 function Feedback({ state }: { state: FeedbackState }) {
     if (!state) return null;
@@ -147,7 +140,8 @@ function Feedback({ state }: { state: FeedbackState }) {
         }`}>
             {ok
                 ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>}
+                : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            }
             {state.msg}
         </div>
     );
@@ -155,46 +149,44 @@ function Feedback({ state }: { state: FeedbackState }) {
 
 /* ─────────────────────────────────────────────
    SECTION CARD
-   — eyebrow pills now use solid theme colors
-     so they're bold and visible in both modes
+   Pills use tailwind config tokens only.
+   No h2 title — pill IS the heading.
 ───────────────────────────────────────────── */
-type AccentBorder = "cyan" | "violet" | "emerald";
+type CardAccent = "primary" | "secondary" | "success";
 
-const cardBorder: Record<AccentBorder, string> = {
-    cyan:    "border-cyan-500/25",
-    violet:  "border-violet-500/25",
-    emerald: "border-emerald-500/25",
+/* Border, pill bg/text/border — all config tokens */
+const cardStyles: Record<CardAccent, { border: string; pill: string; dot: string }> = {
+    primary:   {
+        border: "border-primary/25",
+        pill:   "text-primary border-primary/50 bg-primary/[0.1] font-extrabold",
+        dot:    "bg-primary",
+    },
+    secondary: {
+        border: "border-secondary/25",
+        pill:   "text-secondary border-secondary/50 bg-secondary/[0.1] font-extrabold",
+        dot:    "bg-secondary",
+    },
+    success:   {
+        border: "border-success/25",
+        pill:   "text-success border-success/50 bg-success/[0.1] font-extrabold",
+        dot:    "bg-success",
+    },
 };
 
-/* Eyebrow pill — solid color, clearly readable in light and dark */
-const eyebrowCls: Record<AccentBorder, string> = {
-    cyan:    "text-cyan-600 dark:text-cyan-400 border-cyan-500/35 bg-cyan-500/[0.08] font-bold",
-    violet:  "text-violet-600 dark:text-violet-400 border-violet-500/35 bg-violet-500/[0.08] font-bold",
-    emerald: "text-emerald-600 dark:text-emerald-400 border-emerald-500/35 bg-emerald-500/[0.08] font-bold",
-};
-const dotCls: Record<AccentBorder, string> = {
-    cyan:    "bg-cyan-500 shadow-[0_0_6px_theme(colors.cyan.500)]",
-    violet:  "bg-violet-500 shadow-[0_0_6px_theme(colors.violet.500)]",
-    emerald: "bg-emerald-500 shadow-[0_0_6px_theme(colors.emerald.500)]",
-};
-
-function Card({ accent = "cyan", eyebrow, title, children, action }: {
-    accent?: AccentBorder;
+function Card({ accent = "primary", eyebrow, children, action }: {
+    accent?: CardAccent;
     eyebrow: string;
-    title: string;
     children: React.ReactNode;
     action?: React.ReactNode;
 }) {
+    const s = cardStyles[accent];
     return (
-        <div className={`flex flex-col gap-4 bg-card border ${cardBorder[accent]} rounded-2xl p-7 shadow-sm`}>
+        <div className={`flex flex-col gap-4 bg-card border ${s.border} rounded-2xl p-7 shadow-sm`}>
             <div className="flex items-start justify-between gap-4">
-                <div>
-                    <div className={`inline-flex items-center gap-1.5 font-mono text-[0.6rem] tracking-[0.18em] uppercase mb-2 border px-2.5 py-1 rounded-full ${eyebrowCls[accent]}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotCls[accent]}`} />
-                        {eyebrow}
-                    </div>
-                    {/* Title — bigger, always foreground color */}
-                    <h2 className="font-[family-name:var(--font-syne)] font-extrabold text-[1.25rem] tracking-tight text-foreground m-0">{title}</h2>
+                {/* Pill is the only heading — bigger, bolder, clearly readable */}
+                <div className={`inline-flex items-center gap-2 font-mono text-[0.75rem] tracking-[0.2em] uppercase border px-4 py-1.5 rounded-full ${s.pill}`}>
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${s.dot}`} />
+                    {eyebrow}
                 </div>
                 {action}
             </div>
@@ -205,23 +197,23 @@ function Card({ accent = "cyan", eyebrow, title, children, action }: {
 }
 
 /* ─────────────────────────────────────────────
-   ICON BUTTON
+   ICON BUTTON — tailwind tokens
 ───────────────────────────────────────────── */
 function IconBtn({ onClick, title, children, disabled, variant = "default" }: {
     onClick: () => void; title: string; children: React.ReactNode;
-    disabled?: boolean; variant?: "default" | "danger" | "emerald";
+    disabled?: boolean; variant?: "default" | "danger" | "success";
 }) {
     const colors: Record<string, string> = {
-        default: "text-muted hover:text-primary hover:border-primary/30 hover:bg-primary/[0.07]",
-        danger:  "text-muted hover:text-danger hover:border-danger/30 hover:bg-danger/[0.07]",
-        emerald: "text-muted hover:text-emerald-500 hover:border-emerald-500/30 hover:bg-emerald-500/[0.07]",
+        default: "hover:text-primary hover:border-primary/30 hover:bg-primary/[0.07]",
+        danger:  "hover:text-danger hover:border-danger/30 hover:bg-danger/[0.07]",
+        success: "hover:text-success hover:border-success/30 hover:bg-success/[0.07]",
     };
     return (
         <button
             type="button"
             title={title}
             onClick={disabled ? undefined : onClick}
-            className={`flex items-center justify-center p-1.5 bg-background border border-border rounded-md transition-all duration-[180ms] ${
+            className={`flex items-center justify-center p-1.5 bg-background border border-border rounded-md text-muted transition-all duration-[180ms] ${
                 disabled ? "opacity-30 cursor-not-allowed" : `cursor-pointer ${colors[variant]}`
             }`}
         >
@@ -231,12 +223,14 @@ function IconBtn({ onClick, title, children, disabled, variant = "default" }: {
 }
 
 /* ─────────────────────────────────────────────
-   ADD BUTTON (dashed)
+   ADD BUTTON — tailwind tokens
 ───────────────────────────────────────────── */
-function AddBtn({ label, onClick, accent }: { label: string; onClick: () => void; accent: "violet" | "emerald" }) {
+function AddBtn({ label, onClick, accent }: {
+    label: string; onClick: () => void; accent: "secondary" | "success";
+}) {
     const cls: Record<string, string> = {
-        violet:  "text-violet-600 dark:text-violet-400 border-violet-500/40 hover:bg-violet-500/[0.06] hover:border-violet-500/70",
-        emerald: "text-emerald-600 dark:text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/[0.06] hover:border-emerald-500/70",
+        secondary: "text-secondary border-secondary/40 hover:bg-secondary/[0.06] hover:border-secondary/70",
+        success:   "text-success border-success/40 hover:bg-success/[0.06] hover:border-success/70",
     };
     return (
         <button
@@ -244,14 +238,16 @@ function AddBtn({ label, onClick, accent }: { label: string; onClick: () => void
             onClick={onClick}
             className={`flex items-center gap-1.5 font-mono text-[0.6rem] tracking-[0.14em] uppercase border border-dashed rounded-lg px-4 py-2 w-full cursor-pointer transition-all duration-200 font-semibold ${cls[accent]}`}
         >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
             {label}
         </button>
     );
 }
 
 /* ─────────────────────────────────────────────
-   WORK EXPERIENCE ROW
+   WORK EXPERIENCE ROW — tailwind tokens
 ───────────────────────────────────────────── */
 function WorkRow({ exp, onEdit, onDelete }: { exp: WorkExperience; onEdit: () => void; onDelete: () => void }) {
     const fmt = (d: string | null) => d ? d.slice(0, 7).replace("-", "/") : "Present";
@@ -259,10 +255,8 @@ function WorkRow({ exp, onEdit, onDelete }: { exp: WorkExperience; onEdit: () =>
         <div className="flex items-start justify-between gap-4 p-4 bg-background border border-border rounded-xl">
             <div className="flex flex-col gap-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                    {/* Job title — text-foreground, readable in both modes */}
                     <span className="font-[family-name:var(--font-syne)] font-bold text-base text-foreground">{exp.job_title}</span>
-                    {/* Employer pill — solid color, clearly visible */}
-                    <span className="font-mono text-[0.62rem] tracking-[0.08em] text-cyan-600 dark:text-cyan-400 bg-cyan-500/[0.1] border border-cyan-500/30 rounded-full px-2.5 py-0.5 font-semibold">{exp.employer}</span>
+                    <span className="font-mono text-[0.62rem] tracking-[0.08em] text-primary bg-primary/[0.1] border border-primary/30 rounded-full px-2.5 py-0.5 font-semibold">{exp.employer}</span>
                 </div>
                 <span className="font-mono text-xs text-muted tracking-[0.06em]">
                     {fmt(exp.start_date)} — {fmt(exp.end_date)}
@@ -284,7 +278,7 @@ function WorkRow({ exp, onEdit, onDelete }: { exp: WorkExperience; onEdit: () =>
 }
 
 /* ─────────────────────────────────────────────
-   EDUCATION ROW
+   EDUCATION ROW — tailwind tokens
 ───────────────────────────────────────────── */
 function EduRow({ edu, onEdit, onDelete, isOnly }: { edu: Education; onEdit: () => void; onDelete: () => void; isOnly: boolean }) {
     return (
@@ -293,14 +287,14 @@ function EduRow({ edu, onEdit, onDelete, isOnly }: { edu: Education; onEdit: () 
                 <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-[family-name:var(--font-syne)] font-bold text-base text-foreground">{edu.institution}</span>
                     {edu.gpa && (
-                        <span className="font-mono text-[0.62rem] tracking-[0.08em] text-emerald-600 dark:text-emerald-400 bg-emerald-500/[0.1] border border-emerald-500/30 rounded-full px-2.5 py-0.5 font-semibold">GPA {edu.gpa}</span>
+                        <span className="font-mono text-[0.62rem] tracking-[0.08em] text-success bg-success/[0.1] border border-success/30 rounded-full px-2.5 py-0.5 font-semibold">GPA {edu.gpa}</span>
                     )}
                 </div>
                 <span className="text-sm text-subheading">{edu.degree} in {edu.area_of_study}</span>
                 <span className="font-mono text-xs text-muted tracking-[0.06em]">{edu.start_year} — {edu.end_year}</span>
             </div>
             <div className="flex gap-1.5 shrink-0">
-                <IconBtn onClick={onEdit} title="Edit" variant="emerald">
+                <IconBtn onClick={onEdit} title="Edit" variant="success">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 </IconBtn>
                 <IconBtn onClick={onDelete} title="Delete" variant="danger" disabled={isOnly}>
@@ -336,12 +330,12 @@ function WorkModal({ isOpen, onClose, initial, onSave }: {
                 </ModalHeader>
                 <ModalBody className="flex flex-col gap-3.5 pt-5 pb-5">
                     <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
-                        <Input label="Employer" placeholder="Google" value={w.employer} onValueChange={set("employer")} variant="bordered" classNames={iCN("violet")} />
-                        <Input label="Job Title" placeholder="Software Engineer" value={w.job_title} onValueChange={set("job_title")} variant="bordered" classNames={iCN("violet")} />
+                        <Input label="Employer" placeholder="Google" value={w.employer} onValueChange={set("employer")} variant="bordered" classNames={iCN("secondary")} />
+                        <Input label="Job Title" placeholder="Software Engineer" value={w.job_title} onValueChange={set("job_title")} variant="bordered" classNames={iCN("secondary")} />
                     </div>
                     <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
-                        <Input label="Start Date" type="date" value={w.start_date} onValueChange={set("start_date")} variant="bordered" classNames={iCN("violet")} />
-                        <Input label="End Date" type="date" value={w.end_date ?? ""} onValueChange={set("end_date")} variant="bordered" isDisabled={!!w.current} classNames={iCN("violet")} />
+                        <Input label="Start Date" type="date" value={w.start_date} onValueChange={set("start_date")} variant="bordered" classNames={iCN("secondary")} />
+                        <Input label="End Date" type="date" value={w.end_date ?? ""} onValueChange={set("end_date")} variant="bordered" isDisabled={!!w.current} classNames={iCN("secondary")} />
                     </div>
                     <Checkbox
                         isSelected={!!w.current}
@@ -353,7 +347,7 @@ function WorkModal({ isOpen, onClose, initial, onSave }: {
                     >
                         Currently working here
                     </Checkbox>
-                    <Textarea label="Description" placeholder="What did you build, improve, or accomplish?" value={w.description} onValueChange={set("description")} variant="bordered" minRows={3} classNames={taCN("violet")} />
+                    <Textarea label="Description" placeholder="What did you build, improve, or accomplish?" value={w.description} onValueChange={set("description")} variant="bordered" minRows={3} classNames={taCN("secondary")} />
                 </ModalBody>
                 <ModalFooter>
                     <Button variant="bordered" onPress={onClose} className="border-border text-muted hover:text-foreground hover:border-border/80">Cancel</Button>
@@ -390,16 +384,16 @@ function EduModal({ isOpen, onClose, initial, onSave }: {
                     {initial?.id ? "Edit Education" : "Add Education"}
                 </ModalHeader>
                 <ModalBody className="flex flex-col gap-3.5 pt-5 pb-5">
-                    <Input label="Institution" placeholder="Adelphi University" value={ed.institution} onValueChange={set("institution")} variant="bordered" classNames={iCN("emerald")} />
+                    <Input label="Institution" placeholder="Adelphi University" value={ed.institution} onValueChange={set("institution")} variant="bordered" classNames={iCN("success")} />
                     <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
-                        <Input label="Degree" placeholder="Bachelor's" value={ed.degree} onValueChange={set("degree")} variant="bordered" classNames={iCN("emerald")} />
-                        <Input label="Area of Study" placeholder="Computer Science" value={ed.area_of_study} onValueChange={set("area_of_study")} variant="bordered" classNames={iCN("emerald")} />
+                        <Input label="Degree" placeholder="Bachelor's" value={ed.degree} onValueChange={set("degree")} variant="bordered" classNames={iCN("success")} />
+                        <Input label="Area of Study" placeholder="Computer Science" value={ed.area_of_study} onValueChange={set("area_of_study")} variant="bordered" classNames={iCN("success")} />
                     </div>
                     <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
-                        <Input label="Start Year" type="number" placeholder="2022" value={String(ed.start_year)} onValueChange={v => set("start_year")(v)} variant="bordered" classNames={iCN("emerald")} />
-                        <Input label="End Year" type="number" placeholder="2026" value={String(ed.end_year)} onValueChange={v => set("end_year")(v)} variant="bordered" classNames={iCN("emerald")} />
+                        <Input label="Start Year" type="number" placeholder="2022" value={String(ed.start_year)} onValueChange={v => set("start_year")(v)} variant="bordered" classNames={iCN("success")} />
+                        <Input label="End Year" type="number" placeholder="2026" value={String(ed.end_year)} onValueChange={v => set("end_year")(v)} variant="bordered" classNames={iCN("success")} />
                     </div>
-                    <Input label="GPA (optional)" placeholder="3.8" value={ed.gpa} onValueChange={set("gpa")} variant="bordered" classNames={iCN("emerald")} />
+                    <Input label="GPA (optional)" placeholder="3.8" value={ed.gpa} onValueChange={set("gpa")} variant="bordered" classNames={iCN("success")} />
                 </ModalBody>
                 <ModalFooter>
                     <Button variant="bordered" onPress={onClose} className="border-border text-muted hover:text-foreground hover:border-border/80">Cancel</Button>
@@ -616,7 +610,7 @@ export default function ProfileEditPage() {
                     <Link href="/" className="font-mono text-[0.78rem] tracking-[0.22em] uppercase text-foreground no-underline transition-colors hover:text-primary">
                         ApplyOS
                     </Link>
-                    <Link href="/preferences" className="font-sans font-medium text-[0.84rem] px-5 py-2 rounded-md bg-primary/[0.07] text-primary border border-primary/25 no-underline transition-all hover:bg-primary/14 hover:border-primary/50 max-sm:text-xs max-sm:px-3.5 max-sm:py-1.5">
+                    <Link href="/preferences" className="font-sans font-medium text-[0.84rem] px-5 py-2 rounded-md bg-primary/[0.07] text-primary border border-primary/25 no-underline transition-all hover:bg-primary/[0.14] hover:border-primary/50 max-sm:text-xs max-sm:px-3.5 max-sm:py-1.5">
                         ← Settings
                     </Link>
                 </nav>
@@ -626,18 +620,15 @@ export default function ProfileEditPage() {
 
                     {/* Page header */}
                     <div>
-                        {/* Eyebrow pill — uses primary color so it's bold in both modes */}
                         <div className="inline-flex items-center gap-1.5 font-mono text-[0.6rem] tracking-[0.2em] uppercase text-primary font-semibold border border-primary/30 bg-primary/[0.07] px-3 py-1 rounded-full mb-3">
-                            <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_theme(colors.indigo.500)] inline-block" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />
                             Autofill Information
                         </div>
                         <h1 className="font-[family-name:var(--font-syne)] font-extrabold text-[clamp(1.5rem,5vw,2.6rem)] tracking-tight text-foreground leading-[1.05] m-0">
                             Edit autofill{" "}
-                            <span className="text-transparent bg-clip-text bg-hero-gradient">
-                                information
-                            </span>
+                            {/* Plain primary color — no gradient */}
+                            <span className="text-primary">information</span>
                         </h1>
-                        {/* Subtitle — text-foreground/70 ensures readable in light mode */}
                         <p className="text-sm text-foreground/70 mt-1.5">
                             This information is used to autofill job applications — keep it accurate and up to date.
                         </p>
@@ -648,13 +639,13 @@ export default function ProfileEditPage() {
 
                         {/* Row 1 — Identity + Contact */}
                         <div className="grid grid-cols-2 gap-5 max-md:grid-cols-1">
-                            <Card accent="cyan" eyebrow="Identity" title="Personal Details">
-                                <Input label="Preferred Name" placeholder="What should we call you?" value={form.preferred_name} onValueChange={v => setField("preferred_name")(v)} variant="bordered" classNames={iCN("cyan")} />
-                                <Input label="Pronouns" placeholder="he/him, she/her, they/them…" value={form.pronouns} onValueChange={v => setField("pronouns")(v)} variant="bordered" classNames={iCN("cyan")} />
-                                <Input label="Nationality" placeholder="American" value={form.nationality} onValueChange={v => setField("nationality")(v)} variant="bordered" classNames={iCN("cyan")} />
-                                <Input label="Date of Birth" type="date" value={form.date_of_birth} onValueChange={v => setField("date_of_birth")(v)} variant="bordered" classNames={iCN("cyan")} />
+                            <Card accent="primary" eyebrow="Identity">
+                                <Input label="Preferred Name" placeholder="What should we call you?" value={form.preferred_name} onValueChange={v => setField("preferred_name")(v)} variant="bordered" classNames={iCN("primary")} />
+                                <Input label="Pronouns" placeholder="he/him, she/her, they/them…" value={form.pronouns} onValueChange={v => setField("pronouns")(v)} variant="bordered" classNames={iCN("primary")} />
+                                <Input label="Nationality" placeholder="American" value={form.nationality} onValueChange={v => setField("nationality")(v)} variant="bordered" classNames={iCN("primary")} />
+                                <Input label="Date of Birth" type="date" value={form.date_of_birth} onValueChange={v => setField("date_of_birth")(v)} variant="bordered" classNames={iCN("primary")} />
                                 <div>
-                                    <Textarea label="Bio" placeholder="Short paragraph about you, your skills, or what you're looking for…" value={form.bio} onValueChange={v => setField("bio")(v)} variant="bordered" minRows={3} maxRows={5} isInvalid={!!errors.bio} errorMessage={errors.bio} classNames={taCN("cyan")} />
+                                    <Textarea label="Bio" placeholder="Short paragraph about you, your skills, or what you're looking for…" value={form.bio} onValueChange={v => setField("bio")(v)} variant="bordered" minRows={3} maxRows={5} isInvalid={!!errors.bio} errorMessage={errors.bio} classNames={taCN("primary")} />
                                     <div className="flex justify-end mt-1">
                                         <span className={`font-mono text-[0.55rem] tracking-[0.1em] ${form.bio.length > 300 ? "text-warning" : "text-muted"}`}>
                                             {form.bio.length} / 320
@@ -663,40 +654,40 @@ export default function ProfileEditPage() {
                                 </div>
                             </Card>
 
-                            <Card accent="violet" eyebrow="Contact" title="Contact Details">
-                                <Input label="Contact Email" type="email" placeholder="recruiter@email.com" value={form.contact_email} onValueChange={v => setField("contact_email")(v)} variant="bordered" isInvalid={!!errors.contact_email} errorMessage={errors.contact_email} classNames={iCN("violet")} />
-                                <Input label="Phone Number" type="tel" placeholder="+1 (555) 000-0000" value={form.phone_number} onValueChange={v => setField("phone_number")(v)} variant="bordered" isInvalid={!!errors.phone_number} errorMessage={errors.phone_number} classNames={iCN("violet")} />
+                            <Card accent="secondary" eyebrow="Contact">
+                                <Input label="Contact Email" type="email" placeholder="recruiter@email.com" value={form.contact_email} onValueChange={v => setField("contact_email")(v)} variant="bordered" isInvalid={!!errors.contact_email} errorMessage={errors.contact_email} classNames={iCN("secondary")} />
+                                <Input label="Phone Number" type="tel" placeholder="+1 (555) 000-0000" value={form.phone_number} onValueChange={v => setField("phone_number")(v)} variant="bordered" isInvalid={!!errors.phone_number} errorMessage={errors.phone_number} classNames={iCN("secondary")} />
                                 <div className="h-px bg-border/50" />
                                 <p className="font-mono text-[0.58rem] tracking-[0.14em] uppercase text-subheading m-0">Address</p>
-                                <Input label="Address Line 1" placeholder="123 Main St" value={form.address_line_1} onValueChange={v => setField("address_line_1")(v)} variant="bordered" classNames={iCN("violet")} />
-                                <Input label="Address Line 2" placeholder="Apt 4B (optional)" value={form.address_line_2} onValueChange={v => setField("address_line_2")(v)} variant="bordered" classNames={iCN("violet")} />
+                                <Input label="Address Line 1" placeholder="123 Main St" value={form.address_line_1} onValueChange={v => setField("address_line_1")(v)} variant="bordered" classNames={iCN("secondary")} />
+                                <Input label="Address Line 2" placeholder="Apt 4B (optional)" value={form.address_line_2} onValueChange={v => setField("address_line_2")(v)} variant="bordered" classNames={iCN("secondary")} />
                                 <div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
-                                    <Input label="City" value={form.city} onValueChange={v => setField("city")(v)} variant="bordered" classNames={iCN("violet")} />
-                                    <Input label="State" value={form.state} onValueChange={v => setField("state")(v)} variant="bordered" classNames={iCN("violet")} />
+                                    <Input label="City" value={form.city} onValueChange={v => setField("city")(v)} variant="bordered" classNames={iCN("secondary")} />
+                                    <Input label="State" value={form.state} onValueChange={v => setField("state")(v)} variant="bordered" classNames={iCN("secondary")} />
                                 </div>
                                 <div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
-                                    <Input label="Zip Code" value={form.zip_code} onValueChange={v => setField("zip_code")(v)} variant="bordered" classNames={iCN("violet")} />
-                                    <Input label="Country" value={form.country} onValueChange={v => setField("country")(v)} variant="bordered" classNames={iCN("violet")} />
+                                    <Input label="Zip Code" value={form.zip_code} onValueChange={v => setField("zip_code")(v)} variant="bordered" classNames={iCN("secondary")} />
+                                    <Input label="Country" value={form.country} onValueChange={v => setField("country")(v)} variant="bordered" classNames={iCN("secondary")} />
                                 </div>
                             </Card>
                         </div>
 
                         {/* Row 2 — Links */}
-                        <Card accent="emerald" eyebrow="Links" title="Online Presence">
+                        <Card accent="success" eyebrow="Online Presence">
                             <div className="grid grid-cols-3 gap-4 max-md:grid-cols-2 max-sm:grid-cols-1">
-                                <Input label="LinkedIn URL" placeholder="https://linkedin.com/in/yourprofile" value={form.linkedin_url} onValueChange={v => setField("linkedin_url")(v)} variant="bordered" isInvalid={!!errors.linkedin_url} errorMessage={errors.linkedin_url} classNames={iCN("emerald")}
-                                       startContent={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" className="shrink-0 text-emerald-500/60"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>} />
-                                <Input label="Portfolio URL" placeholder="https://yoursite.dev" value={form.portfolio_url} onValueChange={v => setField("portfolio_url")(v)} variant="bordered" isInvalid={!!errors.portfolio_url} errorMessage={errors.portfolio_url} classNames={iCN("emerald")}
-                                       startContent={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-emerald-500/60"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>} />
-                                <Input label="GitHub URL" placeholder="https://github.com/yourhandle" value={form.github_url} onValueChange={v => setField("github_url")(v)} variant="bordered" isInvalid={!!errors.github_url} errorMessage={errors.github_url} classNames={iCN("emerald")}
-                                       startContent={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" className="shrink-0 text-emerald-500/60"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>} />
+                                <Input label="LinkedIn URL" placeholder="https://linkedin.com/in/yourprofile" value={form.linkedin_url} onValueChange={v => setField("linkedin_url")(v)} variant="bordered" isInvalid={!!errors.linkedin_url} errorMessage={errors.linkedin_url} classNames={iCN("success")}
+                                       startContent={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" className="shrink-0 text-success/60"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>} />
+                                <Input label="Portfolio URL" placeholder="https://yoursite.dev" value={form.portfolio_url} onValueChange={v => setField("portfolio_url")(v)} variant="bordered" isInvalid={!!errors.portfolio_url} errorMessage={errors.portfolio_url} classNames={iCN("success")}
+                                       startContent={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-success/60"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>} />
+                                <Input label="GitHub URL" placeholder="https://github.com/yourhandle" value={form.github_url} onValueChange={v => setField("github_url")(v)} variant="bordered" isInvalid={!!errors.github_url} errorMessage={errors.github_url} classNames={iCN("success")}
+                                       startContent={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" className="shrink-0 text-success/60"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>} />
                             </div>
                         </Card>
 
                         {/* Row 3 — Work + Education */}
                         <div className="grid grid-cols-2 gap-5 max-md:grid-cols-1">
-                            <Card accent="violet" eyebrow="Experience" title="Work Experience"
-                                  action={<AddBtn label="Add" onClick={openAddWork} accent="violet" />}>
+                            <Card accent="secondary" eyebrow="Work Experience"
+                                  action={<AddBtn label="Add" onClick={openAddWork} accent="secondary" />}>
                                 {form.work_experiences.length === 0 ? (
                                     <p className="text-sm text-muted text-center py-6 m-0">No work experience added yet.</p>
                                 ) : (
@@ -708,8 +699,8 @@ export default function ProfileEditPage() {
                                 )}
                             </Card>
 
-                            <Card accent="emerald" eyebrow="Education" title="Education"
-                                  action={<AddBtn label="Add" onClick={openAddEdu} accent="emerald" />}>
+                            <Card accent="success" eyebrow="Education"
+                                  action={<AddBtn label="Add" onClick={openAddEdu} accent="success" />}>
                                 <div className="flex flex-col gap-2.5">
                                     {form.educations.map((edu, i) => (
                                         <EduRow key={edu.id ?? i} edu={edu} onEdit={() => openEditEdu(i)} onDelete={() => deleteEdu(i)} isOnly={form.educations.length === 1} />

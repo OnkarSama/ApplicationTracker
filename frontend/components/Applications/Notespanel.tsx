@@ -439,9 +439,7 @@ export default function NotesPanel({ applicationId }: NotesPanelProps) {
                                 </button>
                             </div>
 
-                            {!olderExpanded ? (
-                                <OlderCollapsedPile notes={olderNotes} onToggle={() => setOlderExpanded(true)} />
-                            ) : (
+                            {olderExpanded && (
                                 <div className="flex flex-col w-full">
                                     {olderNotes.map((note, index) => (
                                         <NoteCard
