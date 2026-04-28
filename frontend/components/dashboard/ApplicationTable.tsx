@@ -140,6 +140,7 @@ export default function ApplicationTable({ applications = [] }: Props) {
                     sortDescriptor={sortDescriptor}
                     onSortChange={setSortDescriptor}
                     className="bg-table_bg rounded-xl border border-table_border shadow-[0_18px_40px_rgba(0,0,0,0.35)] w-full"
+                    classNames={{ th: "dark:bg-background dark:text-slate-400" }}
                 >
                     <TableHeader>
                         <TableColumn key="title"      allowsSorting>Title</TableColumn>

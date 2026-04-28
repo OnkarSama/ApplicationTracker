@@ -4,7 +4,6 @@ import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Select, SelectItem, addToast } from "@heroui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
 import Link from "next/link";
 import apiRouter from "@/api/router";
 
@@ -22,7 +21,7 @@ function PageShell({ children }: { children: React.ReactNode }) {
 
 function FormCard({ children }: { children: React.ReactNode }) {
     return (
-        <div className="bg-foreground border border-table_border rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-foreground border border-table_border dark:border-slate-600 rounded-2xl shadow-sm overflow-hidden">
             {children}
         </div>
     );
@@ -37,11 +36,11 @@ function FieldGroup({ label, hint, error, children }: {
 }) {
     return (
         <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-table_subheading tracking-[0.08em] uppercase">
+            <label className="text-xs font-semibold text-slate-300 dark:text-slate-700 tracking-[0.08em] uppercase">
                 {label}
             </label>
             {children}
-            {hint  && !error && <p className="text-xs text-table_subheading opacity-70">{hint}</p>}
+            {hint  && !error && <p className="text-xs text-slate-400 dark:text-slate-600 opacity-80">{hint}</p>}
             {error && <p className="text-xs text-danger font-medium">{error}</p>}
         </div>
     );
@@ -52,8 +51,9 @@ function StyledInput({ ...props }: React.InputHTMLAttributes<HTMLInputElement>) 
         <input
             {...props}
             className={[
-                "w-full rounded-xl border border-table_border bg-background px-4 py-2.5 text-sm text-table_text",
-                "placeholder:text-table_subheading placeholder:opacity-50",
+                "w-full rounded-xl border border-table_border dark:border-slate-600 bg-background px-4 py-2.5 text-sm",
+                "text-slate-800 dark:text-slate-200",
+                "placeholder:text-slate-500 dark:placeholder:text-slate-600",
                 "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary",
                 "transition-all duration-150",
                 props.className ?? "",
@@ -67,8 +67,9 @@ function StyledTextarea({ ...props }: React.TextareaHTMLAttributes<HTMLTextAreaE
         <textarea
             {...props}
             className={[
-                "w-full rounded-xl border border-table_border bg-background px-4 py-2.5 text-sm text-table_text",
-                "placeholder:text-table_subheading placeholder:opacity-50",
+                "w-full rounded-xl border border-table_border dark:border-slate-600 bg-background px-4 py-2.5 text-sm",
+                "text-slate-800 dark:text-slate-200",
+                "placeholder:text-slate-500 dark:placeholder:text-slate-600",
                 "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary",
                 "transition-all duration-150 resize-none",
                 props.className ?? "",
@@ -102,7 +103,7 @@ function BackLink({ href, label }: { href: string; label: string }) {
     return (
         <Link
             href={href}
-            className="inline-flex items-center gap-1.5 text-xs text-table_subheading hover:text-table_text transition-colors mb-5 font-medium"
+            className="inline-flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors mb-5 font-medium"
         >
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M8 1L3 6l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -170,10 +171,10 @@ export default function NewApplicationPage() {
 
             {/* Header */}
             <div className="mb-6">
-                <h1 className="font-['Sora',sans-serif] text-heading font-extrabold text-[22px] tracking-tight m-0">
+                <h1 className="font-['Sora',sans-serif] text-slate-900 dark:text-white font-extrabold text-[22px] tracking-tight m-0">
                     New Application
                 </h1>
-                <p className="text-table_subheading text-sm mt-1">
+                <p className="text-slate-700 dark:text-slate-400 text-sm mt-1">
                     Add a new application — job, grad school, fellowship, or anything else.
                 </p>
             </div>
@@ -197,7 +198,7 @@ export default function NewApplicationPage() {
                                     size="sm"
                                     selectedKeys={[status]}
                                     onSelectionChange={(k) => setStatus(Array.from(k)[0] as string)}
-                                    classNames={{ trigger: "rounded-xl border-table_border bg-background h-10", value: "text-sm text-table_text" }}
+                                    classNames={{ trigger: "rounded-xl border-table_border dark:border-slate-600 bg-background h-10", value: "text-sm text-slate-800 dark:text-slate-200" }}
                                     aria-label="Status"
                                 >
                                     <SelectItem key="Wishlist">Wishlist</SelectItem>
@@ -213,7 +214,7 @@ export default function NewApplicationPage() {
                                     size="sm"
                                     selectedKeys={category ? [category] : []}
                                     onSelectionChange={(k) => setCategory(Array.from(k)[0] as string)}
-                                    classNames={{ trigger: "rounded-xl border-table_border bg-background h-10", value: "text-sm text-table_text" }}
+                                    classNames={{ trigger: "rounded-xl border-table_border dark:border-slate-600 bg-background h-10", value: "text-sm text-slate-800 dark:text-slate-200" }}
                                     aria-label="Category"
                                     placeholder="Select category"
                                 >
@@ -231,9 +232,9 @@ export default function NewApplicationPage() {
                         <FieldGroup label="Priority">
                             <div className="flex gap-2">
                                 {[
-                                    { key: "0", label: "Normal",    color: "text-table_subheading" },
-                                    { key: "1", label: "Important", color: "text-warning"          },
-                                    { key: "2", label: "Urgent",    color: "text-danger"           },
+                                    { key: "0", label: "Normal",    color: "text-slate-700 dark:text-slate-600" },
+                                    { key: "1", label: "Important", color: "text-warning"                       },
+                                    { key: "2", label: "Urgent",    color: "text-danger"                        },
                                 ].map(({ key, label, color }) => (
                                     <button
                                         key={key}
@@ -243,7 +244,7 @@ export default function NewApplicationPage() {
                                             "flex-1 py-2 rounded-xl text-xs font-semibold border transition-all duration-150",
                                             priority === key
                                                 ? `border-primary bg-primary/10 ${color}`
-                                                : "border-table_border bg-transparent text-table_subheading hover:border-primary/40",
+                                                : "border-table_border dark:border-slate-600 bg-transparent text-slate-500 dark:text-slate-600 hover:border-primary/40",
                                         ].join(" ")}
                                     >
                                         {label}
@@ -268,7 +269,7 @@ export default function NewApplicationPage() {
                         <SubmitButton loading={submitting} label="Create Application" loadingLabel="Creating…" />
                         <Link
                             href={`/dashboard?${searchParams.toString()}`}
-                            className="text-center text-xs text-table_subheading hover:text-table_text transition-colors"
+                            className="text-center text-xs text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
                         >
                             Cancel
                         </Link>

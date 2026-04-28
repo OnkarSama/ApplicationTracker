@@ -108,8 +108,8 @@ export default function DashboardPage() {
 
                     {/* Table card */}
                     <Card className="bg-foreground border border-slate-200 dark:border-slate-500 rounded-2xl shadow-sm">
-                        <CardHeader className="flex items-center justify-between border-table_border px-4.5 py-3.5 dark:bg-[#4a3520] dark:rounded-t-2xl">
-                            <div className=" text-table_subheading dark:text-slate-400 text-[13px] tracking-[0.04em] uppercase font-semibold m-0">
+                        <CardHeader className="flex items-center justify-between border-table_border px-4.5 py-3.5">
+                            <div className=" text-table_subheading text-[13px] tracking-[0.04em] uppercase font-semibold m-0">
                                 Applications
                                 {/*<span className="ml-2 text-table_subheading font-normal">({filtered.length})</span>*/}
                                 {/*{hasFilters && <span className="ml-2 text-indigo-500 text-[11px] font-semibold">● filtered</span>}*/}
