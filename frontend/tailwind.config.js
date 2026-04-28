@@ -41,7 +41,7 @@ const config = {
                     colors: {
                         // Layout
                         background: "#020617",
-                        foreground: "#f8fafc",
+                        foreground: "#94a3b8",
 
                         // Surfaces
                         card: "#0f172a",         // bg-heroui-card
@@ -85,7 +85,7 @@ const config = {
                 light: {
                     colors: {
                         // Layout
-                        background: "#f4f6f9",    // bg-heroui-background → page bg
+                        background: "#94a3b8",    // bg-heroui-background → page bg
                         foreground: "#0f172a",
 
                         // Surfaces

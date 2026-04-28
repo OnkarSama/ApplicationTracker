@@ -59,19 +59,19 @@ export default function ApplicationTableHeader({ onNewApplication, stats }: Prop
 
             {/* Stat cards */}
             <div className="mb-6 grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(130px,1fr))" }}>
-                <div className="bg-foreground border border-slate-200 rounded-xl px-5 py-4 flex flex-col gap-1 shadow-sm">
+                <div className="bg-foreground border border-slate-200 dark:border-slate-500 rounded-xl px-5 py-4 flex flex-col gap-1 shadow-sm">
                     <span className="text-[28px] font-extrabold font-['Sora',sans-serif] leading-none text-primary">{stats.total}</span>
                     <span className="text-[11px] text-table_subheading font-semibold tracking-widest uppercase">Total</span>
                 </div>
-                <div className="bg-foreground border border-slate-200 rounded-xl px-5 py-4 flex flex-col gap-1 shadow-sm">
+                <div className="bg-foreground border border-slate-200 dark:border-slate-500 rounded-xl px-5 py-4 flex flex-col gap-1 shadow-sm">
                     <span className="text-[28px] font-extrabold font-['Sora',sans-serif] leading-none text-secondary">{stats.applied}</span>
                     <span className="text-[11px] text-table_subheading font-semibold tracking-widest uppercase">Applied</span>
                 </div>
-                <div className="bg-foreground border border-slate-200 rounded-xl px-5 py-4 flex flex-col gap-1 shadow-sm">
+                <div className="bg-foreground border border-slate-200 dark:border-slate-500 rounded-xl px-5 py-4 flex flex-col gap-1 shadow-sm">
                     <span className="text-[28px] font-extrabold font-['Sora',sans-serif] leading-none text-warning">{stats.interviews}</span>
                     <span className="text-[11px] text-table_subheading font-semibold tracking-widest uppercase">Interviews</span>
                 </div>
-                <div className="bg-foreground border border-slate-200 rounded-xl px-5 py-4 flex flex-col gap-1 shadow-sm">
+                <div className="bg-foreground border border-slate-200 dark:border-slate-500 rounded-xl px-5 py-4 flex flex-col gap-1 shadow-sm">
                     <span className="text-[28px] font-extrabold font-['Sora',sans-serif] leading-none text-success">{stats.offers}</span>
                     <span className="text-[11px] text-table_subheading font-semibold tracking-widest uppercase">Offers</span>
                 </div>

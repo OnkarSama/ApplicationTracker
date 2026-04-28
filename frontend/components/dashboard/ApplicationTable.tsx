@@ -44,10 +44,18 @@ const statusColorMap: Record<string, any> = {
     Wishlist:  "secondary",
 };
 
-const priorityMap: Record<number, { label: string; color: any }> = {
-    0: { label: "Low",    color: "success" },
-    1: { label: "Medium", color: "warning" },
-    2: { label: "High",   color: "danger"  },
+const statusPillClass: Record<string, string> = {
+    Applied:   "bg-blue-100 text-black dark:bg-yellow-400 dark:text-slate-400",
+    Interview: "bg-amber-100 text-black dark:bg-yellow-400 dark:text-slate-400",
+    Offer:     "bg-green-100 text-black dark:bg-yellow-400 dark:text-slate-400",
+    Rejected:  "bg-red-100 text-black dark:bg-yellow-400 dark:text-slate-400",
+    Wishlist:  "bg-purple-100 text-black dark:bg-yellow-400 dark:text-slate-400",
+};
+
+const priorityMap: Record<number, { label: string; color: any; pillClass: string }> = {
+    0: { label: "Low",    color: "success", pillClass: "bg-green-100 text-black dark:bg-yellow-400 dark:text-slate-400" },
+    1: { label: "Medium", color: "warning", pillClass: "bg-amber-100 text-black dark:bg-yellow-400 dark:text-slate-400" },
+    2: { label: "High",   color: "danger",  pillClass: "bg-red-100   text-black dark:bg-yellow-400 dark:text-slate-400" },
 };
 
 export default function ApplicationTable({ applications = [] }: Props) {
@@ -153,18 +161,12 @@ export default function ApplicationTable({ applications = [] }: Props) {
                                     <Dropdown>
                                         <DropdownTrigger>
                                             <button className="outline-none cursor-pointer">
-                                                <Chip
-                                                    size="sm"
-                                                    color={statusColorMap[app.status] || "primary"}
-                                                    className="cursor-pointer"
-                                                    endContent={
-                                                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="opacity-60 ml-0.5">
-                                                            <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                                                        </svg>
-                                                    }
-                                                >
+                                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${statusPillClass[app.status] || statusPillClass["Applied"]}`}>
                                                     {app.status}
-                                                </Chip>
+                                                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="opacity-60">
+                                                        <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                                                    </svg>
+                                                </span>
                                             </button>
                                         </DropdownTrigger>
 
@@ -179,13 +181,10 @@ export default function ApplicationTable({ applications = [] }: Props) {
                                             }}
                                         >
                                             {STATUSES.map((s) => (
-                                                <DropdownItem
-                                                    key={s}
-                                                    textValue={s}
-                                                >
-                                                    <Chip size="sm" color={statusColorMap[s]} variant="flat">
+                                                <DropdownItem key={s} textValue={s}>
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${statusPillClass[s]}`}>
                                                         {s}
-                                                    </Chip>
+                                                    </span>
                                                 </DropdownItem>
                                             ))}
                                         </DropdownMenu>
@@ -193,9 +192,9 @@ export default function ApplicationTable({ applications = [] }: Props) {
                                 </TableCell>
 
                                 <TableCell>
-                                    <Chip size="sm" color={priorityMap[app.priority]?.color || "default"}>
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${priorityMap[app.priority]?.pillClass || "bg-gray-100 text-black dark:bg-yellow-400 dark:text-slate-400"}`}>
                                         {priorityMap[app.priority]?.label || "Unknown"}
-                                    </Chip>
+                                    </span>
                                 </TableCell>
 
                                 <TableCell>
