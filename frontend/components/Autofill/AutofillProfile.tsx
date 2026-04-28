@@ -20,6 +20,7 @@ interface WorkExperience {
     end_date: string | null;
     current: boolean | null;
     description: string;
+    location: string;
 }
 
 interface Education {
@@ -84,7 +85,7 @@ function validateProfile(f: ProfileData): Record<string, string> {
 }
 
 function blankWork(): WorkExperience {
-    return { employer: "", job_title: "", start_date: "", end_date: "", current: false, description: "" };
+    return { employer: "", job_title: "", start_date: "", end_date: "", current: false, description: "", location: "" };
 }
 function blankEdu(): Education {
     return { institution: "", degree: "", area_of_study: "", start_year: "", end_year: "", gpa: "" };
@@ -328,6 +329,10 @@ function WorkModal({ isOpen, onClose, initial, onSave }: {
                         <Input label="Employer" placeholder="Google" value={w.employer} onValueChange={set("employer")} variant="bordered" classNames={iCN("violet")} />
                         <Input label="Job Title" placeholder="Software Engineer" value={w.job_title} onValueChange={set("job_title")} variant="bordered" classNames={iCN("violet")} />
                     </div>
+
+                    <div className="col-span-2 max-sm:col-span-1">
+                        <Input label="Location" placeholder="New York, NY" value={w.location} onValueChange={set("location")} variant="bordered" classNames={iCN("violet")} />
+                    </div>
                     <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
                         <Input label="Start Date" type="date" value={w.start_date} onValueChange={set("start_date")} variant="bordered" classNames={iCN("violet")} />
                         <Input label="End Date" type="date" value={w.end_date ?? ""} onValueChange={set("end_date")} variant="bordered" isDisabled={!!w.current} classNames={iCN("violet")} />
@@ -445,6 +450,7 @@ function mapApiToForm(raw: any): ProfileData {
             end_date:    w.end_date    ?? null,
             current:     w.current     ?? false,
             description: w.description ?? "",
+            location: w.location ?? "",
         })),
         educations: (p.educations ?? []).length > 0
             ? (p.educations ?? []).map((e: any) => ({
@@ -581,6 +587,7 @@ export default function ProfileEditPage() {
                     end_date:    w.current ? undefined : w.end_date ?? undefined,
                     current:     !!w.current,
                     description: w.description || undefined,
+                    location: w.location
                 })
             ));
             await Promise.all(form.work_experiences.filter(w => !w.id).map(w =>
@@ -591,6 +598,7 @@ export default function ProfileEditPage() {
                     end_date:    w.current ? undefined : w.end_date ?? undefined,
                     current:     !!w.current,
                     description: w.description || undefined,
+                    location: w.location
                 })
             ));
 

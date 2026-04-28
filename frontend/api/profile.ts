@@ -29,6 +29,7 @@ export type WorkExperiencePayload = {
         end_date?: string
         current: boolean
         description?: string
+        location: string
     }
 }
 
