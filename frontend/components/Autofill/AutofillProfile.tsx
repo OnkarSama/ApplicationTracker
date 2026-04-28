@@ -605,16 +605,6 @@ export default function ProfileEditPage() {
         <div className="min-h-screen bg-background">
             <div className="flex flex-col">
 
-                {/* Nav */}
-                <nav className="sticky top-0 z-10 shrink-0 flex items-center justify-between px-8 py-5 backdrop-blur-xl bg-background/80 border-b border-border max-sm:px-4 max-sm:py-3.5">
-                    <Link href="/" className="font-mono text-[0.78rem] tracking-[0.22em] uppercase text-foreground no-underline transition-colors hover:text-primary">
-                        ApplyOS
-                    </Link>
-                    <Link href="/preferences" className="font-sans font-medium text-[0.84rem] px-5 py-2 rounded-md bg-primary/[0.07] text-primary border border-primary/25 no-underline transition-all hover:bg-primary/[0.14] hover:border-primary/50 max-sm:text-xs max-sm:px-3.5 max-sm:py-1.5">
-                        ← Settings
-                    </Link>
-                </nav>
-
                 {/* Body */}
                 <div className="flex flex-col gap-6 px-8 pt-10 pb-16 max-sm:px-5 max-sm:pt-6 max-sm:gap-4">
 
