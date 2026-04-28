@@ -7,7 +7,7 @@ json.extract! @profile, :id, :preferred_name, :contact_email, :phone_number,
               :zip_code, :country, :github_url
 
 json.work_experiences @profile.work_experiences do |we|
-  json.extract! we, :id, :employer, :job_title, :start_date, :end_date, :current, :description
+  json.extract! we, :id, :employer, :job_title, :start_date, :end_date, :location, :current, :description
 end
 
 json.educations @profile.educations do |edu|
