@@ -170,6 +170,9 @@ const FIELD_SELECTORS = {
         'input[id="workExperience-i--location"]',
         'input[name="location"]'
     ],
+    roleDescription: [
+        '[data-automation-id="formField-roleDescription"] textarea'
+    ],
     schoolName: [
         'input[id="workExperience-i--schoolName"]',
         'input[name="schoolName"]'
@@ -245,14 +248,19 @@ const CHECKBOX_SELECTORS = {
 
 // Native setter bypasses React's synthetic event system so onChange fires correctly
 const nativeInputSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+const nativeTextareaSetter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+
 
 function fillField(selectors: string[], value: string | undefined) {
     if (!value) return
     for (const selector of selectors) {
         const el = document.querySelector<HTMLInputElement>(selector)
         if (!el || el.type === 'hidden' || el.disabled || el.readOnly) continue
-        if (nativeInputSetter) {
-            nativeInputSetter.call(el, value)
+
+
+        const isTextarea = el instanceof HTMLTextAreaElement
+        if (isTextarea ? nativeTextareaSetter : nativeInputSetter) {
+            (isTextarea ? nativeTextareaSetter : nativeInputSetter)!.call(el, value)
         } else {
             el.value = value
         }
@@ -293,6 +301,7 @@ function fillCheckbox(selectors: string[], isCurrent: boolean) {
     }
 }
 
+
 function fillActionSelector(selectors: string[], profile: any, isWorkExperiences: boolean) {
     for (const selector of selectors) {
         const el = document.querySelector<HTMLInputElement>(selector)
@@ -319,6 +328,9 @@ function fillActionSelector(selectors: string[], profile: any, isWorkExperiences
                     fillField(FIELD_SELECTORS.workEndMonth, endDate[1])
                     fillField(FIELD_SELECTORS.workEndYear, endDate[0])
                 }
+
+                fillField(FIELD_SELECTORS.roleDescription, profile.work_experiences[0]?.description)
+                console.log(profile.work_experiences[0]?.description)
 
 
             } else {
