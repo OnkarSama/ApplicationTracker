@@ -27,6 +27,6 @@ class Api::WorkExperiencesController < ApplicationController
   private
 
   def work_experience_params
-    params.require(:work_experience).permit(:employer, :job_title, :location,  :start_date, :end_date, :description)
+    params.require(:work_experience).permit(:employer, :job_title, :location, :current, :start_date, :end_date, :description)
   end
 end
