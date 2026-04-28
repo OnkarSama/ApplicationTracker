@@ -157,6 +157,76 @@ const FIELD_SELECTORS = {
     preferredName: [
         'input[aria-label="Preferred Name"]',
 
+    ],
+    jobTitle: [
+        'input[id="workExperience-i--jobTitle"]',
+        'input[name="jobTitle"]'
+    ],
+    company: [
+        'input[id="workExperience-i--companyName"]',
+        'input[name="companyName"]'
+    ],
+    location: [
+        'input[id="workExperience-i--location"]',
+        'input[name="location"]'
+    ],
+    schoolName: [
+        'input[id="workExperience-i--schoolName"]',
+        'input[name="schoolName"]'
+    ],
+    fieldOfStudy: [
+        'input[id="education-i--fieldOfStudy"]',
+        'input[name="fieldOfStudy"]',
+        '[data-automation-id="formField-fieldOfStudy"] input[placeholder="Search"]'
+    ],
+    gradePointAverage: [
+        'input[id="workExperience-i--gradePointAverage"]',
+        'input[name="gradeAverage"]',
+    ],
+    startMonth: [
+        'input[data-automation-id="dateSectionMonth-input"]',
+    ],
+    startYear: [
+        'input[data-automation-id="dateSectionYear-input"]',
+    ]
+
+}
+
+const ACTION_SELECTORS = {
+
+    workExperiences: [
+        '[aria-labelledby="Work-Experience-section"] button[data-automation-id="add-button"]'
+
+    ],
+    educations: [
+        '[aria-labelledby="Education-section"] button[data-automation-id="add-button"]',
+    ],
+
+}
+
+const DROPDOWN_SELECTORS = {
+
+    state:      [
+        'button[name="countryRegion"]',
+        'button[id="address--countryRegion"]',
+        'button[aria-label*="state" i]',
+    ],
+    country:    [
+        'button[name="country"]',
+        'button[id="country--country"]',
+        'button[aria-label*="country" i]',
+
+    ],
+    degree: [
+        'button[aria-label="Degree Select One Required"]',
+        'button[name="degree"]',
+    ]
+}
+
+const CHECKBOX_SELECTORS = {
+
+    currentPosition: [
+        'input[type="checkbox"][name="currentlyWorkHere"]'
     ]
 }
 
@@ -179,6 +249,66 @@ function fillField(selectors: string[], value: string | undefined) {
         return  // stop at first match
     }
 }
+
+function fillCustomDropdown(selectors: string[], value: string | undefined) {
+    if (!value) return
+    for (const selector of selectors) {
+        const el = document.querySelector<HTMLInputElement>(selector)
+        if (!el || el.type === 'hidden' || el.disabled || el.readOnly) continue
+
+        el.click()
+
+        setTimeout(() => {
+                let liElement = Array.from(document.querySelectorAll('li[role="option"]')).find(li => li.textContent?.trim().toLowerCase() === value.trim().toLowerCase())
+                if (!liElement) {
+                    liElement = Array.from(document.querySelectorAll('li[role="option"]')).find(li => li.textContent?.trim().toLowerCase().replace(/'/g, '') === value.trim().toLowerCase().replace(/'/g, ''))
+                }
+                liElement?.click()
+            }
+        ,500)
+    }
+}
+
+function fillCheckbox(selectors: string[], isCurrent: boolean) {
+    for (const selector of selectors) {
+        const el = document.querySelector<HTMLInputElement>(selector)
+        if (!el || el.type === 'hidden' || el.disabled || el.readOnly) continue
+
+        if(isCurrent) {
+            el.click()
+        }
+    }
+}
+
+function fillActionSelector(selectors: string[], profile: any, isWorkExperiences: boolean) {
+    for (const selector of selectors) {
+        const el = document.querySelector<HTMLInputElement>(selector)
+        if (!el || el.type === 'hidden' || el.disabled || el.readOnly) continue
+
+        el.click()
+
+        setTimeout(() => {
+            if (isWorkExperiences) {
+                fillField(FIELD_SELECTORS.jobTitle, profile.work_experiences[0]?.job_title)
+                fillField(FIELD_SELECTORS.company, profile.work_experiences[0]?.employer)
+                fillField(FIELD_SELECTORS.location, profile.work_experiences[0]?.employer)
+                const startDate = profile.work_experiences[0]?.start_date.split("-")
+                fillField(FIELD_SELECTORS.startMonth, startDate[1])
+                fillField(FIELD_SELECTORS.startYear, startDate[0])
+                fillCheckbox(CHECKBOX_SELECTORS.currentPosition, profile.work_experiences[0]?.current)
+            } else {
+                fillField(FIELD_SELECTORS.schoolName, profile.educations[0]?.institution)
+                fillCustomDropdown(DROPDOWN_SELECTORS.degree, profile.educations[0]?.degree)
+                fillField(FIELD_SELECTORS.fieldOfStudy, profile.educations[0]?.area_of_study)
+                fillField(FIELD_SELECTORS.gradePointAverage, profile.educations[0]?.gpa)
+            }
+
+        }, 500)
+
+
+    }
+}
+
 
 function queryAny(selectorList: string[]): Element | null {
     for (const s of selectorList) {
@@ -304,6 +434,7 @@ export default function FillOverlay() {
     const [appSaveForm, setAppSaveForm]   = useState({ company: '', position: '', status: 'Applied', saveStatus: 'idle' as 'idle' | 'saving' | 'saved' | 'error' })
     const currentUrl = useRef(window.location.href)
     const fillableApps = apps.filter(a => hostnameMatches(a) && !!a.credential?.username)
+    const savableApps = apps.filter(a => guessCompany().toLowerCase() === a.company.toLowerCase())
     const savableStatusApps = apps.filter(a => hostnameMatches(a) && !a.credential?.status_page_link )
 
     // ── fill: write saved credentials into the form ──────────────────────────
@@ -344,11 +475,15 @@ export default function FillOverlay() {
             fillField(FIELD_SELECTORS.addressLine2,    profile.address_line_2)
             fillField(FIELD_SELECTORS.city,       profile.city)
             fillField(FIELD_SELECTORS.state,      profile.state)
+            fillCustomDropdown(DROPDOWN_SELECTORS.state, profile.state)
             fillField(FIELD_SELECTORS.zip,        profile.zip_code)
             fillField(FIELD_SELECTORS.country,    profile.country)
+            fillCustomDropdown(DROPDOWN_SELECTORS.country, profile.country)
             fillField(FIELD_SELECTORS.preferredName,     profile.preferred_name)
+            fillActionSelector(ACTION_SELECTORS.workExperiences, profile, true)
+            fillActionSelector(ACTION_SELECTORS.educations, profile, false)
 
-            setProfileFillStatus('done')
+            setProfileFillStatus('idle')
         })
     }, [])
 
@@ -463,7 +598,6 @@ export default function FillOverlay() {
             setApps(fetchedApps)
 
             const savableStatusApps = fetchedApps.filter(a => hostnameMatches(a) && !a.credential?.status_page_link)
-            console.log('savableStatusApps:', savableStatusApps, fetchedApps.map(a => ({ company: a.company, status_page_link: a.credential?.status_page_link, hostnameMatches: hostnameMatches(a) })))
             if (savableStatusApps.length === 0) setPendingStatusPageSave(false)
 
 
