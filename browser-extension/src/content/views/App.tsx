@@ -183,11 +183,24 @@ const FIELD_SELECTORS = {
         'input[id="workExperience-i--gradePointAverage"]',
         'input[name="gradeAverage"]',
     ],
-    startMonth: [
-        'input[data-automation-id="dateSectionMonth-input"]',
+    workStartMonth: [
+        '[data-automation-id="formField-startDate"] [data-automation-id="dateSectionMonth-input"]',
     ],
-    startYear: [
-        'input[data-automation-id="dateSectionYear-input"]',
+    workStartYear: [
+        '[data-automation-id="formField-startDate"] [data-automation-id="dateSectionYear-input"]',
+    ],
+    workEndMonth: [
+        '[data-automation-id="formField-endDate"] [data-automation-id="dateSectionMonth-input"]',
+    ],
+    workEndYear: [
+        '[data-automation-id="formField-endDate"] [data-automation-id="dateSectionYear-input"]',
+    ],
+    educationStartYear: [
+        '[data-automation-id="formField-firstYearAttended"] [data-automation-id="dateSectionYear-input"]',
+    ],
+    educationEndYear: [
+        '[data-automation-id="formField-lastYearAttended"] [data-automation-id="dateSectionYear-input"]',
+
     ]
 
 }
@@ -291,16 +304,33 @@ function fillActionSelector(selectors: string[], profile: any, isWorkExperiences
             if (isWorkExperiences) {
                 fillField(FIELD_SELECTORS.jobTitle, profile.work_experiences[0]?.job_title)
                 fillField(FIELD_SELECTORS.company, profile.work_experiences[0]?.employer)
-                fillField(FIELD_SELECTORS.location, profile.work_experiences[0]?.employer)
+                fillField(FIELD_SELECTORS.location, profile.work_experiences[0]?.location)
+
                 const startDate = profile.work_experiences[0]?.start_date.split("-")
-                fillField(FIELD_SELECTORS.startMonth, startDate[1])
-                fillField(FIELD_SELECTORS.startYear, startDate[0])
-                fillCheckbox(CHECKBOX_SELECTORS.currentPosition, profile.work_experiences[0]?.current)
+                fillField(FIELD_SELECTORS.workStartMonth, startDate[1])
+                fillField(FIELD_SELECTORS.workStartYear, startDate[0])
+
+                const isCurrent = profile.work_experiences[0]?.current
+
+                if (isCurrent) {
+                    fillCheckbox(CHECKBOX_SELECTORS.currentPosition, isCurrent)
+                } else {
+                    const endDate = profile.work_experiences[0]?.end_date.split("-")
+                    fillField(FIELD_SELECTORS.workEndMonth, endDate[1])
+                    fillField(FIELD_SELECTORS.workEndYear, endDate[0])
+                }
+
+
             } else {
                 fillField(FIELD_SELECTORS.schoolName, profile.educations[0]?.institution)
                 fillCustomDropdown(DROPDOWN_SELECTORS.degree, profile.educations[0]?.degree)
                 fillField(FIELD_SELECTORS.fieldOfStudy, profile.educations[0]?.area_of_study)
                 fillField(FIELD_SELECTORS.gradePointAverage, profile.educations[0]?.gpa)
+
+                fillField(FIELD_SELECTORS.educationStartYear, profile.educations[0]?.start_year)
+                fillField(FIELD_SELECTORS.educationEndYear, profile.educations[0]?.end_year)
+
+
             }
 
         }, 500)
